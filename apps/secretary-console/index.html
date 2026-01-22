@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CAM-AIMS Secretary Console</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="grain"></div>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">CAM</span>
+        <div>
+          <div class="brand-title">Secretary Console</div>
+          <div class="brand-sub">Governance-first minutes workflow</div>
+        </div>
+      </div>
+      <div class="api-config">
+        <label for="apiBase">API Base</label>
+        <input id="apiBase" type="url" placeholder="http://localhost:4000" />
+        <button id="saveApiBase" class="btn ghost">Save</button>
+        <span id="roleBadge" class="pill">Role: Guest</span>
+        <button id="logout" class="btn ghost">Logout</button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="left-pane">
+        <div class="panel banner" id="onboardingBanner">
+          <div>
+            <h2>Start here</h2>
+            <ol>
+              <li>Create a meeting.</li>
+              <li>Register room audio (.mp3/.wav).</li>
+              <li>Process to generate draft minutes.</li>
+              <li>Review motions, action items, and approve.</li>
+            </ol>
+          </div>
+          <button id="dismissBanner" class="btn ghost">Dismiss</button>
+        </div>
+        <div class="panel hero">
+          <div>
+            <h1>Meetings</h1>
+            <p>Track recording, draft minutes, and approvals in one place.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="quickCreate" class="btn">Quick Create</button>
+            <button id="seedDemo" class="btn ghost">Seed Demo</button>
+            <button id="refreshMeetings" class="btn ghost">Refresh</button>
+          </div>
+        </div>
+
+        <div class="panel form">
+          <h2>New Meeting</h2>
+          <div class="grid">
+            <label>
+              Date
+              <input id="newDate" type="date" />
+            </label>
+            <label>
+              Start Time
+              <input id="newStart" type="time" />
+            </label>
+            <label>
+              Location
+              <input id="newLocation" type="text" placeholder="Chamber Hall" />
+            </label>
+            <label>
+              Chair
+              <input id="newChair" type="text" placeholder="Alex Chair" />
+            </label>
+            <label>
+              Secretary
+              <input id="newSecretary" type="text" placeholder="Riley Secretary" />
+            </label>
+            <label>
+              Tags
+              <input id="newTags" type="text" placeholder="budget, annual, special" />
+            </label>
+          </div>
+          <button id="createMeeting" class="btn">Create Meeting</button>
+          <div id="newMeetingError" class="hint"></div>
+        </div>
+
+        <div class="panel list">
+          <div class="panel-head">
+            <h2>Meeting Queue</h2>
+            <span id="meetingCount" class="pill">0</span>
+          </div>
+          <label class="filter">
+            Filter by Tag
+            <select id="tagFilter">
+              <option value="">All</option>
+            </select>
+          </label>
+          <div id="tagChips" class="tag-chip-row"></div>
+          <label class="filter">
+            Search
+            <input id="meetingSearch" type="text" placeholder="Search by location or chair (/) " />
+            <span class="hint">Press Esc to clear.</span>
+          </label>
+          <label class="filter">
+            Status
+            <select id="statusFilter">
+              <option value="">All</option>
+              <option value="CREATED">CREATED</option>
+              <option value="UPLOADED">UPLOADED</option>
+              <option value="PROCESSING">PROCESSING</option>
+              <option value="DRAFT_READY">DRAFT_READY</option>
+              <option value="APPROVED">APPROVED</option>
+            </select>
+          </label>
+          <label class="filter">
+            Recent
+            <select id="recentFilter">
+              <option value="">All</option>
+              <option value="30">Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+          </label>
+          <div class="inline-actions">
+            <button id="clearFilters" class="btn ghost" type="button">Clear Filters</button>
+          </div>
+          <div id="meetingList" class="meeting-list"></div>
+          <div id="meetingEmpty" class="empty">No meetings yet. Create your first meeting.</div>
+        </div>
+
+        <div class="panel form">
+          <div class="panel-head">
+            <h2>Settings</h2>
+          </div>
+          <div class="grid">
+            <label>
+              Retention Days
+              <input id="settingRetention" type="number" min="1" max="365" />
+            </label>
+            <label>
+              Max File Size (MB)
+              <input id="settingMaxSize" type="number" min="1" max="1024" />
+            </label>
+            <label>
+              Max Duration (seconds)
+              <input id="settingMaxDuration" type="number" min="300" max="21600" />
+            </label>
+          </div>
+          <button id="saveSettings" class="btn ghost">Save Settings</button>
+          <div id="settingsStatus" class="settings-banner hidden"></div>
+        </div>
+      </section>
+
+      <section class="right-pane">
+        <div class="panel detail">
+          <div class="panel-head">
+            <h2>Meeting Detail</h2>
+            <span id="meetingStatus" class="pill">No meeting selected</span>
+          </div>
+
+          <div id="detailBody" class="detail-body">
+            <div class="checklist" id="approvalChecklist"></div>
+            <div class="detail-grid">
+              <div>
+                <h3>Metadata</h3>
+                <div class="meta" id="meetingMeta">Select a meeting to view details.</div>
+                <div class="meta-form">
+                  <label>
+                    End Time
+                    <input id="metaEndTime" type="time" />
+                  </label>
+                  <label>
+                    Tags
+                    <input id="metaTags" type="text" placeholder="budget, annual, special" />
+                  </label>
+                  <label class="check">
+                    <input id="flagNoMotions" type="checkbox" />
+                    No motions recorded
+                  </label>
+                  <label class="check">
+                    <input id="flagNoActionItems" type="checkbox" />
+                    No action items recorded
+                  </label>
+                  <label class="check">
+                    <input id="flagNoAdjournment" type="checkbox" />
+                    Adjournment time not recorded
+                  </label>
+                  <button id="saveMeta" class="btn ghost" type="button">Save Metadata</button>
+                </div>
+              </div>
+              <div>
+                <h3>Actions</h3>
+                <div class="actions">
+                  <div class="upload-card">
+                    <div class="upload-head">Room Audio</div>
+                    <div id="dropzone" class="dropzone">
+                      <span>Drop .mp3/.wav here or</span>
+                      <button id="pickFile" class="btn ghost" type="button">Choose File</button>
+                      <input id="fileInput" type="file" accept=".mp3,.wav,audio/*" hidden />
+                    </div>
+                    <div id="fileMeta" class="file-meta">No file selected.</div>
+                    <label>
+                      Duration (seconds)
+                      <input id="audioDuration" type="number" min="1" value="1200" />
+                    </label>
+                    <div id="fileHint" class="hint">Max 500MB. Supported: mp3, wav.</div>
+                    <button id="registerAudio" class="btn ghost" type="button">Register Audio</button>
+                    <div class="audio-list">
+                      <div class="list-head">Audio Sources</div>
+                      <div id="audioSources" class="list-body"></div>
+                    </div>
+                  </div>
+                  <button id="processMeeting" class="btn">Process</button>
+                  <button id="approveMeeting" class="btn accent">Approve</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-bar">
+              <button class="tab active" data-tab="minutes">Minutes</button>
+              <button class="tab" data-tab="actions">Action Items</button>
+              <button class="tab" data-tab="audit">Audit Log</button>
+              <button class="tab" data-tab="motions">Motions</button>
+            </div>
+
+            <div class="tab-content" id="tab-minutes">
+              <div class="minutes-block">
+                <textarea id="minutesContent" rows="12" placeholder="Draft minutes will appear here..."></textarea>
+                <div class="inline-actions">
+                  <button id="saveMinutes" class="btn ghost">Save Draft</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-content hidden" id="tab-actions">
+              <div class="actions-block">
+                <div id="approvalWarnings" class="warnings"></div>
+                <div class="hint" id="actionGate"></div>
+                <div class="adjournment-gate">
+                  <label class="check">
+                    <input id="flagNoAdjournmentInline" type="checkbox" />
+                    Adjournment time not recorded
+                  </label>
+                  <button id="saveAdjournmentFlag" class="btn ghost" type="button">Save</button>
+                  <span class="hint" id="adjournmentGate"></span>
+                </div>
+                <div class="inline-actions">
+                  <button id="exportActionCsv" class="btn ghost" type="button">Export Action Items CSV</button>
+                  <button id="importActionCsv" class="btn ghost" type="button">Import Action Items CSV</button>
+                  <input id="actionCsvInput" type="file" accept=".csv,text/csv" hidden />
+                </div>
+                <div class="action-row">
+                  <input id="actionDescription" type="text" placeholder="Action item description" />
+                  <input id="actionOwner" type="text" placeholder="Owner" />
+                  <input id="actionDue" type="date" />
+                  <button id="addActionItem" class="btn ghost">Add</button>
+                </div>
+                <div id="actionItemsList" class="action-items"></div>
+              </div>
+            </div>
+
+            <div class="tab-content hidden" id="tab-audit">
+              <div id="auditLog" class="audit-log"></div>
+            </div>
+
+            <div class="tab-content hidden" id="tab-motions">
+              <div class="motions-block">
+                <div id="motionWarnings" class="warnings"></div>
+                <div id="motionGate" class="hint"></div>
+                <div class="motions-table">
+                  <div class="motions-row header">
+                    <span>Motion</span>
+                    <span>Mover</span>
+                    <span>Seconder</span>
+                    <span>Vote</span>
+                    <span>Outcome</span>
+                    <span>Actions</span>
+                  </div>
+                  <div id="motionsList"></div>
+                </div>
+                <div class="motion-editor">
+                  <input id="motionText" type="text" placeholder="Motion text" />
+                  <input id="motionMover" type="text" placeholder="Mover" />
+                  <input id="motionSeconder" type="text" placeholder="Seconder" />
+                  <input id="motionVote" type="text" placeholder="Vote method" />
+                  <input id="motionOutcome" type="text" placeholder="Outcome" />
+                  <button id="addMotion" class="btn ghost">Add Motion</button>
+                </div>
+                <div class="export-block">
+                  <div class="export-filters">
+                    <label class="check">
+                      <input id="exportLatestOnly" type="checkbox" />
+                      Show latest only
+                    </label>
+                    <label>
+                      Group by
+                      <select id="exportGroup">
+                        <option value="none">None</option>
+                        <option value="format">Format</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="export-actions">
+                    <button id="exportPdf" class="btn ghost">Export PDF</button>
+                    <button id="exportDocx" class="btn ghost">Export DOCX</button>
+                    <button id="exportMinutesMd" class="btn ghost">Download Minutes MD</button>
+                    <button id="clearExportHistory" class="btn ghost">Clear Export History</button>
+                  </div>
+                  <div id="exportResults" class="export-results"></div>
+                  <div id="exportHistory" class="export-results"></div>
+                </div>
+                <div class="hint">Mover + Outcome required for approval.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel notice">
+          <h3>Governance Notes</h3>
+          <ul>
+            <li>Minutes are the official record.</li>
+            <li>Audio stays private with retention controls.</li>
+            <li>Approvals are blocked when required fields are missing.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>CAM-AIMS Mock Console · In-memory API expected</span>
+    </footer>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <div id="loginModal" class="modal hidden">
+      <div class="modal-card">
+        <h2>Demo Login</h2>
+        <p>Select a role to enter the console.</p>
+        <div class="grid">
+          <label>
+            Email
+            <input id="loginEmail" type="email" placeholder="admin@acme.com" />
+          </label>
+          <label>
+            Role
+            <select id="loginRole">
+              <option value="admin">Admin</option>
+              <option value="secretary">Secretary</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button id="loginSubmit" class="btn">Enter</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="quickModal" class="modal hidden">
+      <div class="modal-card">
+        <h2>Quick Create Meeting</h2>
+          <p>Uses today’s date, a 6:00 PM start, and your last used values.</p>
+          <div class="grid">
+            <label>
+              Location
+              <input id="quickLocation" type="text" placeholder="Chamber Hall" />
+            </label>
+            <label>
+              Chair
+              <input id="quickChair" type="text" placeholder="Alex Chair" />
+            </label>
+            <label>
+              Secretary
+              <input id="quickSecretary" type="text" placeholder="Riley Secretary" />
+            </label>
+            <label>
+              Tags
+              <input id="quickTags" type="text" placeholder="budget, annual, special" />
+            </label>
+          </div>
+        <div class="modal-actions">
+          <button id="quickSubmit" class="btn">Create</button>
+          <button id="quickCancel" class="btn ghost">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="csvPreviewModal" class="modal hidden">
+      <div class="modal-card">
+        <h2>Import Action Items</h2>
+        <p>Preview parsed rows before applying.</p>
+        <label class="check">
+          <input id="csvSkipInvalid" type="checkbox" checked />
+          Skip rows missing owner/due date
+        </label>
+        <div id="csvPreviewNote" class="hint"></div>
+        <div id="csvPreviewTable" class="preview-table"></div>
+        <div class="modal-actions">
+          <button id="csvApply" class="btn">Apply Import</button>
+          <button id="csvCancel" class="btn ghost">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

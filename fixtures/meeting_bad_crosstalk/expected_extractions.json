@@ -1,0 +1,15 @@
+{
+  "pipeline_run_id": "run_fixture_bad",
+  "minutes_version": 1,
+  "motions": [],
+  "action_items": [
+    {
+      "id": "action_1",
+      "meeting_id": "",
+      "description": "Follow up on ambiguous vote.",
+      "owner_name": null,
+      "due_date": null,
+      "status": "OPEN"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "pipeline_run_id": "run_fixture_good",
+  "minutes_version": 1,
+  "motions": [
+    {
+      "id": "motion_1",
+      "meeting_id": "",
+      "text": "Approve the budget",
+      "mover_speaker_id": "spk_3",
+      "seconder_speaker_id": "spk_1",
+      "vote_method": "voice",
+      "outcome": "passed"
+    }
+  ],
+  "action_items": [
+    {
+      "id": "action_1",
+      "meeting_id": "",
+      "description": "Treasurer to file the approved budget with the city.",
+      "owner_name": "Taylor Treasurer",
+      "due_date": "2026-02-05",
+      "status": "OPEN"
+    }
+  ]
+}

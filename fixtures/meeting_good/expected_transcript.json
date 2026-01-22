@@ -1,0 +1,33 @@
+{
+  "speakers": [
+    { "id": "spk_1", "label": "Chair", "name": "Alex Chair", "role": "Chair" },
+    { "id": "spk_2", "label": "Secretary", "name": "Riley Secretary", "role": "Secretary" },
+    { "id": "spk_3", "label": "Member", "name": "Jordan Member", "role": "Board Member" }
+  ],
+  "segments": [
+    {
+      "id": "seg_1",
+      "meeting_id": "",
+      "speaker_id": "spk_1",
+      "start_ms": 0,
+      "end_ms": 12000,
+      "text": "Call to order at 6:05 PM."
+    },
+    {
+      "id": "seg_2",
+      "meeting_id": "",
+      "speaker_id": "spk_3",
+      "start_ms": 12000,
+      "end_ms": 26000,
+      "text": "Motion to approve the budget, seconded."
+    },
+    {
+      "id": "seg_3",
+      "meeting_id": "",
+      "speaker_id": "spk_1",
+      "start_ms": 26000,
+      "end_ms": 36000,
+      "text": "Vote passes unanimously."
+    }
+  ]
+}

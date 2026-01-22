@@ -1,0 +1,10 @@
+{
+  "name": "cam-aims",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "dev:api": "node services/api/server.js",
+    "dev:console": "node scripts/serve_console.js"
+  }
+}
