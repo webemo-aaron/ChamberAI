@@ -19,9 +19,9 @@
       <div class="api-config">
         <label for="apiBase">API Base</label>
         <input id="apiBase" type="url" placeholder="http://localhost:4000" />
-        <button id="saveApiBase" class="btn ghost">Save</button>
+        <button id="saveApiBase" class="btn ghost" data-testid="save-api-base">Save</button>
         <span id="roleBadge" class="pill">Role: Guest</span>
-        <button id="logout" class="btn ghost">Logout</button>
+        <button id="logout" class="btn ghost" data-testid="logout">Logout</button>
       </div>
     </header>
 
@@ -37,7 +37,7 @@
               <li>Review motions, action items, and approve.</li>
             </ol>
           </div>
-          <button id="dismissBanner" class="btn ghost">Dismiss</button>
+          <button id="dismissBanner" class="btn ghost" data-testid="dismiss-banner">Dismiss</button>
         </div>
         <div class="panel hero">
           <div>
@@ -45,9 +45,9 @@
             <p>Track recording, draft minutes, and approvals in one place.</p>
           </div>
           <div class="hero-actions">
-            <button id="quickCreate" class="btn">Quick Create</button>
-            <button id="seedDemo" class="btn ghost">Seed Demo</button>
-            <button id="refreshMeetings" class="btn ghost">Refresh</button>
+            <button id="quickCreate" class="btn" data-testid="quick-create">Quick Create</button>
+            <button id="seedDemo" class="btn ghost" data-testid="seed-demo">Seed Demo</button>
+            <button id="refreshMeetings" class="btn ghost" data-testid="refresh-meetings">Refresh</button>
           </div>
         </div>
 
@@ -56,30 +56,30 @@
           <div class="grid">
             <label>
               Date
-              <input id="newDate" type="date" />
+              <input id="newDate" type="date" data-testid="meeting-date" />
             </label>
             <label>
               Start Time
-              <input id="newStart" type="time" />
+              <input id="newStart" type="time" data-testid="meeting-start-time" />
             </label>
             <label>
               Location
-              <input id="newLocation" type="text" placeholder="Chamber Hall" />
+              <input id="newLocation" type="text" placeholder="Chamber Hall" data-testid="meeting-location" />
             </label>
             <label>
               Chair
-              <input id="newChair" type="text" placeholder="Alex Chair" />
+              <input id="newChair" type="text" placeholder="Alex Chair" data-testid="meeting-chair" />
             </label>
             <label>
               Secretary
-              <input id="newSecretary" type="text" placeholder="Riley Secretary" />
+              <input id="newSecretary" type="text" placeholder="Riley Secretary" data-testid="meeting-secretary" />
             </label>
             <label>
               Tags
-              <input id="newTags" type="text" placeholder="budget, annual, special" />
+              <input id="newTags" type="text" placeholder="budget, annual, special" data-testid="meeting-tags" />
             </label>
           </div>
-          <button id="createMeeting" class="btn">Create Meeting</button>
+          <button id="createMeeting" class="btn" data-testid="create-meeting">Create Meeting</button>
           <div id="newMeetingError" class="hint"></div>
         </div>
 
@@ -90,19 +90,19 @@
           </div>
           <label class="filter">
             Filter by Tag
-            <select id="tagFilter">
+            <select id="tagFilter" data-testid="tag-filter">
               <option value="">All</option>
             </select>
           </label>
           <div id="tagChips" class="tag-chip-row"></div>
           <label class="filter">
             Search
-            <input id="meetingSearch" type="text" placeholder="Search by location or chair (/) " />
+            <input id="meetingSearch" type="text" placeholder="Search by location or chair (/) " data-testid="meeting-search" />
             <span class="hint">Press Esc to clear.</span>
           </label>
           <label class="filter">
             Status
-            <select id="statusFilter">
+            <select id="statusFilter" data-testid="status-filter">
               <option value="">All</option>
               <option value="CREATED">CREATED</option>
               <option value="UPLOADED">UPLOADED</option>
@@ -113,7 +113,7 @@
           </label>
           <label class="filter">
             Recent
-            <select id="recentFilter">
+            <select id="recentFilter" data-testid="recent-filter">
               <option value="">All</option>
               <option value="30">Last 30 days</option>
               <option value="60">Last 60 days</option>
@@ -121,7 +121,7 @@
             </select>
           </label>
           <div class="inline-actions">
-            <button id="clearFilters" class="btn ghost" type="button">Clear Filters</button>
+            <button id="clearFilters" class="btn ghost" type="button" data-testid="clear-filters">Clear Filters</button>
           </div>
           <div id="meetingList" class="meeting-list"></div>
           <div id="meetingEmpty" class="empty">No meetings yet. Create your first meeting.</div>
@@ -149,9 +149,9 @@
               <input id="settingMaxDuration" type="number" min="300" max="21600" />
             </label>
           </div>
-          <button id="saveSettings" class="btn ghost">Save Settings</button>
+          <button id="saveSettings" class="btn ghost" data-testid="save-settings">Save Settings</button>
           <div class="inline-actions">
-            <button id="runRetentionSweep" class="btn ghost" type="button">Run Retention Sweep</button>
+            <button id="runRetentionSweep" class="btn ghost" data-testid="run-retention-sweep" type="button">Run Retention Sweep</button>
           </div>
           <div id="retentionResult" class="hint"></div>
           <div id="settingsStatus" class="settings-banner hidden"></div>
@@ -202,7 +202,7 @@
                     <div class="upload-head">Room Audio</div>
                     <div id="dropzone" class="dropzone">
                       <span>Drop .mp3/.wav here or</span>
-                      <button id="pickFile" class="btn ghost" type="button">Choose File</button>
+                      <button id="pickFile" class="btn ghost" data-testid="pick-file" type="button">Choose File</button>
                       <input id="fileInput" type="file" accept=".mp3,.wav,audio/*" hidden />
                     </div>
                     <div id="fileMeta" class="file-meta">No file selected.</div>
@@ -211,14 +211,14 @@
                       <input id="audioDuration" type="number" min="1" value="1200" />
                     </label>
                     <div id="fileHint" class="hint">Max 500MB. Supported: mp3, wav.</div>
-                    <button id="registerAudio" class="btn ghost" type="button">Register Audio</button>
+                    <button id="registerAudio" class="btn ghost" data-testid="register-audio" type="button">Register Audio</button>
                     <div class="audio-list">
                       <div class="list-head">Audio Sources</div>
                       <div id="audioSources" class="list-body"></div>
                     </div>
                   </div>
-                  <button id="processMeeting" class="btn">Process</button>
-                  <button id="approveMeeting" class="btn accent">Approve</button>
+                  <button id="processMeeting" class="btn" data-testid="process-meeting">Process</button>
+                  <button id="approveMeeting" class="btn accent" data-testid="approve-meeting">Approve</button>
                 </div>
               </div>
             </div>
@@ -233,9 +233,9 @@
 
             <div class="tab-content" id="tab-minutes">
               <div class="minutes-block">
-                <textarea id="minutesContent" rows="12" placeholder="Draft minutes will appear here..."></textarea>
+                <textarea id="minutesContent" rows="12" placeholder="Draft minutes will appear here..." data-testid="minutes-content"></textarea>
                 <div class="inline-actions">
-                  <button id="saveMinutes" class="btn ghost">Save Draft</button>
+                  <button id="saveMinutes" class="btn ghost" data-testid="save-minutes">Save Draft</button>
                 </div>
               </div>
             </div>
@@ -258,10 +258,10 @@
                   <input id="actionCsvInput" type="file" accept=".csv,text/csv" hidden />
                 </div>
                 <div class="action-row">
-                  <input id="actionDescription" type="text" placeholder="Action item description" />
-                  <input id="actionOwner" type="text" placeholder="Owner" />
-                  <input id="actionDue" type="date" />
-                  <button id="addActionItem" class="btn ghost">Add</button>
+                  <input id="actionDescription" type="text" placeholder="Action item description" data-testid="action-description" />
+                  <input id="actionOwner" type="text" placeholder="Owner" data-testid="action-owner" />
+                  <input id="actionDue" type="date" data-testid="action-due-date" />
+                  <button id="addActionItem" class="btn ghost" data-testid="add-action-item">Add</button>
                 </div>
                 <div id="actionItemsList" class="action-items"></div>
               </div>
@@ -287,12 +287,12 @@
                   <div id="motionsList"></div>
                 </div>
                 <div class="motion-editor">
-                  <input id="motionText" type="text" placeholder="Motion text" />
-                  <input id="motionMover" type="text" placeholder="Mover" />
-                  <input id="motionSeconder" type="text" placeholder="Seconder" />
-                  <input id="motionVote" type="text" placeholder="Vote method" />
-                  <input id="motionOutcome" type="text" placeholder="Outcome" />
-                  <button id="addMotion" class="btn ghost">Add Motion</button>
+                  <input id="motionText" type="text" placeholder="Motion text" data-testid="motion-text" />
+                  <input id="motionMover" type="text" placeholder="Mover" data-testid="motion-mover" />
+                  <input id="motionSeconder" type="text" placeholder="Seconder" data-testid="motion-seconder" />
+                  <input id="motionVote" type="text" placeholder="Vote method" data-testid="motion-vote" />
+                  <input id="motionOutcome" type="text" placeholder="Outcome" data-testid="motion-outcome" />
+                  <button id="addMotion" class="btn ghost" data-testid="add-motion">Add Motion</button>
                 </div>
                 <div class="export-block">
                   <div class="export-filters">
@@ -309,9 +309,9 @@
                     </label>
                   </div>
                   <div class="export-actions">
-                    <button id="exportPdf" class="btn ghost">Export PDF</button>
-                    <button id="exportDocx" class="btn ghost">Export DOCX</button>
-                    <button id="exportMinutesMd" class="btn ghost">Download Minutes MD</button>
+                    <button id="exportPdf" class="btn ghost" data-testid="export-pdf">Export PDF</button>
+                    <button id="exportDocx" class="btn ghost" data-testid="export-docx">Export DOCX</button>
+                    <button id="exportMinutesMd" class="btn ghost" data-testid="export-minutes-md">Download Minutes MD</button>
                     <button id="clearExportHistory" class="btn ghost">Clear Export History</button>
                   </div>
                   <div id="exportResults" class="export-results"></div>
@@ -389,10 +389,10 @@
                 </label>
                 <div id="publicSummaryPublishStatus" class="hint"></div>
                 <div class="inline-actions">
-                  <button id="savePublicSummary" class="btn ghost">Save Summary</button>
-                  <button id="composePublicSummary" class="btn ghost">Compose Summary</button>
-                  <button id="generatePublicSummary" class="btn">Generate</button>
-                  <button id="publishPublicSummary" class="btn accent" type="button">Publish Summary</button>
+                  <button id="savePublicSummary" class="btn ghost" data-testid="save-public-summary">Save Summary</button>
+                  <button id="composePublicSummary" class="btn ghost" data-testid="compose-public-summary">Compose Summary</button>
+                  <button id="generatePublicSummary" class="btn" data-testid="generate-public-summary">Generate</button>
+                  <button id="publishPublicSummary" class="btn accent" data-testid="publish-public-summary" type="button">Publish Summary</button>
                 </div>
               </div>
             </div>
@@ -435,7 +435,7 @@
           </label>
         </div>
         <div class="modal-actions">
-          <button id="loginSubmit" class="btn">Enter</button>
+          <button id="loginSubmit" class="btn" data-testid="login-submit">Enter</button>
         </div>
       </div>
     </div>
@@ -463,8 +463,8 @@
             </label>
           </div>
         <div class="modal-actions">
-          <button id="quickSubmit" class="btn">Create</button>
-          <button id="quickCancel" class="btn ghost">Cancel</button>
+          <button id="quickSubmit" class="btn" data-testid="quick-submit">Create</button>
+          <button id="quickCancel" class="btn ghost" data-testid="quick-cancel">Cancel</button>
         </div>
       </div>
     </div>
@@ -480,8 +480,8 @@
         <div id="csvPreviewNote" class="hint"></div>
         <div id="csvPreviewTable" class="preview-table"></div>
         <div class="modal-actions">
-          <button id="csvApply" class="btn">Apply Import</button>
-          <button id="csvCancel" class="btn ghost">Cancel</button>
+          <button id="csvApply" class="btn" data-testid="csv-apply">Apply Import</button>
+          <button id="csvCancel" class="btn ghost" data-testid="csv-cancel">Cancel</button>
         </div>
       </div>
     </div>

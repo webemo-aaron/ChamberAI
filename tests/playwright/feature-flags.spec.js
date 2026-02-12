@@ -39,20 +39,19 @@ test.describe("Feature Flags", () => {
     // Save settings
     await page.click('button:has-text("Save Settings")');
 
-    // Wait for save to complete
-    await page.waitForTimeout(500);
+    // Wait for the tab to become visible
+    await expect(publicSummaryTab).not.toHaveClass(/hidden/, { timeout: 5000 });
 
     // Public summary tab should now be visible
-    await expect(publicSummaryTab).not.toHaveClass(/hidden/);
+    await expect(publicSummaryTab).toBeVisible();
 
     // Disable the flag
     await page.click('button:has-text("Settings")');
     await publicSummaryCheckbox.uncheck();
     await page.click('button:has-text("Save Settings")');
-    await page.waitForTimeout(500);
 
-    // Tab should be hidden again
-    await expect(publicSummaryTab).toHaveClass(/hidden/);
+    // Wait for the tab to become hidden
+    await expect(publicSummaryTab).toHaveClass(/hidden/, { timeout: 5000 });
   });
 
   test("retention sweep button appears in settings", async ({ page }) => {
@@ -68,11 +67,8 @@ test.describe("Feature Flags", () => {
     // Click it and verify result appears
     await retentionButton.click();
 
-    // Wait for result
-    await page.waitForTimeout(1000);
-
-    // Check for result message
+    // Wait for result element to appear and contain text
     const retentionResult = page.locator("#retentionResult");
-    await expect(retentionResult).toContainText(/Sweep complete|deleted/i);
+    await expect(retentionResult).toContainText(/Sweep complete|deleted/i, { timeout: 10000 });
   });
 });

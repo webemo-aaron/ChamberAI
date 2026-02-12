@@ -1,0 +1,17 @@
+{
+  "reporter": ["html", "text", "lcov"],
+  "exclude": [
+    "tests/**",
+    "node_modules/**",
+    "**/*.test.js",
+    "coverage/**",
+    ".nyc_output/**"
+  ],
+  "all": true,
+  "lines": 80,
+  "statements": 80,
+  "functions": 80,
+  "branches": 75,
+  "report-dir": "./coverage",
+  "temp-dir": "./.nyc_output"
+}
