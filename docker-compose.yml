@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # Firebase Emulator Suite
+  firebase-emulators:
+    build:
+      context: .
+      dockerfile: Dockerfile.emulator
+    ports:
+      - "9099:9099"  # Auth emulator
+      - "8080:8080"  # Firestore emulator
+      - "9199:9199"  # Storage emulator
+      - "4000:4000"  # Emulator Suite UI
+    volumes:
+      - firebase-data:/root/.config/firebase
+    environment:
+      - FIRESTORE_EMULATOR_HOST=0.0.0.0:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=0.0.0.0:9099
+      - FIREBASE_STORAGE_EMULATOR_HOST=0.0.0.0:9199
+    networks:
+      - chamberai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChamberAI API Service
+  api:
+    image: chamberai-api:local
+    ports:
+      - "4001:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
+      - GCP_PROJECT_ID=chamberai-local
+      - FIREBASE_AUTH_ENABLED=false
+      - FIREBASE_USE_EMULATOR=true
+      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
+      - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulators:9199
+      - GCS_BUCKET_NAME=chamberai-local-audio
+      - CORS_ORIGIN=http://localhost:5174
+      - WORKER_ENDPOINT=http://worker:8080/tasks/process
+    depends_on:
+      firebase-emulators:
+        condition: service_healthy
+    networks:
+      - chamberai-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      # Mount emulator config for Firebase Admin SDK
+      - firebase-data:/root/.config/firebase
+
+  # ChamberAI Worker Service
+  worker:
+    image: chamberai-worker:local
+    ports:
+      - "4002:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=development
+      - GCP_PROJECT_ID=chamberai-local
+      - FIREBASE_USE_EMULATOR=true
+      - FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulators:9099
+      - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulators:9199
+    depends_on:
+      firebase-emulators:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      - chamberai-network
+    volumes:
+      - firebase-data:/root/.config/firebase
+
+networks:
+  chamberai-network:
+    driver: bridge
+
+volumes:
+  firebase-data:

@@ -3,7 +3,8 @@ import express from "express";
 import admin from "firebase-admin";
 import fs from "node:fs";
 
-const port = Number(process.env.WORKER_PORT ?? 4001);
+// Use PORT for Cloud Run compatibility, fallback to WORKER_PORT for local dev
+const port = Number(process.env.PORT || process.env.WORKER_PORT || 4001);
 
 function initAdmin() {
   if (admin.apps.length > 0) return admin;
@@ -27,6 +28,11 @@ function initAdmin() {
 const app = express();
 app.use(express.json());
 
+// Health endpoint for Cloud Run and docker-compose health checks
+app.get("/health", (req, res) => {
+  res.json({ ok: true, service: "worker", timestamp: new Date().toISOString() });
+});
+
 app.post("/tasks/process", async (req, res) => {
   const { meeting_id } = req.body;
   if (!meeting_id) return res.status(422).json({ error: "meeting_id required" });
@@ -49,6 +55,7 @@ app.post("/tasks/process", async (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(port, "127.0.0.1", () => {
-  console.log(`Worker listening on http://127.0.0.1:${port}`);
+// Listen on 0.0.0.0 for Docker/Cloud Run compatibility
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Worker listening on http://0.0.0.0:${port}`);
 });

@@ -1,0 +1,32 @@
+# Firebase Emulator with Java support
+FROM eclipse-temurin:21-jre
+
+# Install Node.js 20
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Firebase CLI globally
+RUN npm install -g firebase-tools
+
+# Set working directory
+WORKDIR /app
+
+# Copy Firebase configuration files
+COPY firebase.json ./
+COPY firestore.rules ./
+COPY storage.rules ./
+
+# Set environment variables for emulators
+ENV FIRESTORE_EMULATOR_HOST=0.0.0.0:8080 \
+    FIREBASE_AUTH_EMULATOR_HOST=0.0.0.0:9099 \
+    FIREBASE_STORAGE_EMULATOR_HOST=0.0.0.0:9199
+
+# Expose emulator ports
+EXPOSE 4000 8080 9099 9199
+
+# Start emulators
+CMD ["firebase", "emulators:start", "--only", "auth,firestore,storage", "--project", "chamberai-local"]

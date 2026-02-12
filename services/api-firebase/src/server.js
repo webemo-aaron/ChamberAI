@@ -40,6 +40,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: err.message ?? "Server error" });
 });
 
-app.listen(port, "127.0.0.1", () => {
-  console.log(`API listening on http://127.0.0.1:${port}`);
+// Listen on 0.0.0.0 for Docker/Cloud Run compatibility
+app.listen(port, "0.0.0.0", () => {
+  console.log(`API listening on http://0.0.0.0:${port}`);
 });
