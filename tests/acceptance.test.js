@@ -106,3 +106,24 @@ test("retention deletes audio older than retention window for approved meetings"
   const result = runRetentionSweep(db, new Date("2026-01-01T10:00:00Z"));
   assert.equal(result.deleted.length, 1);
 });
+
+test("retention does not delete audio for meetings not approved", () => {
+  const { db, setNow } = makeDbWithClock("2025-10-01T10:00:00Z");
+  const meeting = createMeeting(db, {
+    date: "2025-10-01",
+    start_time: "10:00",
+    location: "Chamber Hall"
+  });
+
+  registerAudioSource(db, meeting.id, {
+    type: "UPLOAD",
+    file_uri: "meeting_good.wav",
+    duration_seconds: 1200
+  });
+
+  updateMeeting(db, meeting.id, { status: "DRAFT_READY" });
+  setNow("2026-01-01T10:00:00Z");
+
+  const result = runRetentionSweep(db, new Date("2026-01-01T10:00:00Z"));
+  assert.equal(result.deleted.length, 0);
+});

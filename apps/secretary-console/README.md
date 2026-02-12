@@ -47,6 +47,7 @@ Notes:
 - Approval is disabled until checklist passes.
 - Seed demo creates a processed meeting with action items.
 - Minutes can be downloaded as Markdown.
+- Feature flags can be toggled in Settings (modules).
 - Demo login supports admin/secretary/viewer roles.
 - Approve is disabled until checklist passes (and viewer is read-only).
 - Demo seed button creates a processed meeting with action items.

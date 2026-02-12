@@ -131,6 +131,10 @@
           <div class="panel-head">
             <h2>Settings</h2>
           </div>
+          <div class="settings-section">
+            <h3>Modules</h3>
+            <div id="featureFlags" class="flag-grid"></div>
+          </div>
           <div class="grid">
             <label>
               Retention Days
@@ -146,6 +150,10 @@
             </label>
           </div>
           <button id="saveSettings" class="btn ghost">Save Settings</button>
+          <div class="inline-actions">
+            <button id="runRetentionSweep" class="btn ghost" type="button">Run Retention Sweep</button>
+          </div>
+          <div id="retentionResult" class="hint"></div>
           <div id="settingsStatus" class="settings-banner hidden"></div>
         </div>
       </section>
@@ -220,6 +228,7 @@
               <button class="tab" data-tab="actions">Action Items</button>
               <button class="tab" data-tab="audit">Audit Log</button>
               <button class="tab" data-tab="motions">Motions</button>
+              <button class="tab hidden" data-tab="public-summary" id="publicSummaryTab">Public Summary</button>
             </div>
 
             <div class="tab-content" id="tab-minutes">
@@ -309,6 +318,82 @@
                   <div id="exportHistory" class="export-results"></div>
                 </div>
                 <div class="hint">Mover + Outcome required for approval.</div>
+              </div>
+            </div>
+
+            <div class="tab-content hidden" id="tab-public-summary">
+              <div class="minutes-block">
+                <div class="summary-grid">
+                  <label>
+                    Summary Title
+                    <input id="publicSummaryTitle" type="text" placeholder="Board meeting highlights" />
+                  </label>
+                  <label>
+                    Key Highlights
+                    <textarea id="publicSummaryHighlights" rows="3" placeholder="Top 2-3 outcomes or updates."></textarea>
+                  </label>
+                  <label>
+                    Community Impact
+                    <textarea id="publicSummaryImpact" rows="3" placeholder="Why this matters to members or visitors."></textarea>
+                  </label>
+                  <label>
+                    Motions & Decisions
+                    <textarea id="publicSummaryMotions" rows="3" placeholder="Public-safe summary of motions/outcomes."></textarea>
+                  </label>
+                  <label>
+                    Action Items (Public)
+                    <textarea id="publicSummaryActions" rows="3" placeholder="Member-facing actions or next steps."></textarea>
+                  </label>
+                  <label>
+                    Attendance / Guests
+                    <textarea id="publicSummaryAttendance" rows="2" placeholder="Optional acknowledgements or guests."></textarea>
+                  </label>
+                  <label>
+                    Call to Action
+                    <textarea id="publicSummaryCTA" rows="2" placeholder="How members can engage or respond."></textarea>
+                  </label>
+                  <label>
+                    Notes
+                    <textarea id="publicSummaryNotes" rows="2" placeholder="Optional notes to include in the summary."></textarea>
+                  </label>
+                </div>
+
+                <div class="summary-checklist">
+                  <div class="hint">Publish Readiness Checklist</div>
+                  <label class="check">
+                    <input id="summaryNoConfidential" type="checkbox" />
+                    No confidential or sensitive info included
+                  </label>
+                  <label class="check">
+                    <input id="summaryNamesApproved" type="checkbox" />
+                    Names/roles approved for public release
+                  </label>
+                  <label class="check">
+                    <input id="summaryMotionsReviewed" type="checkbox" />
+                    Motions/outcomes reviewed for accuracy
+                  </label>
+                  <label class="check">
+                    <input id="summaryActionsReviewed" type="checkbox" />
+                    Action items sanitized for public view
+                  </label>
+                  <label class="check">
+                    <input id="summaryChairApproved" type="checkbox" />
+                    Chair approval recorded
+                  </label>
+                  <div id="publicSummaryReady" class="hint"></div>
+                </div>
+
+                <label>
+                  Compiled Public Summary
+                  <textarea id="publicSummaryContent" rows="8" placeholder="Compiled summary will appear here."></textarea>
+                </label>
+                <div id="publicSummaryPublishStatus" class="hint"></div>
+                <div class="inline-actions">
+                  <button id="savePublicSummary" class="btn ghost">Save Summary</button>
+                  <button id="composePublicSummary" class="btn ghost">Compose Summary</button>
+                  <button id="generatePublicSummary" class="btn">Generate</button>
+                  <button id="publishPublicSummary" class="btn accent" type="button">Publish Summary</button>
+                </div>
               </div>
             </div>
           </div>

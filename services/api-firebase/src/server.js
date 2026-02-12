@@ -9,6 +9,9 @@ import minutes from "./routes/minutes.js";
 import processing from "./routes/processing.js";
 import audit from "./routes/audit.js";
 import settings from "./routes/settings.js";
+import publicSummary from "./routes/public_summary.js";
+import approval from "./routes/approval.js";
+import retention from "./routes/retention.js";
 import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
@@ -28,6 +31,9 @@ app.use(minutes);
 app.use(processing);
 app.use(audit);
 app.use(settings);
+app.use(publicSummary);
+app.use(approval);
+app.use(retention);
 
 app.use((err, req, res, next) => {
   const status = err.status ?? 500;

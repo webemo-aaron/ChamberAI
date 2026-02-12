@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get("/meetings/:id/draft-minutes", async (req, res, next) => {
   }
 });
 
-router.put("/meetings/:id/draft-minutes", async (req, res, next) => {
+router.put("/meetings/:id/draft-minutes", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
     const draft = {
@@ -30,7 +31,7 @@ router.put("/meetings/:id/draft-minutes", async (req, res, next) => {
   }
 });
 
-router.post("/meetings/:id/export", async (req, res, next) => {
+router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
     const format = req.body.format ?? "pdf";

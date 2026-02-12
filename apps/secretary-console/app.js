@@ -1,4 +1,5 @@
 import { loadSettings, saveSettings } from "./settings.js";
+import { FEATURE_FLAGS, defaultFlags } from "./modules.js";
 
 const apiBaseInput = document.getElementById("apiBase");
 const saveApiBaseBtn = document.getElementById("saveApiBase");
@@ -59,6 +60,8 @@ const tabMinutes = document.getElementById("tab-minutes");
 const tabActions = document.getElementById("tab-actions");
 const tabAudit = document.getElementById("tab-audit");
 const tabMotions = document.getElementById("tab-motions");
+const tabPublicSummary = document.getElementById("tab-public-summary");
+const publicSummaryTab = document.getElementById("publicSummaryTab");
 
 const motionText = document.getElementById("motionText");
 const motionMover = document.getElementById("motionMover");
@@ -70,6 +73,26 @@ const motionsList = document.getElementById("motionsList");
 const exportPdfBtn = document.getElementById("exportPdf");
 const exportDocxBtn = document.getElementById("exportDocx");
 const exportMinutesMd = document.getElementById("exportMinutesMd");
+const publicSummaryTitle = document.getElementById("publicSummaryTitle");
+const publicSummaryHighlights = document.getElementById("publicSummaryHighlights");
+const publicSummaryImpact = document.getElementById("publicSummaryImpact");
+const publicSummaryMotions = document.getElementById("publicSummaryMotions");
+const publicSummaryActions = document.getElementById("publicSummaryActions");
+const publicSummaryAttendance = document.getElementById("publicSummaryAttendance");
+const publicSummaryCTA = document.getElementById("publicSummaryCTA");
+const publicSummaryNotes = document.getElementById("publicSummaryNotes");
+const publicSummaryContent = document.getElementById("publicSummaryContent");
+const savePublicSummary = document.getElementById("savePublicSummary");
+const composePublicSummary = document.getElementById("composePublicSummary");
+const generatePublicSummary = document.getElementById("generatePublicSummary");
+const publishPublicSummary = document.getElementById("publishPublicSummary");
+const publicSummaryPublishStatus = document.getElementById("publicSummaryPublishStatus");
+const publicSummaryReady = document.getElementById("publicSummaryReady");
+const summaryNoConfidential = document.getElementById("summaryNoConfidential");
+const summaryNamesApproved = document.getElementById("summaryNamesApproved");
+const summaryMotionsReviewed = document.getElementById("summaryMotionsReviewed");
+const summaryActionsReviewed = document.getElementById("summaryActionsReviewed");
+const summaryChairApproved = document.getElementById("summaryChairApproved");
 const exportResults = document.getElementById("exportResults");
 const exportHistory = document.getElementById("exportHistory");
 const approvalChecklist = document.getElementById("approvalChecklist");
@@ -102,7 +125,10 @@ const settingMaxSize = document.getElementById("settingMaxSize");
 const settingMaxDuration = document.getElementById("settingMaxDuration");
 const saveSettingsBtn = document.getElementById("saveSettings");
 const settingsStatus = document.getElementById("settingsStatus");
+const runRetentionSweep = document.getElementById("runRetentionSweep");
+const retentionResult = document.getElementById("retentionResult");
 const toast = document.getElementById("toast");
+const featureFlagsEl = document.getElementById("featureFlags");
 
 let meetings = [];
 let selectedMeetingId = null;
@@ -117,6 +143,7 @@ let statusQuery = "";
 let recentDays = "";
 let pendingCsvItems = [];
 let currentRole = localStorage.getItem("camRole") || "";
+let featureFlags = defaultFlags();
 
 const defaultApiBase = localStorage.getItem("camApiBase") || "http://localhost:4000";
 apiBaseInput.value = defaultApiBase;
@@ -270,7 +297,8 @@ saveSettingsBtn.addEventListener("click", async () => {
   const patch = {
     retentionDays: Number(settingRetention.value || "60"),
     maxFileSizeMb: Number(settingMaxSize.value || "500"),
-    maxDurationSeconds: Number(settingMaxDuration.value || "14400")
+    maxDurationSeconds: Number(settingMaxDuration.value || "14400"),
+    featureFlags: collectFeatureFlags()
   };
   const validation = validateSettings(patch);
   if (!validation.ok) {
@@ -283,7 +311,19 @@ saveSettingsBtn.addEventListener("click", async () => {
   } else {
     showSettingsBanner("Settings saved.", "success");
     showToast("Settings updated.");
+    renderFeatureFlags();
   }
+});
+
+runRetentionSweep.addEventListener("click", async () => {
+  const result = await request("/retention/sweep", "POST");
+  if (result?.error) {
+    retentionResult.textContent = `Sweep failed: ${result.error}`;
+    return;
+  }
+  const deletedCount = Array.isArray(result?.deleted) ? result.deleted.length : 0;
+  retentionResult.textContent = `Sweep complete. Deleted ${deletedCount} audio source(s).`;
+  showToast("Retention sweep complete.");
 });
 
 quickCreateBtn.addEventListener("click", () => {
@@ -401,6 +441,49 @@ saveMinutesBtn.addEventListener("click", async () => {
   });
 });
 
+savePublicSummary.addEventListener("click", async () => {
+  if (!selectedMeetingId) return;
+  const payload = collectPublicSummaryPayload();
+  await request(`/meetings/${selectedMeetingId}/public-summary`, "PUT", payload);
+  showToast("Public summary saved.");
+});
+
+composePublicSummary.addEventListener("click", () => {
+  publicSummaryContent.value = composePublicSummaryText();
+  updatePublicSummaryReady();
+});
+
+generatePublicSummary.addEventListener("click", async () => {
+  if (!selectedMeetingId) return;
+  const result = await request(`/meetings/${selectedMeetingId}/public-summary/generate`, "POST");
+  if (result) {
+    applyPublicSummary(result);
+  }
+});
+
+publishPublicSummary.addEventListener("click", async () => {
+  if (!selectedMeetingId) return;
+  if (!isPublicSummaryReady()) {
+    showToast("Checklist incomplete. Complete readiness items before publishing.");
+    return;
+  }
+  const result = await request(`/meetings/${selectedMeetingId}/public-summary/publish`, "POST");
+  if (result) {
+    applyPublicSummary(result);
+    showToast("Public summary published.");
+  }
+});
+
+[
+  summaryNoConfidential,
+  summaryNamesApproved,
+  summaryMotionsReviewed,
+  summaryActionsReviewed,
+  summaryChairApproved
+].forEach((checkbox) => {
+  checkbox.addEventListener("change", updatePublicSummaryReady);
+});
+
 addActionBtn.addEventListener("click", async () => {
   if (!selectedMeetingId) return;
   const item = {
@@ -425,6 +508,7 @@ tabs.forEach((tab) => {
     tabActions.classList.toggle("hidden", target !== "actions");
     tabAudit.classList.toggle("hidden", target !== "audit");
     tabMotions.classList.toggle("hidden", target !== "motions");
+    tabPublicSummary.classList.toggle("hidden", target !== "public-summary");
   });
 });
 
@@ -587,7 +671,7 @@ function renderMeetings() {
       const tags = meeting.tags ?? [];
       const tagHtml =
         tags.length > 0
-          ? `<div class=\"tag-row\">${tags.map((tag) => `<span class=\"tag\">${tag}</span>`).join(\"\")}</div>`
+          ? `<div class="tag-row">${tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>`
           : "";
       card.innerHTML = `
         <div><strong>${meeting.date}</strong> · ${meeting.location}</div>
@@ -656,6 +740,15 @@ async function loadMeetingDetail(meetingId) {
   renderAdjournmentGate();
   renderApprovalChecklist();
   approveBtn.disabled = !approvalStatus?.ok || currentRole === "viewer";
+
+  if (featureFlags.public_summary) {
+    const summary = await request(`/meetings/${meetingId}/public-summary`, "GET");
+    if (summary) {
+      applyPublicSummary(summary);
+    } else {
+      applyPublicSummary({ content: "", fields: {}, checklist: {} });
+    }
+  }
 }
 
 function renderActionItems() {
@@ -794,7 +887,14 @@ function renderMotions() {
     row.className = `motions-row${missingMover || missingOutcome ? " invalid" : ""}`;
 
     if (currentRole === "viewer") {
-      row.innerHTML = `\n      <span>${motion.text || "—"}</span>\n      <span>${motion.mover_name || "—"}</span>\n      <span>${motion.seconder_name || "—"}</span>\n      <span>${motion.vote_method || "—"}</span>\n      <span>${motion.outcome || "—"}</span>\n      <span></span>\n    `;
+      row.innerHTML = `
+        <span>${motion.text || "—"}</span>
+        <span>${motion.mover_name || "—"}</span>
+        <span>${motion.seconder_name || "—"}</span>
+        <span>${motion.vote_method || "—"}</span>
+        <span>${motion.outcome || "—"}</span>
+        <span></span>
+      `;
     } else if (motionEditIndex === index) {
       const textInput = document.createElement("input");
       textInput.value = motion.text ?? "";
@@ -843,7 +943,13 @@ function renderMotions() {
         row.appendChild(msg);
       }
     } else {
-      row.innerHTML = `\n      <span>${motion.text || "—"}</span>\n      <span>${motion.mover_name || "—"}</span>\n      <span>${motion.seconder_name || "—"}</span>\n      <span>${motion.vote_method || "—"}</span>\n      <span>${motion.outcome || "—"}</span>\n    `;\n
+      row.innerHTML = `
+        <span>${motion.text || "—"}</span>
+        <span>${motion.mover_name || "—"}</span>
+        <span>${motion.seconder_name || "—"}</span>
+        <span>${motion.vote_method || "—"}</span>
+        <span>${motion.outcome || "—"}</span>
+      `;
       const actions = document.createElement("div");
       const editBtn = document.createElement("button");
       editBtn.className = "btn ghost";
@@ -1175,6 +1281,8 @@ loadSettings(request).then((settings) => {
   settingRetention.value = settings.retentionDays ?? 60;
   settingMaxSize.value = settings.maxFileSizeMb ?? 500;
   settingMaxDuration.value = settings.maxDurationSeconds ?? 14400;
+  featureFlags = { ...defaultFlags(), ...(settings.featureFlags ?? {}) };
+  renderFeatureFlags();
   settingsStatus.classList.add("hidden");
 });
 
@@ -1237,6 +1345,140 @@ function showToast(message) {
   showToast.timeout = setTimeout(() => {
     toast.classList.add("hidden");
   }, 2200);
+}
+
+function composePublicSummaryText() {
+  const title = publicSummaryTitle.value.trim();
+  const parts = [
+    title ? `${title}` : "",
+    publicSummaryHighlights.value,
+    publicSummaryImpact.value,
+    publicSummaryMotions.value,
+    publicSummaryActions.value,
+    publicSummaryAttendance.value,
+    publicSummaryCTA.value,
+    publicSummaryNotes.value
+  ]
+    .map((text) => text.trim())
+    .filter(Boolean);
+  return parts.join("\\n\\n");
+}
+
+function collectPublicSummaryPayload() {
+  return {
+    content: publicSummaryContent.value,
+    fields: {
+      title: publicSummaryTitle.value,
+      highlights: publicSummaryHighlights.value,
+      impact: publicSummaryImpact.value,
+      motions: publicSummaryMotions.value,
+      actions: publicSummaryActions.value,
+      attendance: publicSummaryAttendance.value,
+      call_to_action: publicSummaryCTA.value,
+      notes: publicSummaryNotes.value
+    },
+    checklist: {
+      no_confidential: summaryNoConfidential.checked,
+      names_approved: summaryNamesApproved.checked,
+      motions_reviewed: summaryMotionsReviewed.checked,
+      actions_reviewed: summaryActionsReviewed.checked,
+      chair_approved: summaryChairApproved.checked
+    }
+  };
+}
+
+function applyPublicSummary(summary) {
+  publicSummaryTitle.value = summary?.fields?.title ?? "";
+  publicSummaryHighlights.value = summary?.fields?.highlights ?? "";
+  publicSummaryImpact.value = summary?.fields?.impact ?? "";
+  publicSummaryMotions.value = summary?.fields?.motions ?? "";
+  publicSummaryActions.value = summary?.fields?.actions ?? "";
+  publicSummaryAttendance.value = summary?.fields?.attendance ?? "";
+  publicSummaryCTA.value = summary?.fields?.call_to_action ?? "";
+  publicSummaryNotes.value = summary?.fields?.notes ?? "";
+  publicSummaryContent.value = summary?.content ?? "";
+  summaryNoConfidential.checked = Boolean(summary?.checklist?.no_confidential);
+  summaryNamesApproved.checked = Boolean(summary?.checklist?.names_approved);
+  summaryMotionsReviewed.checked = Boolean(summary?.checklist?.motions_reviewed);
+  summaryActionsReviewed.checked = Boolean(summary?.checklist?.actions_reviewed);
+  summaryChairApproved.checked = Boolean(summary?.checklist?.chair_approved);
+  const publishedLabel = formatSummaryTimestamp(summary?.published_at);
+  if (publishedLabel) {
+    const published = publishedLabel;
+    publicSummaryPublishStatus.textContent = `Published ${published} by ${summary.published_by ?? "user"}.`;
+  } else {
+    publicSummaryPublishStatus.textContent = "Not published yet.";
+  }
+  updatePublicSummaryReady();
+}
+
+function formatSummaryTimestamp(value) {
+  if (!value) return "";
+  if (typeof value === "string") {
+    const date = new Date(value);
+    return Number.isNaN(date.valueOf()) ? "" : date.toLocaleString();
+  }
+  if (typeof value.toDate === "function") {
+    return value.toDate().toLocaleString();
+  }
+  if (typeof value === "object" && typeof value.seconds === "number") {
+    return new Date(value.seconds * 1000).toLocaleString();
+  }
+  return "";
+}
+
+function updatePublicSummaryReady() {
+  const ready = isPublicSummaryReady();
+  publicSummaryReady.textContent = ready
+    ? "Publish readiness: complete."
+    : "Publish readiness: incomplete.";
+  publicSummaryReady.classList.toggle("ready", ready);
+  publishPublicSummary.disabled = !ready;
+}
+
+function isPublicSummaryReady() {
+  return (
+    summaryNoConfidential.checked &&
+    summaryNamesApproved.checked &&
+    summaryMotionsReviewed.checked &&
+    summaryActionsReviewed.checked &&
+    summaryChairApproved.checked
+  );
+}
+
+function renderFeatureFlags() {
+  featureFlagsEl.innerHTML = "";
+  FEATURE_FLAGS.forEach((flag) => {
+    const label = document.createElement("label");
+    label.className = "check";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = Boolean(featureFlags[flag.key]);
+    input.dataset.flag = flag.key;
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(flag.label));
+    featureFlagsEl.appendChild(label);
+  });
+  const hidePublicSummary = !featureFlags.public_summary;
+  publicSummaryTab.classList.toggle("hidden", hidePublicSummary);
+  if (hidePublicSummary && publicSummaryTab.classList.contains("active")) {
+    tabs.forEach((tab) => tab.classList.remove("active"));
+    if (tabs.length > 0) tabs[0].classList.add("active");
+    tabMinutes.classList.remove("hidden");
+    tabActions.classList.add("hidden");
+    tabAudit.classList.add("hidden");
+    tabMotions.classList.add("hidden");
+    tabPublicSummary.classList.add("hidden");
+  }
+}
+
+function collectFeatureFlags() {
+  const flags = { ...defaultFlags() };
+  featureFlagsEl.querySelectorAll("input[data-flag]").forEach((input) => {
+    flags[input.dataset.flag] = input.checked;
+  });
+  featureFlags = flags;
+  return flags;
 }
 
 function showSettingsBanner(message, variant) {

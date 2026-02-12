@@ -1,6 +1,7 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
 import { makeId } from "../utils/ids.js";
+import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.get("/meetings/:id/action-items", async (req, res, next) => {
   }
 });
 
-router.put("/meetings/:id/action-items", async (req, res, next) => {
+router.put("/meetings/:id/action-items", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
     const items = (req.body.items ?? []).map((item, index) => ({

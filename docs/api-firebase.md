@@ -13,6 +13,7 @@ Run:
 - `npm run dev`
 
 Notes:
-- Auth middleware is a placeholder and should be wired to Firebase Auth.
-- Processing pipeline endpoints are stubbed.
+- Auth middleware supports Firebase ID tokens when `FIREBASE_AUTH_ENABLED=true`.
+- Processing pipeline endpoints are stubbed (worker hook).
 - CSV export for action items is implemented.
+- Audio download URL endpoint is available at `/audio-sources/{id}/download-url`.

@@ -22,7 +22,11 @@ import {
   updateMotions,
   listMotions,
   getConfig,
-  updateConfig
+  updateConfig,
+  getPublicSummary,
+  updatePublicSummary,
+  generatePublicSummary,
+  publishPublicSummary
 } from "./index.js";
 
 export function createRequestHandler(db) {
@@ -153,6 +157,34 @@ export function createRequestHandler(db) {
           const updated = updateMotions(db, meetingId, body.motions ?? []);
           return sendJson(res, 200, updated);
         }
+      }
+
+      const publicSummaryMatch = path.match(/^\/meetings\/([^/]+)\/public-summary$/);
+      if (publicSummaryMatch) {
+        const meetingId = publicSummaryMatch[1];
+        if (method === "GET") {
+          return sendJson(res, 200, getPublicSummary(db, meetingId));
+        }
+        if (method === "PUT") {
+          const body = await readJsonBody(req);
+          const updated = updatePublicSummary(db, meetingId, body ?? {});
+          return sendJson(res, 200, updated);
+        }
+      }
+
+      const publicSummaryGenerateMatch = path.match(/^\/meetings\/([^/]+)\/public-summary\/generate$/);
+      if (publicSummaryGenerateMatch && method === "POST") {
+        const meetingId = publicSummaryGenerateMatch[1];
+        const summary = generatePublicSummary(db, meetingId);
+        return sendJson(res, 200, summary);
+      }
+
+      const publicSummaryPublishMatch = path.match(/^\/meetings\/([^/]+)\/public-summary\/publish$/);
+      if (publicSummaryPublishMatch && method === "POST") {
+        const meetingId = publicSummaryPublishMatch[1];
+        const actor = req.headers["x-demo-email"] ?? "user";
+        const summary = publishPublicSummary(db, meetingId, actor);
+        return sendJson(res, 200, summary);
       }
 
       const exportMatch = path.match(/^\/meetings\/([^/]+)\/export$/);

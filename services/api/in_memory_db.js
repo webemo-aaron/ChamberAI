@@ -19,6 +19,7 @@ export function createInMemoryDb(options = {}) {
     motions: new Map(),
     actionItems: new Map(),
     draftMinutes: new Map(),
+    publicSummary: new Map(),
     auditLog: []
   };
 
@@ -127,6 +128,14 @@ export function getDraftMinutes(db, meetingId) {
 
 export function setDraftMinutes(db, meetingId, draft) {
   db.draftMinutes.set(meetingId, draft);
+}
+
+export function getPublicSummary(db, meetingId) {
+  return db.publicSummary.get(meetingId) ?? null;
+}
+
+export function setPublicSummary(db, meetingId, summary) {
+  db.publicSummary.set(meetingId, summary);
 }
 
 export function addAuditLog(db, entry) {

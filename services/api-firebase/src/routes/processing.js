@@ -1,9 +1,10 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
 
-router.post("/meetings/:id/process", async (req, res, next) => {
+router.post("/meetings/:id/process", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
     await db.collection("meetings").doc(req.params.id).set({

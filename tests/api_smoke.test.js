@@ -113,3 +113,44 @@ test("API smoke: create meeting, upload audio, process, approve, audit, retentio
   const retentionRes = await invoke(handler, "/retention/sweep", { method: "POST" });
   assert.equal(retentionRes.status, 200);
 });
+
+test("API smoke: public summary endpoints", async () => {
+  const { handler } = createServer();
+
+  const meetingRes = await invoke(handler, "/meetings", {
+    method: "POST",
+    body: JSON.stringify({
+      date: "2026-01-23",
+      start_time: "09:00",
+      location: "Public Summary Hall",
+      chair_name: "Alex Chair",
+      secretary_name: "Riley Secretary"
+    })
+  });
+  assert.equal(meetingRes.status, 201);
+  const meetingId = meetingRes.body.id;
+
+  const updateRes = await invoke(handler, `/meetings/${meetingId}/public-summary`, {
+    method: "PUT",
+    body: JSON.stringify({
+      content: "Public summary content.",
+      fields: { title: "Highlights" },
+      checklist: {
+        no_confidential: true,
+        names_approved: true,
+        motions_reviewed: true,
+        actions_reviewed: true,
+        chair_approved: true
+      }
+    })
+  });
+  assert.equal(updateRes.status, 200);
+
+  const getRes = await invoke(handler, `/meetings/${meetingId}/public-summary`, { method: "GET" });
+  assert.equal(getRes.status, 200);
+  assert.equal(getRes.body.content, "Public summary content.");
+
+  const publishRes = await invoke(handler, `/meetings/${meetingId}/public-summary/publish`, { method: "POST" });
+  assert.equal(publishRes.status, 200);
+  assert.ok(publishRes.body.published_at);
+});

@@ -2,10 +2,11 @@ import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
 import { makeId } from "../utils/ids.js";
 import { normalizeTags, requireFields } from "../utils/validation.js";
+import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
 
-router.post("/meetings", async (req, res, next) => {
+router.post("/meetings", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     requireFields(req.body, ["date", "start_time", "location"]);
     const db = initFirestore();
@@ -58,7 +59,7 @@ router.get("/meetings/:id", async (req, res, next) => {
   }
 });
 
-router.put("/meetings/:id", async (req, res, next) => {
+router.put("/meetings/:id", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
     const update = {

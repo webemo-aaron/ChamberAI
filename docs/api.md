@@ -17,6 +17,15 @@ Additional endpoints:
 - `GET /meetings/{id}/approval-status`
 - `GET /meetings/{id}/motions`
 - `PUT /meetings/{id}/motions`
+- `GET /meetings/{id}/public-summary`
+- `PUT /meetings/{id}/public-summary`
+- `POST /meetings/{id}/public-summary/generate`
+- `POST /meetings/{id}/public-summary/publish`
+
+Public summary payload includes:
+- `content` (compiled text)
+- `fields` (structured sections)
+- `checklist` (publish readiness flags)
 - `GET /meetings/{id}/audit-log`
 - `GET /meetings/{id}/action-items/export/csv`
 - `POST /retention/sweep`
