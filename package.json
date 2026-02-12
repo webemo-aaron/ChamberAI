@@ -12,6 +12,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:errors": "node --test 'tests/unit/error-handling.test.js'",
     "test:motions": "node --test 'tests/unit/motions.test.js'",
+    "test:edge-cases": "node --test 'tests/unit/edge-cases.test.js'",
     "test:coverage-report": "nyc report --reporter=html",
     "dev:api": "node services/api/server.js",
     "dev:console": "node scripts/serve_console.js"
