@@ -2,22 +2,22 @@
   "name": "cam-aims",
   "private": true,
   "type": "module",
-  \"scripts\": {
-    \"test\": \"npm run test:unit && npm run test:e2e\",
-    \"test:unit\": \"node --test 'tests/unit/**/*.test.js'\",
-    \"test:unit:watch\": \"node --test --watch 'tests/unit/**/*.test.js'\",
-    \"test:unit:coverage\": \"nyc node --test 'tests/unit/**/*.test.js'\",
-    \"test:e2e\": \"playwright test\",
-    \"test:e2e:headed\": \"playwright test --headed\",
-    \"test:e2e:debug\": \"playwright test --debug\",
-    \"test:errors\": \"node --test 'tests/unit/error-handling.test.js'\",
-    \"test:motions\": \"node --test 'tests/unit/motions.test.js'\",
-    \"test:coverage-report\": \"nyc report --reporter=html\",
-    \"dev:api\": \"node services/api/server.js\",
-    \"dev:console\": \"node scripts/serve_console.js\"
+  "scripts": {
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test 'tests/unit/**/*.test.js'",
+    "test:unit:watch": "node --test --watch 'tests/unit/**/*.test.js'",
+    "test:unit:coverage": "nyc node --test 'tests/unit/**/*.test.js'",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:errors": "node --test 'tests/unit/error-handling.test.js'",
+    "test:motions": "node --test 'tests/unit/motions.test.js'",
+    "test:coverage-report": "nyc report --reporter=html",
+    "dev:api": "node services/api/server.js",
+    "dev:console": "node scripts/serve_console.js"
   },
-  \"devDependencies\": {
-    \"@playwright/test\": \"^1.58.0\",
-    \"nyc\": \"^15.1.0\"
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "nyc": "^15.1.0"
   }
 }
