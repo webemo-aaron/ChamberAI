@@ -1,0 +1,12 @@
+
+Running 32 tests using 1 worker
+
+  ✓   1 tests/playwright/accessibility.spec.js:8:3 › Accessibility and WCAG Compliance › Keyboard navigation with Tab key works (259ms)
+  ✓   2 tests/playwright/accessibility.spec.js:39:3 › Accessibility and WCAG Compliance › Form inputs have associated labels (254ms)
+  ✓   3 tests/playwright/accessibility.spec.js:58:3 › Accessibility and WCAG Compliance › Buttons have accessible text or aria-labels (257ms)
+  ✘   4 tests/playwright/accessibility.spec.js:77:3 › Accessibility and WCAG Compliance › Form can be submitted with Enter key (5.3s)
+  ✘   5 tests/playwright/accessibility.spec.js:98:3 › Accessibility and WCAG Compliance › Modal dialogs are keyboard accessible (1.0m)
+  ✘   6 tests/playwright/accessibility.spec.js:132:3 › Accessibility and WCAG Compliance › Focus is visible on all interactive elements (1.0m)
+  ✓   7 tests/playwright/accessibility.spec.js:153:3 › Accessibility and WCAG Compliance › Skip link or main content is accessible (180ms)
+  ✘   8 tests/playwright/export-features.spec.js:28:3 › Export Features › Export minutes as PDF (1.0m)
+  ✘   9 tests/playwright/export-features.spec.js:53:3 › Export Features › Export minutes as DOCX (1.0m)

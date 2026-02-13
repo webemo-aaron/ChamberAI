@@ -1,0 +1,20 @@
+
+> test:e2e
+> playwright test
+
+
+Running 38 tests using 1 worker
+
+  ✓   1 tests/playwright/accessibility.spec.js:8:3 › Accessibility and WCAG Compliance › Keyboard navigation with Tab key works (279ms)
+  ✓   2 tests/playwright/accessibility.spec.js:39:3 › Accessibility and WCAG Compliance › Form inputs have associated labels (252ms)
+  ✓   3 tests/playwright/accessibility.spec.js:58:3 › Accessibility and WCAG Compliance › Buttons have accessible text or aria-labels (252ms)
+  ✘   4 tests/playwright/accessibility.spec.js:77:3 › Accessibility and WCAG Compliance › Form can be submitted with Enter key (5.2s)
+  ✘   5 tests/playwright/accessibility.spec.js:98:3 › Accessibility and WCAG Compliance › Modal dialogs are keyboard accessible (1.0m)
+  ✘   6 tests/playwright/accessibility.spec.js:132:3 › Accessibility and WCAG Compliance › Focus is visible on all interactive elements (1.0m)
+  ✓   7 tests/playwright/accessibility.spec.js:153:3 › Accessibility and WCAG Compliance › Skip link or main content is accessible (172ms)
+  ✘   8 tests/playwright/action_items_csv.spec.mjs:4:1 › action items CSV import/export (20.1s)
+  ✘   9 tests/playwright/approval_export.spec.mjs:4:1 › approval gating and export flow (18.7s)
+  ✘  10 tests/playwright/approval_negative.spec.mjs:4:1 › approval remains blocked without required fields (18.6s)
+  ✘  11 tests/playwright/audio_process.spec.mjs:4:1 › audio upload + process flow (20.2s)
+  ✘  12 tests/playwright/export-features.spec.js:28:3 › Export Features › Export minutes as PDF (1.0m)
+  ✘  13 tests/playwright/export-features.spec.js:53:3 › Export Features › Export minutes as DOCX (1.0m)

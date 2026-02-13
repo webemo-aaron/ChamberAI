@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [active] [ref=e1]:
+- generic [ref=e1]:
   - banner [ref=e2]:
     - generic [ref=e3]:
       - generic [ref=e4]: CAM
@@ -40,14 +40,15 @@
         - generic [ref=e35]:
           - generic [ref=e36]:
             - text: Date
-            - textbox "Date" [ref=e37]
+            - textbox "Date" [ref=e37]: 2026-03-28
           - generic [ref=e38]:
             - text: Start Time
-            - textbox "Start Time" [ref=e39]
+            - textbox "Start Time" [ref=e39]: 14:00
           - generic [ref=e40]:
             - text: Location
-            - textbox "Location" [ref=e41]:
+            - textbox "Location" [active] [ref=e41]:
               - /placeholder: Chamber Hall
+              - text: Export Room
           - generic [ref=e42]:
             - text: Chair
             - textbox "Chair" [ref=e43]:
@@ -93,8 +94,8 @@
         - button "Clear Filters" [ref=e63] [cursor=pointer]
         - generic [ref=e65] [cursor=pointer]:
           - generic [ref=e66]:
-            - strong [ref=e67]: 2026-02-12
-            - text: · Test Chamber
+            - strong [ref=e67]: 2026-03-30
+            - text: · Keyboard Test Room
           - generic [ref=e68]:
             - text: "Status:"
             - generic [ref=e69]: CREATED
@@ -104,7 +105,7 @@
           - heading "Modules" [level=3] [ref=e74]
           - generic [ref=e75]:
             - generic [ref=e76]:
-              - checkbox "Public Summary" [checked] [ref=e77]
+              - checkbox "Public Summary" [ref=e77]
               - text: Public Summary
             - generic [ref=e78]:
               - checkbox "Member Spotlight" [ref=e79]
@@ -139,13 +140,13 @@
         - generic [ref=e98]:
           - generic [ref=e99]:
             - text: Retention Days
-            - spinbutton "Retention Days" [ref=e100]: "30"
+            - spinbutton "Retention Days" [ref=e100]: "60"
           - generic [ref=e101]:
             - text: Max File Size (MB)
-            - spinbutton "Max File Size (MB)" [ref=e102]: "250"
+            - spinbutton "Max File Size (MB)" [ref=e102]: "500"
           - generic [ref=e103]:
             - text: Max Duration (seconds)
-            - spinbutton "Max Duration (seconds)" [ref=e104]: "7200"
+            - spinbutton "Max Duration (seconds)" [ref=e104]: "14400"
         - button "Save Settings" [ref=e105] [cursor=pointer]
         - button "Run Retention Sweep" [ref=e107] [cursor=pointer]
     - generic [ref=e108]:

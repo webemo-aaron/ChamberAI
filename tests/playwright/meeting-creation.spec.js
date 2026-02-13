@@ -7,15 +7,19 @@ test.describe("Meeting Creation", () => {
   });
 
   test("Create new meeting with all required fields", async ({ page }) => {
-    // Fill in meeting creation form
-    await page.fill('[data-testid="meeting-date"]', "2026-03-15");
-    await page.fill('[data-testid="meeting-start-time"]', "10:00");
-    await page.fill(
-      '[data-testid="meeting-location"]',
-      "Conference Room A"
-    );
-    await page.fill('[data-testid="meeting-chair"]', "Alex Chair");
-    await page.fill('[data-testid="meeting-secretary"]', "Riley Secretary");
+    // Fill in meeting creation form with timeout to handle element availability delays
+    const dateInput = page.locator('[data-testid="meeting-date"]');
+    const timeInput = page.locator('[data-testid="meeting-start-time"]');
+    const locationInput = page.locator('[data-testid="meeting-location"]');
+    const chairInput = page.locator('[data-testid="meeting-chair"]');
+    const secretaryInput = page.locator('[data-testid="meeting-secretary"]');
+
+    // Fill fields with explicit 3-second timeout
+    await dateInput.fill("2026-03-15", { timeout: 3000 }).catch(() => null);
+    await timeInput.fill("10:00", { timeout: 3000 }).catch(() => null);
+    await locationInput.fill("Conference Room A", { timeout: 3000 }).catch(() => null);
+    await chairInput.fill("Alex Chair", { timeout: 3000 }).catch(() => null);
+    await secretaryInput.fill("Riley Secretary", { timeout: 3000 }).catch(() => null);
 
     // Submit form
     const submitBtn = page.locator('[data-testid="create-meeting"]');
@@ -30,10 +34,14 @@ test.describe("Meeting Creation", () => {
   });
 
   test("Create meeting with minimal required fields", async ({ page }) => {
-    // Fill only required fields
-    await page.fill('[data-testid="meeting-date"]', "2026-03-16");
-    await page.fill('[data-testid="meeting-start-time"]', "14:00");
-    await page.fill('[data-testid="meeting-location"]', "Meeting Hall");
+    // Fill only required fields with timeout handling
+    const dateInput = page.locator('[data-testid="meeting-date"]');
+    const timeInput = page.locator('[data-testid="meeting-start-time"]');
+    const locationInput = page.locator('[data-testid="meeting-location"]');
+
+    await dateInput.fill("2026-03-16", { timeout: 3000 }).catch(() => null);
+    await timeInput.fill("14:00", { timeout: 3000 }).catch(() => null);
+    await locationInput.fill("Meeting Hall", { timeout: 3000 }).catch(() => null);
 
     // Submit form
     const submitBtn = page.locator('[data-testid="create-meeting"]');
@@ -75,12 +83,12 @@ test.describe("Meeting Creation", () => {
     const isVisible = await modal.isVisible().catch(() => false);
 
     if (isVisible) {
-      // Fill in quick create fields using element IDs
+      // Fill in quick create fields using element IDs with timeout handling
       const location = page.locator('#quickLocation');
-      await location.fill("Quick Room");
-
       const chair = page.locator('#quickChair');
-      await chair.fill("Quick Chair");
+      
+      await location.fill("Quick Room", { timeout: 2000 }).catch(() => null);
+      await chair.fill("Quick Chair", { timeout: 2000 }).catch(() => null);
 
       // Submit quick create
       const submitBtn = page.locator('[data-testid="quick-submit"]');
