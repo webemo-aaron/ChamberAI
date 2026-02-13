@@ -3,7 +3,15 @@ import { test, expect } from "@playwright/test";
 test.describe("Export Features", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
-    // Just load the page - export buttons should be visible regardless
+
+    // Dismiss login modal if present
+    const loginModal = page.locator("#loginModal");
+    const isVisible = await loginModal.isVisible().catch(() => false);
+    if (isVisible) {
+      await loginModal.locator("#loginSubmit").click().catch(() => null);
+      await loginModal.evaluate(el => el.classList.add("hidden")).catch(() => null);
+      await page.waitForTimeout(200);
+    }
   });
 
   test("Export minutes as PDF", async ({ page }) => {

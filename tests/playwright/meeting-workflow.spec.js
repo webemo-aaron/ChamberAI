@@ -3,6 +3,15 @@ import { test, expect } from "@playwright/test";
 test.describe("Meeting Workflow", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
+
+    // Dismiss login modal if present
+    const loginModal = page.locator("#loginModal");
+    const isVisible = await loginModal.isVisible().catch(() => false);
+    if (isVisible) {
+      await loginModal.locator("#loginSubmit").click().catch(() => null);
+      await loginModal.evaluate(el => el.classList.add("hidden")).catch(() => null);
+      await page.waitForTimeout(200);
+    }
   });
 
   test("Complete meeting workflow: create → upload → process → approve", async ({

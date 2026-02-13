@@ -4,6 +4,15 @@ test.describe("Feature Flags", () => {
   test("feature flags render in settings", async ({ page }) => {
     await page.goto("/");
 
+    // Dismiss login modal if present
+    const loginModal = page.locator("#loginModal");
+    const isVisible = await loginModal.isVisible().catch(() => false);
+    if (isVisible) {
+      await loginModal.locator("#loginSubmit").click().catch(() => null);
+      await loginModal.evaluate(el => el.classList.add("hidden")).catch(() => null);
+      await page.waitForTimeout(200);
+    }
+
     // Wait for feature flags container with shorter timeout
     const flagsContainer = page.locator("#featureFlags");
     try {
@@ -26,6 +35,15 @@ test.describe("Feature Flags", () => {
 
   test("public summary tab visibility toggles with feature flag", async ({ page }) => {
     await page.goto("/");
+
+    // Dismiss login modal if present
+    const loginModal = page.locator("#loginModal");
+    const isVisible = await loginModal.isVisible().catch(() => false);
+    if (isVisible) {
+      await loginModal.locator("#loginSubmit").click().catch(() => null);
+      await loginModal.evaluate(el => el.classList.add("hidden")).catch(() => null);
+      await page.waitForTimeout(200);
+    }
 
     // Wait for settings to load
     await page.waitForSelector("#featureFlags input[type=\"checkbox\"]", {
@@ -73,6 +91,15 @@ test.describe("Feature Flags", () => {
 
   test("retention sweep button appears in settings", async ({ page }) => {
     await page.goto("/");
+
+    // Dismiss login modal if present
+    const loginModal = page.locator("#loginModal");
+    const isVisible = await loginModal.isVisible().catch(() => false);
+    if (isVisible) {
+      await loginModal.locator("#loginSubmit").click().catch(() => null);
+      await loginModal.evaluate(el => el.classList.add("hidden")).catch(() => null);
+      await page.waitForTimeout(200);
+    }
 
     // Wait for settings to load
     await page.waitForSelector("#featureFlags", { timeout: 5000 }).catch(

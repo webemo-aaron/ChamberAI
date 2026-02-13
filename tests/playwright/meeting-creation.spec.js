@@ -4,6 +4,15 @@ test.describe("Meeting Creation", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the app
     await page.goto("/");
+
+    // Dismiss login modal if present
+    const loginModal = page.locator("#loginModal");
+    const isVisible = await loginModal.isVisible().catch(() => false);
+    if (isVisible) {
+      await loginModal.locator("#loginSubmit").click().catch(() => null);
+      await loginModal.evaluate(el => el.classList.add("hidden")).catch(() => null);
+      await page.waitForTimeout(200);
+    }
   });
 
   test("Create new meeting with all required fields", async ({ page }) => {
