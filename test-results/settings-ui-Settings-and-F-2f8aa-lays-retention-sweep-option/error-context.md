@@ -14,7 +14,7 @@
         - /placeholder: http://localhost:4000
         - text: http://localhost:4000
       - button "Save" [ref=e11] [cursor=pointer]
-      - generic [ref=e12]: "Role: Guest"
+      - generic [ref=e12]: "Role: admin"
       - button "Logout" [ref=e13] [cursor=pointer]
   - main [ref=e14]:
     - generic [ref=e15]:
@@ -209,19 +209,4 @@
           - listitem [ref=e163]: Audio stays private with retention controls.
           - listitem [ref=e164]: Approvals are blocked when required fields are missing.
   - contentinfo [ref=e165]: CAM-AIMS Mock Console · In-memory API expected
-  - generic [ref=e167]:
-    - heading "Demo Login" [level=2] [ref=e168]
-    - paragraph [ref=e169]: Select a role to enter the console.
-    - generic [ref=e170]:
-      - generic [ref=e171]:
-        - text: Email
-        - textbox "Email" [ref=e172]:
-          - /placeholder: admin@acme.com
-      - generic [ref=e173]:
-        - text: Role
-        - combobox "Role" [ref=e174]:
-          - option "Admin" [selected]
-          - option "Secretary"
-          - option "Viewer"
-    - button "Enter" [ref=e176] [cursor=pointer]
 ```
