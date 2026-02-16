@@ -10,6 +10,8 @@ can be switched to real Firebase services for production.
 
 Docs index: `docs/INDEX.md`
 
+GitHub Pages: https://webemo-aaron.github.io/ChamberAI/
+
 ## Features
 
 - Meeting creation and management
