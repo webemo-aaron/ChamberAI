@@ -77,6 +77,7 @@ docker-compose down
 - Outreach one-pager: `docs/mission-vision.md`
 - Landing page outline: `docs/landing-page-outline.md`
 - Community posts: `docs/community-posts.md`
+- Subscriptions (PayPal): `docs/SUBSCRIPTIONS.md`
 
 ## Development
 
