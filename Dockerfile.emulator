@@ -29,4 +29,4 @@ ENV FIRESTORE_EMULATOR_HOST=0.0.0.0:8080 \
 EXPOSE 4000 8080 9099 9199
 
 # Start emulators
-CMD ["firebase", "emulators:start", "--only", "auth,firestore,storage", "--project", "chamberai-local"]
+CMD ["firebase", "emulators:start", "--only", "auth,firestore,storage", "--project", "chamberofcommerceai-local"]

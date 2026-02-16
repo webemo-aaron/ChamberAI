@@ -1,8 +1,8 @@
-# Docker Deployment Guide for ChamberAI
+# Docker Deployment Guide for ChamberOfCommerceAI
 
 ## Overview
 
-This guide covers running ChamberAI services in Docker containers, both locally for testing and deploying to Google Cloud Run.
+This guide covers running ChamberOfCommerceAI services in Docker containers, both locally for testing and deploying to Google Cloud Run.
 
 ## Local Development with Docker Compose
 
@@ -15,8 +15,8 @@ This guide covers running ChamberAI services in Docker containers, both locally 
 
 ```bash
 # Build images
-docker build -t chamberai-api:local -f services/api-firebase/Dockerfile services/api-firebase/
-docker build -t chamberai-worker:local -f services/worker-firebase/Dockerfile services/worker-firebase/
+docker build -t chamberofcommerceai-api:local -f services/api-firebase/Dockerfile services/api-firebase/
+docker build -t chamberofcommerceai-worker:local -f services/worker-firebase/Dockerfile services/worker-firebase/
 
 # Start all services
 docker-compose up
@@ -83,11 +83,11 @@ curl http://localhost:4001/meetings
 
 ```bash
 # Set your project ID
-export PROJECT_ID=chamberai
+export PROJECT_ID=chamberofcommerceai
 
 # Tag images
-docker tag chamberai-api:local gcr.io/$PROJECT_ID/api-firebase:latest
-docker tag chamberai-worker:local gcr.io/$PROJECT_ID/worker-firebase:latest
+docker tag chamberofcommerceai-api:local gcr.io/$PROJECT_ID/api-firebase:latest
+docker tag chamberofcommerceai-worker:local gcr.io/$PROJECT_ID/worker-firebase:latest
 
 # Push to Google Container Registry
 docker push gcr.io/$PROJECT_ID/api-firebase:latest
@@ -158,7 +158,7 @@ docker logs <container-id>
 docker inspect <container-id>
 
 # Shell into container
-docker run -it --entrypoint /bin/bash chamberai-api:local
+docker run -it --entrypoint /bin/bash chamberofcommerceai-api:local
 ```
 
 ### Firebase emulator connection issues
@@ -169,7 +169,7 @@ docker-compose logs firebase-emulators
 
 # Ensure services are on same network
 docker network ls
-docker network inspect chamberai_chamberai-network
+docker network inspect <project>_chamberofcommerceai-network
 ```
 
 ### Port conflicts

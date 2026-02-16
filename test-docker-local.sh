@@ -3,7 +3,7 @@
 set -e
 
 PROJECT_ROOT="$(pwd)"
-echo "Starting ChamberAI Docker Test Environment"
+echo "Starting ChamberOfCommerceAI Docker Test Environment"
 echo "==========================================="
 
 # Detect the host address from Docker's perspective
@@ -47,34 +47,34 @@ echo "Firebase emulators started (PID: $FIREBASE_PID)"
 echo ""
 echo "Starting API Service..."
 docker run -d \
-    --name chamberai-api-test \
+    --name chamberofcommerceai-api-test \
     -p 4001:8080 \
     -e PORT=8080 \
     -e NODE_ENV=development \
-    -e GCP_PROJECT_ID=chamberai-local \
+    -e GCP_PROJECT_ID=chamberofcommerceai-local \
     -e FIREBASE_AUTH_ENABLED=false \
     -e FIRESTORE_EMULATOR_HOST=$HOST_IP:8080 \
     -e FIREBASE_AUTH_EMULATOR_HOST=$HOST_IP:9099 \
     -e FIREBASE_STORAGE_EMULATOR_HOST=$HOST_IP:9199 \
-    -e GCS_BUCKET_NAME=chamberai-local-audio \
+    -e GCS_BUCKET_NAME=chamberofcommerceai-local-audio \
     -e CORS_ORIGIN="http://localhost:5174" \
     -e WORKER_ENDPOINT="http://localhost:4002/tasks/process" \
-    chamberai-api:local > /dev/null
+    chamberofcommerceai-api:local > /dev/null
 
 sleep 2
 
 # Start Worker service
 echo "Starting Worker Service..."
 docker run -d \
-    --name chamberai-worker-test \
+    --name chamberofcommerceai-worker-test \
     -p 4002:8080 \
     -e PORT=8080 \
     -e NODE_ENV=development \
-    -e GCP_PROJECT_ID=chamberai-local \
+    -e GCP_PROJECT_ID=chamberofcommerceai-local \
     -e FIRESTORE_EMULATOR_HOST=$HOST_IP:8080 \
     -e FIREBASE_AUTH_EMULATOR_HOST=$HOST_IP:9099 \
     -e FIREBASE_STORAGE_EMULATOR_HOST=$HOST_IP:9199 \
-    chamberai-worker:local > /dev/null
+    chamberofcommerceai-worker:local > /dev/null
 
 sleep 2
 
@@ -122,5 +122,5 @@ echo ""
 echo "To stop services, run: ./test-docker-stop.sh"
 echo "To view logs:"
 echo "  - Firebase: tail -f firebase-emulator.log"
-echo "  - API: docker logs -f chamberai-api-test"
-echo "  - Worker: docker logs -f chamberai-worker-test"
+echo "  - API: docker logs -f chamberofcommerceai-api-test"
+echo "  - Worker: docker logs -f chamberofcommerceai-worker-test"

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issues
+    url: https://github.com/mahoosuc-solutions/ChamberOfCommerceAI/blob/main/SECURITY.md
+    about: Please report security vulnerabilities privately.
+  - name: Support
+    url: https://github.com/mahoosuc-solutions/ChamberOfCommerceAI/blob/main/SUPPORT.md
+    about: Self-hosting and troubleshooting guidance.

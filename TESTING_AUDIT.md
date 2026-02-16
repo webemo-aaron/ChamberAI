@@ -1,4 +1,4 @@
-# ChamberAI Automated Testing Audit & Improvement Plan
+# ChamberOfCommerceAI Automated Testing Audit & Improvement Plan
 
 **Date:** 2026-02-12
 **Framework:** Playwright + Node.js Built-in Test Runner

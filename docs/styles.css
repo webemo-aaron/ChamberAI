@@ -1,0 +1,249 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Fraunces:wght@400;600&display=swap");
+
+:root {
+  --bg: #f4f1ea;
+  --ink: #1c1a16;
+  --muted: #4f4a43;
+  --accent: #e06b4f;
+  --accent-dark: #b74f36;
+  --panel: #fff6ea;
+  --border: #dccdbb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", "Trebuchet MS", sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, #f7f2e9 0%, #efe6d8 100%);
+  min-height: 100vh;
+}
+
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(224, 107, 79, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(28, 26, 22, 0.08), transparent 50%),
+    linear-gradient(90deg, rgba(28, 26, 22, 0.04) 1px, transparent 1px),
+    linear-gradient(rgba(28, 26, 22, 0.04) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+}
+
+.brand {
+  font-family: "Fraunces", "Georgia", serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.nav a {
+  margin-left: 18px;
+  text-decoration: none;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.nav a:hover {
+  color: var(--ink);
+}
+
+main {
+  padding: 40px 60px 80px;
+  animation: fade-in 0.6s ease-out;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 40px;
+  align-items: center;
+  padding: 30px 0 50px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+h1 {
+  font-family: "Fraunces", "Georgia", serif;
+  font-size: 48px;
+  margin: 0 0 16px;
+}
+
+.lead {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 620px;
+}
+
+.cta-row {
+  display: flex;
+  gap: 14px;
+  margin: 22px 0 12px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border-radius: 999px;
+  padding: 12px 22px;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent-dark);
+}
+
+.btn.primary:hover {
+  background: var(--accent-dark);
+}
+
+.btn.ghost {
+  color: var(--ink);
+  background: transparent;
+}
+
+.cred {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.hero-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(28, 26, 22, 0.08);
+  animation: float-in 0.8s ease-out;
+}
+
+.card-top {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.card-body {
+  display: grid;
+  gap: 10px;
+}
+
+.pill {
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.card-foot {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.section {
+  margin-top: 60px;
+}
+
+.section h2 {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.panel {
+  background: #fff;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  font-size: 15px;
+}
+
+.steps {
+  display: grid;
+  gap: 12px;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.highlight {
+  background: #fff1e4;
+  padding: 30px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+}
+
+.site-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 24px 60px 40px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  main {
+    padding: 20px 24px 60px;
+  }
+
+  .site-footer {
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 24px 30px;
+  }
+}

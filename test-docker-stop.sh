@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Stopping ChamberAI Docker Test Environment..."
+echo "Stopping ChamberOfCommerceAI Docker Test Environment..."
 echo "=============================================="
 
 # Stop Firebase emulators
@@ -14,12 +14,12 @@ if [ -f firebase-emulator.pid ]; then
 fi
 
 # Stop Docker containers
-docker stop chamberai-api-test 2>/dev/null && echo "✓ API container stopped"
-docker stop chamberai-worker-test 2>/dev/null && echo "✓ Worker container stopped"
+docker stop chamberofcommerceai-api-test 2>/dev/null && echo "✓ API container stopped"
+docker stop chamberofcommerceai-worker-test 2>/dev/null && echo "✓ Worker container stopped"
 
 # Remove containers
-docker rm chamberai-api-test 2>/dev/null && echo "✓ API container removed"
-docker rm chamberai-worker-test 2>/dev/null && echo "✓ Worker container removed"
+docker rm chamberofcommerceai-api-test 2>/dev/null && echo "✓ API container removed"
+docker rm chamberofcommerceai-worker-test 2>/dev/null && echo "✓ Worker container removed"
 
 echo ""
 echo "=============================================="
