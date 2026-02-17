@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChamberOfCommerceAI Pilot Intake</title>
+    <meta name="description" content="Pilot intake form for Chambers interested in ChamberOfCommerceAI." />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <header class="site-header">
+      <div class="brand">ChamberOfCommerceAI</div>
+      <nav class="nav">
+        <a href="./index.html">Home</a>
+        <a href="./mission-vision.md">Mission</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section highlight">
+        <h1>Pilot Intake Form</h1>
+        <p class="lead">
+          Tell us about your Chamber and priorities. We’ll follow up to discuss pilot opportunities.
+        </p>
+      </section>
+
+      <section class="section">
+        <form class="form" action="https://formspree.io/f/REPLACE_WITH_FORM_ID" method="POST">
+          <div class="grid">
+            <label>
+              Chamber name
+              <input type="text" name="chamber_name" required />
+            </label>
+            <label>
+              Primary contact name
+              <input type="text" name="contact_name" required />
+            </label>
+            <label>
+              Title / role
+              <input type="text" name="contact_title" />
+            </label>
+            <label>
+              Email
+              <input type="email" name="contact_email" required />
+            </label>
+            <label>
+              Phone
+              <input type="tel" name="contact_phone" />
+            </label>
+            <label>
+              Website
+              <input type="url" name="website" />
+            </label>
+          </div>
+
+          <label>
+            Chamber size (members)
+            <select name="member_size">
+              <option value="1-50">1–50</option>
+              <option value="51-150">51–150</option>
+              <option value="151-300">151–300</option>
+              <option value="301-700">301–700</option>
+              <option value="700+">700+</option>
+            </select>
+          </label>
+
+          <label>
+            Service area (city/region/state)
+            <input type="text" name="service_area" />
+          </label>
+
+          <label>
+            Top priorities (pick up to 3)
+            <div class="checkboxes">
+              <label><input type="checkbox" name="priorities" value="directory" /> Local business directory</label>
+              <label><input type="checkbox" name="priorities" value="reviews" /> Recommendations and reviews</label>
+              <label><input type="checkbox" name="priorities" value="minutes" /> Meeting/minutes automation</label>
+              <label><input type="checkbox" name="priorities" value="communications" /> Member communications</label>
+              <label><input type="checkbox" name="priorities" value="events" /> Event management</label>
+              <label><input type="checkbox" name="priorities" value="economic" /> Economic development data</label>
+              <label><input type="checkbox" name="priorities" value="other" /> Other</label>
+            </div>
+          </label>
+
+          <label>
+            Biggest pain point today
+            <textarea name="pain_point" rows="4"></textarea>
+          </label>
+
+          <label>
+            Pilot interest
+            <select name="pilot_interest">
+              <option value="yes">Yes</option>
+              <option value="maybe">Maybe</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+
+          <label>
+            Preferred pilot timeline
+            <select name="pilot_timeline">
+              <option value="immediate">Immediately</option>
+              <option value="30-60">30–60 days</option>
+              <option value="60-90">60–90 days</option>
+              <option value="later">Later</option>
+            </select>
+          </label>
+
+          <label>
+            Hosting preference
+            <select name="hosting_preference">
+              <option value="self-hosted">Self-hosted</option>
+              <option value="hosted">Hosted (SaaS)</option>
+              <option value="unsure">Not sure</option>
+            </select>
+          </label>
+
+          <label>
+            Additional notes
+            <textarea name="notes" rows="4"></textarea>
+          </label>
+
+          <button class="btn primary" type="submit">Submit intake</button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>ChamberOfCommerceAI</div>
+      <div>Contact: aaron@mahoosuc.solutions</div>
+    </footer>
+  </body>
+</html>

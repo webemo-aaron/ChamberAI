@@ -12,7 +12,7 @@ Docs index: `docs/INDEX.md`
 
 GitHub Pages: https://webemo-aaron.github.io/ChamberAI/
 
-Pilot intake: https://forms.gle/REPLACE_WITH_PILOT_INTAKE
+Pilot intake: https://webemo-aaron.github.io/ChamberAI/pilot-intake.html
 
 ## Features
 
