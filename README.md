@@ -12,6 +12,8 @@ Docs index: `docs/INDEX.md`
 
 GitHub Pages: https://webemo-aaron.github.io/ChamberAI/
 
+Pilot intake: https://forms.gle/REPLACE_WITH_PILOT_INTAKE
+
 ## Features
 
 - Meeting creation and management
