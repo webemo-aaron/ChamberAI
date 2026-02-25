@@ -15,6 +15,7 @@ test.describe("Minutes Editing and Management", () => {
     const updatedText = "Updated draft minutes for board review.";
     await page.locator('[data-testid="minutes-content"]').fill(updatedText);
     await page.locator('[data-testid="save-minutes"]').click();
+    await expect(page.locator('[data-testid="collab-status"]')).toContainText("Draft saved.");
 
     await page.locator("#refreshMeetings").click();
     await openMeeting(page, location);

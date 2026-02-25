@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.10] - 2026-02-25
+
+- Stabilized minutes editing E2E by waiting for explicit `Draft saved.` collaboration status before reloading and re-opening the meeting.
+
 ## [0.2.9] - 2026-02-25
 
 - Switched the `e2e` GitHub Actions job to use the Docker Compose stack (same as compose-smoke) and fixed fixture seeding base URL to `http://127.0.0.1:4001`.
