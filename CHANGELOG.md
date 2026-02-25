@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-02-25
+
+- Switched the `e2e` GitHub Actions job to use the Docker Compose stack (same as compose-smoke) and fixed fixture seeding base URL to `http://127.0.0.1:4001`.
+
 ## [0.2.8] - 2026-02-25
 
 - Fixed compose smoke console trend artifact generation by ensuring `artifacts/` exists before teeing warning logs in CI and local scripts.

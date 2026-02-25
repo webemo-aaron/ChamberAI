@@ -212,35 +212,21 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Start API and Console
-        run: |
-          PORT=4100 npm run dev:api > /tmp/chamberai-api.log 2>&1 &
-          npm run dev:console > /tmp/chamberai-console.log 2>&1 &
+      - name: Start Clean Local Stack
+        run: ./scripts/reset_test_state.sh
 
-      - name: Wait for Services
-        run: |
-          for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:4100/health >/dev/null && curl -fsS http://127.0.0.1:5173/healthz >/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "API/Console failed to become ready"
-          echo "--- api log ---"
-          cat /tmp/chamberai-api.log || true
-          echo "--- console log ---"
-          cat /tmp/chamberai-console.log || true
-          exit 1
+      - name: Verify Stack
+        run: ./scripts/verify_local_stack.sh
 
       - name: E2E Critical Tests
         run: |
-          API_BASE=http://127.0.0.1:4100 SEED_TAG=ci-e2e-critical FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
+          API_BASE=http://127.0.0.1:4001 SEED_TAG=ci-e2e-critical FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
           npm run test:e2e:critical
 
       - name: E2E Full Suite
         if: github.event_name != 'pull_request'
         run: |
-          API_BASE=http://127.0.0.1:4100 SEED_TAG=ci-e2e-full FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
+          API_BASE=http://127.0.0.1:4001 SEED_TAG=ci-e2e-full FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
           npm run test:e2e
 
       - name: Upload Playwright Report
@@ -251,6 +237,10 @@ jobs:
           path: playwright-report
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Shutdown Stack
+        if: always()
+        run: docker compose down -v
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
