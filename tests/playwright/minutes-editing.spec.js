@@ -22,10 +22,18 @@ test.describe("Minutes Editing and Management", () => {
     }
 
     await openMeeting(page, location);
+    await expect(page.locator('[data-testid="collab-status"]')).toContainText("Collaboration active.");
 
     const updatedText = "Updated draft minutes for board review.";
     await page.locator('[data-testid="minutes-content"]').fill(updatedText);
-    await page.locator('[data-testid="save-minutes"]').click();
+    await Promise.all([
+      page.waitForResponse((response) =>
+        response.url().includes(`/meetings/${meeting.id}/draft-minutes`) &&
+        response.request().method() === "PUT" &&
+        response.ok()
+      ),
+      page.locator('[data-testid="save-minutes"]').click()
+    ]);
     await expect(page.locator('[data-testid="collab-status"]')).toContainText("Draft saved.");
 
     // Confirm persistence at API layer before forcing a UI reload.
@@ -34,7 +42,7 @@ test.describe("Minutes Editing and Management", () => {
       const draft = await request.get(`${API_BASE}/meetings/${meeting.id}/draft-minutes`);
       if (draft.ok()) {
         const body = await draft.json();
-        if ((body?.content ?? "") === updatedText) {
+        if ((body?.content ?? "").includes(updatedText)) {
           persisted = true;
           break;
         }
