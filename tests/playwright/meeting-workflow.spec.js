@@ -69,7 +69,13 @@ test.describe("Meeting Workflow", () => {
 
     await page.locator("#metaEndTime").fill("19:30");
     await page.locator("#metaTags").fill("edited,board");
-    await page.locator("#saveMeta").click();
+    await Promise.all([
+      page.waitForResponse((response) =>
+        response.url().includes(`/meetings/${meeting.id}`) && response.request().method() === "PUT" && response.ok()
+      ),
+      page.locator("#saveMeta").click()
+    ]);
+    await expect(page.locator("#metaEndTime")).toHaveValue("19:30");
 
     const res = await request.get(`${API_BASE}/meetings/${meeting.id}`);
     const data = await res.json();
