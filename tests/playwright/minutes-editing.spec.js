@@ -17,6 +17,21 @@ test.describe("Minutes Editing and Management", () => {
     await page.locator('[data-testid="save-minutes"]').click();
     await expect(page.locator('[data-testid="collab-status"]')).toContainText("Draft saved.");
 
+    // Confirm persistence at API layer before forcing a UI reload, avoiding eventual-consistency flakes.
+    let persisted = false;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const draft = await request.get(`${API_BASE}/meetings/${meeting.id}/draft-minutes`);
+      if (draft.ok()) {
+        const body = await draft.json();
+        if ((body?.content ?? "") === updatedText) {
+          persisted = true;
+          break;
+        }
+      }
+      await page.waitForTimeout(250);
+    }
+    expect(persisted).toBe(true);
+
     await page.locator("#refreshMeetings").click();
     await openMeeting(page, location);
     await expect(page.locator('[data-testid="minutes-content"]')).toHaveValue(updatedText);
