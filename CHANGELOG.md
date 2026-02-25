@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-02-25
+
+- Fixed CI quality gate path handling to use repository-relative locations in `scripts/check_test_quality.sh`.
+
 ## [0.2.0] - 2026-02-25
 
 - Added full-text advanced search endpoint (`GET /search/meetings?q=`) and console controls.
