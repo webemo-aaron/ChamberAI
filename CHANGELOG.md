@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.16-rc1] - 2026-02-25
+
+- Aligned repository Firebase defaults to `cam-aim-dev` (`.firebaserc`, `scripts/dev_laptop.sh`) for consistent local/CLI project targeting.
+- Hardened critical action-items CSV E2E flow by waiting for successful import API response and post-import UI state before assertions.
+- Regenerated release evidence with passing release gate, rollback drill, and console guard trend artifacts.
+
 ## [0.2.12] - 2026-02-25
 
 - Stabilized minutes editing E2E further by waiting for meeting status `DRAFT_READY` before editing and extending persistence polling to avoid asynchronous generation races in CI.
