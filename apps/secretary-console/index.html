@@ -458,8 +458,12 @@
 
     <div id="loginModal" class="modal hidden">
       <div class="modal-card">
-        <h2>Demo Login</h2>
-        <p>Select a role to enter the console.</p>
+        <h2>Sign In</h2>
+        <p>Use Google sign-in (Firebase) or fallback demo role login.</p>
+        <div class="modal-actions">
+          <button id="loginGoogle" class="btn" type="button">Continue with Google</button>
+        </div>
+        <div class="hint">If Google auth is not configured, use demo login below.</div>
         <div class="grid">
           <label>
             Email
@@ -526,6 +530,7 @@
       </div>
     </div>
 
+    <script src="./firebase-config.js"></script>
     <script src="./app.js" type="module"></script>
   </body>
 </html>

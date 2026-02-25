@@ -181,6 +181,8 @@ cp .env.gcp.vercel.example .env.gcp.vercel
 ./scripts/deploy_gcp_vercel_low_cost.sh .env.gcp.vercel
 ./scripts/configure_gcp_low_cost_controls.sh .env.gcp.vercel
 ./scripts/check_gcp_monthly_readiness.sh .env.gcp.vercel
+./scripts/setup_firebase_web_auth.sh cam-aim-dev
+./scripts/enable_firebase_google_auth.sh cam-aim-dev
 
 # Deploy secretary console to Vercel production
 ./scripts/deploy_vercel_console.sh

@@ -111,6 +111,7 @@ const loginModal = document.getElementById("loginModal");
 const loginEmail = document.getElementById("loginEmail");
 const loginRole = document.getElementById("loginRole");
 const loginSubmit = document.getElementById("loginSubmit");
+const loginGoogle = document.getElementById("loginGoogle");
 const quickModal = document.getElementById("quickModal");
 const tagFilter = document.getElementById("tagFilter");
 const meetingSearch = document.getElementById("meetingSearch");
@@ -163,6 +164,11 @@ let versionHistoryHasMore = false;
 let versionHistoryTotal = 0;
 let summaryLoadToken = 0;
 let summaryUserEditing = false;
+let firebaseAuth = null;
+let firebaseUser = null;
+let signInWithPopupFn = null;
+let signOutFn = null;
+let googleProvider = null;
 
 const hostedApiBase = "https://chamberai-api-ecfgvedexq-uc.a.run.app";
 const inferredApiBase = window.location.hostname.endsWith(".vercel.app") ? hostedApiBase : "http://localhost:4000";
@@ -197,6 +203,27 @@ loginSubmit.addEventListener("click", () => {
   loginModal.classList.add("hidden");
 });
 
+loginGoogle.addEventListener("click", async () => {
+  if (!firebaseAuth || !signInWithPopupFn || !googleProvider) {
+    showToast("Google auth is not configured.");
+    return;
+  }
+  try {
+    const result = await signInWithPopupFn(firebaseAuth, googleProvider);
+    const role = loginRole.value || localStorage.getItem("camRole") || "secretary";
+    const email = result.user?.email || loginEmail.value.trim() || "user@example.com";
+    localStorage.setItem("camRole", role);
+    localStorage.setItem("camEmail", email);
+    setRole(role, email);
+    syncSettingsFromApi({ startup: true });
+    loginModal.classList.add("hidden");
+    showToast("Signed in with Google.");
+  } catch (error) {
+    console.error(error);
+    showToast("Google sign-in failed.");
+  }
+});
+
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("camRole");
   localStorage.removeItem("camEmail");
@@ -204,6 +231,9 @@ logoutBtn.addEventListener("click", () => {
   roleBadge.textContent = "Role: Guest";
   applyRolePermissions("guest");
   loginModal.classList.remove("hidden");
+  if (firebaseAuth && signOutFn) {
+    signOutFn(firebaseAuth).catch(() => {});
+  }
 });
 
 dismissBanner.addEventListener("click", () => {
@@ -1324,10 +1354,19 @@ function clearApprovalWarnings() {
   approvalWarnings.innerHTML = "";
 }
 
-function authHeaders() {
+async function authHeaders() {
   const headers = {};
   const email = localStorage.getItem("camEmail");
   if (email) headers["x-demo-email"] = email;
+  if (firebaseUser) {
+    try {
+      const token = await firebaseUser.getIdToken();
+      headers.Authorization = `Bearer ${token}`;
+      return headers;
+    } catch (error) {
+      console.error("Failed to get Firebase token", error);
+    }
+  }
   const role = localStorage.getItem("camRole");
   if (role && role !== "guest") {
     headers.Authorization = "Bearer demo-token";
@@ -1350,7 +1389,7 @@ async function request(path, method, payload, options = {}) {
         method,
         headers: {
           "Content-Type": "application/json",
-          ...authHeaders()
+          ...(await authHeaders())
         },
         body: payload ? JSON.stringify(payload) : undefined
       });
@@ -1383,6 +1422,39 @@ async function request(path, method, payload, options = {}) {
     }
   }
 }
+
+async function initFirebaseAuth() {
+  const config = window.CHAMBERAI_FIREBASE_CONFIG;
+  if (!config || !config.apiKey || config.apiKey === "REPLACE_ME") return;
+
+  try {
+    const [{ initializeApp }, authModule] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js")
+    ]);
+
+    const app = initializeApp(config);
+    firebaseAuth = authModule.getAuth(app);
+    googleProvider = new authModule.GoogleAuthProvider();
+    signInWithPopupFn = authModule.signInWithPopup;
+    signOutFn = authModule.signOut;
+
+    authModule.onAuthStateChanged(firebaseAuth, (user) => {
+      firebaseUser = user;
+      if (!user) return;
+      const role = localStorage.getItem("camRole") || loginRole.value || "secretary";
+      const email = user.email || localStorage.getItem("camEmail") || "user@example.com";
+      localStorage.setItem("camRole", role);
+      localStorage.setItem("camEmail", email);
+      setRole(role, email);
+      loginModal.classList.add("hidden");
+    });
+  } catch (error) {
+    console.error("Firebase auth init failed", error);
+  }
+}
+
+initFirebaseAuth();
 
 async function runAdvancedSearch() {
   const term = advancedSearchQuery.value.trim();

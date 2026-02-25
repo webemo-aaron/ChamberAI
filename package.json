@@ -31,6 +31,7 @@
     "deploy:gcp-vercel": "./scripts/deploy_gcp_vercel_low_cost.sh .env.gcp.vercel",
     "cost-controls:gcp": "./scripts/configure_gcp_low_cost_controls.sh .env.gcp.vercel",
     "ready:gcp-monthly": "./scripts/check_gcp_monthly_readiness.sh .env.gcp.vercel",
+    "auth:firebase-google": "./scripts/enable_firebase_google_auth.sh cam-aim-dev",
     "deploy:vercel-console": "./scripts/deploy_vercel_console.sh",
     "release:evidence": "./scripts/build_release_evidence.sh",
     "test:quality": "bash ./scripts/check_test_quality.sh",

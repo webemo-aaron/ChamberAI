@@ -1,4 +1,5 @@
 import admin from "firebase-admin";
+import { initFirebaseAdminApp } from "../db/firestore.js";
 
 export async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization || "";
@@ -23,6 +24,7 @@ export async function requireAuth(req, res, next) {
       return next();
     }
     try {
+      initFirebaseAdminApp();
       const decoded = await admin.auth().verifyIdToken(token);
       req.user = {
         uid: decoded.uid,

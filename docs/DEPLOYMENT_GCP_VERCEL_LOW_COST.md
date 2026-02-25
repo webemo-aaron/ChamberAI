@@ -71,7 +71,32 @@ In Vercel project settings:
 - Set API base/config to Cloud Run API URL output from deploy script
 - Redeploy frontend
 
-## 5) Monthly/On-Demand Readiness
+## 5) Enable Firebase Google Auth (optional, recommended)
+
+The console now supports Firebase Google sign-in when configured.
+
+Generate/find Firebase Web app config:
+
+```bash
+./scripts/setup_firebase_web_auth.sh <your-firebase-project-id>
+```
+
+Then:
+
+1. Initialize Auth + authorized domains via CLI:
+   - `./scripts/enable_firebase_google_auth.sh <your-firebase-project-id>`
+2. Enable Google provider:
+   - If you have a Web OAuth client ID + client secret:
+     - `./scripts/enable_firebase_google_auth.sh <your-firebase-project-id> <google-oauth-client-id> <google-oauth-client-secret>`
+   - Or in Firebase Console:
+     - Authentication -> Sign-in method -> Google -> Enable
+3. Update `apps/secretary-console/firebase-config.js` with SDK config values.
+4. Redeploy frontend:
+   - `npm run deploy:vercel-console`
+5. Re-enable strict backend auth:
+   - set Cloud Run API env `FIREBASE_AUTH_ENABLED=true`
+
+## 6) Monthly/On-Demand Readiness
 
 Run before each meeting:
 
