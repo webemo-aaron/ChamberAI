@@ -6,4 +6,5 @@ firestore-debug.log
 .env.*
 !.env.example
 !.env.hybrid.example
+!.env.gcp.vercel.example
 .worktrees/

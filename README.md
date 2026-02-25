@@ -74,6 +74,7 @@ docker-compose down
 
 - Deployment: `docs/DEPLOYMENT.md`
 - Lowest-cost hybrid deployment: `docs/DEPLOYMENT_LOW_COST_HYBRID.md`
+- GCP + Vercel low-cost deployment: `docs/DEPLOYMENT_GCP_VERCEL_LOW_COST.md`
 - Docs index: `docs/INDEX.md`
 - Architecture: `docs/ARCHITECTURE.md`
 - API (mock): `docs/api.md`
@@ -174,6 +175,12 @@ sudo APP_DIR=/opt/chamberai SSH_PORT=22 ./scripts/bootstrap_vps.sh
 ./scripts/deploy_hybrid_vps.sh .env.hybrid
 ./scripts/verify_hybrid_stack.sh .env.hybrid
 ./scripts/backup_hybrid_data.sh .env.hybrid
+
+# GCP + Vercel Pro low-cost deploy
+cp .env.gcp.vercel.example .env.gcp.vercel
+./scripts/deploy_gcp_vercel_low_cost.sh .env.gcp.vercel
+./scripts/configure_gcp_low_cost_controls.sh .env.gcp.vercel
+./scripts/check_gcp_monthly_readiness.sh .env.gcp.vercel
 ```
 
 If local Playwright is blocked by Chromium sandbox constraints, use GitHub Actions `e2e` job as the canonical browser E2E signal and run `./scripts/verify_local_stack.sh` for local stack health.

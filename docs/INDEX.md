@@ -6,6 +6,7 @@ Welcome to the ChamberOfCommerceAI docs hub.
 
 - Deployment: `docs/DEPLOYMENT.md`
 - Lowest-cost hybrid deployment: `docs/DEPLOYMENT_LOW_COST_HYBRID.md`
+- GCP + Vercel low-cost deployment: `docs/DEPLOYMENT_GCP_VERCEL_LOW_COST.md`
 - Architecture: `docs/ARCHITECTURE.md`
 - Governance: `docs/governance-policy.md`
 - Release checklist: `docs/RELEASE_CHECKLIST.md`
