@@ -277,7 +277,10 @@ npm run dev:console
 
 # Verify in browser
 # Console: http://localhost:5173
+# Console health: http://localhost:5173/healthz
 # API Health: http://localhost:4001/health
+# API Metrics: http://localhost:4001/metrics
+# Worker Metrics: http://localhost:4002/metrics
 ```
 
 #### 3.3 Run Tests
@@ -1021,3 +1024,21 @@ docker run --cpus 4 --memory 8g chamberofcommerceai-api:v1
 **License**: [MIT](../LICENSE)
 
 Questions? [Open an issue](https://github.com/mahoosuc-solutions/ChamberOfCommerceAI/issues) or check [CONTRIBUTING.md](../CONTRIBUTING.md)
+## Release & Recovery Automation
+
+- Clean test-state reset:
+  - `./scripts/reset_test_state.sh`
+- Full release gate with report artifact:
+  - `./scripts/release_gate.sh`
+  - Report output: `artifacts/release-gate-report.txt`
+- Metrics threshold check:
+  - `./scripts/check_metrics_thresholds.sh`
+- Rollback drill:
+  - `./scripts/rollback_drill.sh`
+- Release evidence bundle:
+  - `./scripts/build_release_evidence.sh`
+  - Bundle output: `artifacts/release-evidence/`
+  - Verify bundle integrity: `./scripts/verify_release_evidence.sh`
+  - Verify packaged archive checksums: `./scripts/verify_release_archive.sh artifacts/release-evidence.tar.gz`
+  - Publish verified draft release: `./scripts/promote_release_draft.sh <tag>`
+  - Check rollback warning threshold: `./scripts/check_rollback_warnings.sh artifacts/rollback-drill-report.txt`

@@ -2,7 +2,8 @@
 set -euo pipefail
 
 api_cmd=(npm run dev:api)
-console_cmd=(env PORT=5174 npm run dev:console)
+console_port="$(bash /home/webemo-aaron/projects/ChamberAI/scripts/resolve_console_port.sh 5173)"
+console_cmd=(env CONSOLE_PORT="$console_port" PORT="$console_port" npm run dev:console)
 
 cleanup() {
   if [[ -n "${api_pid:-}" ]]; then kill "$api_pid" 2>/dev/null || true; fi
@@ -17,5 +18,7 @@ sleep 0.5
 
 "${console_cmd[@]}" &
 console_pid=$!
+
+echo "Console URL: http://127.0.0.1:${console_port}"
 
 wait "$api_pid" "$console_pid"

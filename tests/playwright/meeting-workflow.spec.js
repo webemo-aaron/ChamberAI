@@ -1,109 +1,104 @@
 import { test, expect } from "@playwright/test";
+import { API_BASE, bootstrapPage, createMeeting, openMeeting } from "./support/ui_helpers.mjs";
+import { attachConsoleGuard } from "./support/console_guard.mjs";
+
+const authHeaders = {
+  Authorization: "Bearer demo-token",
+  "x-demo-email": "admin@acme.com",
+  "Content-Type": "application/json"
+};
 
 test.describe("Meeting Workflow", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-
-    // Dismiss login modal if present
-    const loginModal = page.locator("#loginModal");
-    const isVisible = await loginModal.isVisible().catch(() => false);
-    if (isVisible) {
-      await loginModal.locator("#loginSubmit").click().catch(() => null);
-      await loginModal.evaluate(el => el.classList.add("hidden")).catch(() => null);
-      await page.waitForTimeout(200);
-    }
+    await bootstrapPage(page);
   });
 
-  test("Complete meeting workflow: create → upload → process → approve", async ({
-    page
-  }) => {
-    // Step 1: Create meeting form interaction with timeout handling
-    const dateInput = page.locator('[data-testid="meeting-date"]');
-    const timeInput = page.locator('[data-testid="meeting-start-time"]');
-    const locationInput = page.locator('[data-testid="meeting-location"]');
-    const chairInput = page.locator('[data-testid="meeting-chair"]');
-    const secretaryInput = page.locator('[data-testid="meeting-secretary"]');
+  test("Complete meeting workflow: create -> upload -> process -> approve @critical", async ({ page, request }) => {
+    const guard = attachConsoleGuard(page);
+    const location = `Workflow Full Room ${Date.now()}`;
+    const meeting = await createMeeting(request, location);
+    await openMeeting(page, location);
 
-    await dateInput.fill("2026-03-20", { timeout: 3000 }).catch(() => null);
-    await timeInput.fill("10:00", { timeout: 3000 }).catch(() => null);
-    await locationInput.fill("Board Room", { timeout: 3000 }).catch(() => null);
-    await chairInput.fill("Board Chair", { timeout: 3000 }).catch(() => null);
-    await secretaryInput.fill("Board Secretary", { timeout: 3000 }).catch(() => null);
+    await page.locator("#registerAudio").click();
+    await expect(page.locator("#audioSources")).toContainText("No audio sources yet.");
 
-    const createBtn = page.locator('[data-testid="create-meeting"]');
-    await createBtn.click();
+    await request.post(`${API_BASE}/meetings/${meeting.id}/audio-sources`, {
+      headers: authHeaders,
+      data: { type: "UPLOAD", file_uri: "workflow.wav", duration_seconds: 1200 }
+    });
+    await page.locator("#refreshMeetings").click();
+    await openMeeting(page, location);
+    await expect(page.locator("#audioSources")).toContainText("workflow.wav");
 
-    // Wait for potential processing
-    await page.waitForTimeout(300);
+    await page.locator('[data-testid="process-meeting"]').click();
+    await expect(page.locator("#meetingStatus")).toHaveText("DRAFT_READY");
 
-    // Verify form is still responsive
-    await expect(createBtn).toBeVisible();
-    expect(true).toBeTruthy();
+    await page.locator("#flagNoMotions").check();
+    await page.locator("#flagNoAdjournment").check();
+    await page.locator("#saveMeta").click();
+    await page.locator(".tab", { hasText: "Action Items" }).click();
+    await page.locator("#actionDescription").fill("Send recap");
+    await page.locator("#actionOwner").fill("Riley Secretary");
+    await page.locator("#actionDue").fill("2026-04-01");
+    await page.locator('[data-testid="add-action-item"]').click();
+
+    await expect(page.locator('[data-testid="approve-meeting"]')).toBeEnabled();
+    await page.locator('[data-testid="approve-meeting"]').click();
+    await expect(page.locator("#meetingStatus")).toHaveText("APPROVED");
+    await guard.assertNoUnexpected();
   });
 
-  test("Upload audio file to meeting", async ({ page }) => {
-    // Verify the pick file button is available
-    const pickFileBtn = page.locator('[data-testid="pick-file"]');
-    const exists = await pickFileBtn.isVisible().catch(() => false);
+  test("Upload audio file to meeting", async ({ page, request }) => {
+    const location = `Audio Upload Room ${Date.now()}`;
+    const meeting = await createMeeting(request, location);
+    await openMeeting(page, location);
 
-    // Test passes whether button exists or not
-    expect(true).toBeTruthy();
+    await request.post(`${API_BASE}/meetings/${meeting.id}/audio-sources`, {
+      headers: authHeaders,
+      data: { type: "UPLOAD", file_uri: "meeting.wav", duration_seconds: 900 }
+    });
+    await page.locator("#refreshMeetings").click();
+    await openMeeting(page, location);
+    await expect(page.locator("#audioSources")).toContainText("meeting.wav");
   });
 
-  test("Edit meeting details after creation", async ({ page }) => {
-    // Fill meeting form with timeout handling
-    const dateInput = page.locator('[data-testid="meeting-date"]');
-    const timeInput = page.locator('[data-testid="meeting-start-time"]');
-    const locationInput = page.locator('[data-testid="meeting-location"]');
+  test("Edit meeting details after creation", async ({ page, request }) => {
+    const location = `Edit Test Room ${Date.now()}`;
+    const meeting = await createMeeting(request, location);
+    await openMeeting(page, location);
 
-    await dateInput.fill("2026-03-22", { timeout: 3000 }).catch(() => null);
-    await timeInput.fill("09:00", { timeout: 3000 }).catch(() => null);
-    await locationInput.fill("Edit Test Room", { timeout: 3000 }).catch(() => null);
+    await page.locator("#metaEndTime").fill("19:30");
+    await page.locator("#metaTags").fill("edited,board");
+    await page.locator("#saveMeta").click();
 
-    // Submit the form
-    const createBtn = page.locator('[data-testid="create-meeting"]');
-    await createBtn.click();
-
-    // Wait for potential processing
-    await page.waitForTimeout(300);
-
-    // Form interaction capability verified
-    expect(true).toBeTruthy();
+    const res = await request.get(`${API_BASE}/meetings/${meeting.id}`);
+    const data = await res.json();
+    expect(data.end_time).toBe("19:30");
+    expect(data.tags).toContain("edited");
   });
 
-  test("Cannot approve meeting without processing", async ({ page }) => {
-    // Verify approve button exists and is accessible
-    const approveBtn = page.locator('[data-testid="approve-meeting"]');
-    const exists = await approveBtn.isVisible().catch(() => false);
-
-    if (exists) {
-      // Button is available for interaction
-      await expect(approveBtn).toBeVisible();
-    }
-
-    // Test passes - UI capability verified
-    expect(true).toBeTruthy();
+  test("Cannot approve meeting without processing", async ({ page, request }) => {
+    const location = `Approval Gate Room ${Date.now()}`;
+    await createMeeting(request, location);
+    await openMeeting(page, location);
+    await expect(page.locator('[data-testid="approve-meeting"]')).toBeDisabled();
   });
 
-  test("Meeting status updates through workflow stages", async ({ page }) => {
-    // Fill meeting form with timeout handling
-    const dateInput = page.locator('[data-testid="meeting-date"]');
-    const timeInput = page.locator('[data-testid="meeting-start-time"]');
-    const locationInput = page.locator('[data-testid="meeting-location"]');
+  test("Meeting status updates through workflow stages", async ({ page, request }) => {
+    const location = `Status Test Room ${Date.now()}`;
+    const meeting = await createMeeting(request, location);
+    await openMeeting(page, location);
+    await expect(page.locator("#meetingStatus")).toHaveText("CREATED");
 
-    await dateInput.fill("2026-03-24", { timeout: 3000 }).catch(() => null);
-    await timeInput.fill("11:00", { timeout: 3000 }).catch(() => null);
-    await locationInput.fill("Status Test Room", { timeout: 3000 }).catch(() => null);
+    await request.post(`${API_BASE}/meetings/${meeting.id}/audio-sources`, {
+      headers: authHeaders,
+      data: { type: "UPLOAD", file_uri: "status.wav", duration_seconds: 600 }
+    });
+    await page.locator("#refreshMeetings").click();
+    await openMeeting(page, location);
+    await expect(page.locator("#meetingStatus")).toHaveText("UPLOADED");
 
-    // Submit form
-    const createBtn = page.locator('[data-testid="create-meeting"]');
-    await createBtn.click();
-
-    // Wait for potential result
-    await page.waitForTimeout(300);
-
-    // Form remains interactive
-    await expect(createBtn).toBeVisible();
-    expect(true).toBeTruthy();
+    await page.locator('[data-testid="process-meeting"]').click();
+    await expect(page.locator("#meetingStatus")).toHaveText("DRAFT_READY");
   });
 });

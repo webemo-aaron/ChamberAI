@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { waitForApi } from "./utils.mjs";
+import { API_BASE, UI_BASE, waitForApi } from "./utils.mjs";
+import { attachConsoleGuard } from "./support/console_guard.mjs";
 
-test("action items CSV import/export", async ({ browser, request }) => {
+test("action items CSV import/export @critical", async ({ browser, request }) => {
   await waitForApi(request);
-  const createRes = await request.post("http://127.0.0.1:4100/meetings", {
+  const location = `CSV Hall ${Date.now()}`;
+  const createRes = await request.post(`${API_BASE}/meetings`, {
     headers: {
       Authorization: "Bearer demo-token",
       "x-demo-email": "admin@acme.com",
@@ -12,7 +14,7 @@ test("action items CSV import/export", async ({ browser, request }) => {
     data: {
       date: "2026-01-23",
       start_time: "18:00",
-      location: "CSV Hall",
+      location,
       chair_name: "Alex Chair",
       secretary_name: "Riley Secretary",
       tags: "csv"
@@ -22,16 +24,17 @@ test("action items CSV import/export", async ({ browser, request }) => {
 
   const context = await browser.newContext();
   const page = await context.newPage();
+  const guard = attachConsoleGuard(page);
 
-  await page.goto("http://127.0.0.1:5174/");
+  await page.goto(`${UI_BASE}/`);
   await page.locator("#loginEmail").fill("admin@acme.com");
   await page.locator("#loginRole").selectOption("admin");
   await page.locator("#loginSubmit").click();
-  await page.locator("#apiBase").fill("http://127.0.0.1:4100");
+  await page.locator("#apiBase").fill(API_BASE);
   await page.locator("#saveApiBase").click();
 
   await page.locator("#refreshMeetings").click();
-  await page.locator(".meeting-card", { hasText: "CSV Hall" }).first().click();
+  await page.locator(".meeting-card", { hasText: location }).first().click();
   await expect(page.locator("#meetingStatus")).toHaveText(/CREATED|UPLOADED|PROCESSING|DRAFT_READY|APPROVED/);
 
   await page.locator(".tab", { hasText: "Action Items" }).click();
@@ -64,6 +67,7 @@ test("action items CSV import/export", async ({ browser, request }) => {
   await page.locator("#exportActionCsv").click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain("action-items-");
+  await guard.assertNoUnexpected();
 
   await context.close();
 });

@@ -1,0 +1,14 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY scripts/serve_console.js ./scripts/serve_console.js
+COPY apps/secretary-console ./apps/secretary-console
+
+ENV CONSOLE_HOST=0.0.0.0 \
+    CONSOLE_PORT=5173 \
+    CONSOLE_STRICT_PORT=true
+
+EXPOSE 5173
+
+CMD ["node", "scripts/serve_console.js"]

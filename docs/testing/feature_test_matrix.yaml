@@ -1,0 +1,85 @@
+version: 1
+updated_at: 2026-02-24
+
+features:
+  - feature_id: ui.meeting_creation
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/meeting-creation.spec.js::Create new meeting with all required fields
+      - tests/playwright/meeting-creation.spec.js::Create meeting with minimal required fields
+      - tests/playwright/meeting-creation.spec.js::Display validation error for missing required fields
+      - tests/playwright/meeting-creation.spec.js::Quick create meeting uses default values
+
+  - feature_id: ui.meeting_workflow
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/meeting-workflow.spec.js::Complete meeting workflow: create -> upload -> process -> approve
+      - tests/playwright/meeting-workflow.spec.js::Cannot approve meeting without processing
+      - tests/playwright/meeting-workflow.spec.js::Meeting status updates through workflow stages
+
+  - feature_id: ui.minutes_and_actions
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/minutes-editing.spec.js::Edit draft minutes after generation
+      - tests/playwright/minutes-editing.spec.js::Add action items to meeting
+      - tests/playwright/action_items_csv.spec.mjs::action items CSV import/export
+
+  - feature_id: ui.motions_and_exports
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/minutes-editing.spec.js::Create and edit motions during meeting
+      - tests/playwright/export-features.spec.js::Export minutes as PDF
+      - tests/playwright/export-features.spec.js::Export minutes as DOCX
+      - tests/playwright/export-features.spec.js::Export action items as CSV
+
+  - feature_id: ui.settings_and_flags
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/settings-ui.spec.js::Toggle public summary feature flag
+      - tests/playwright/settings-ui.spec.js::Run retention sweep from settings
+      - tests/playwright/feature-flags.spec.js::public summary tab visibility toggles with feature flag
+      - tests/playwright/retention_sweep.spec.mjs::retention sweep runs from settings
+
+  - feature_id: ui.public_summary
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/public_summary.spec.mjs::public summary publish flow
+
+  - feature_id: ui.role_gating
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/approval_negative.spec.mjs::approval remains blocked without required fields
+      - tests/playwright/approval_export.spec.mjs::approval gating and export flow
+
+  - feature_id: ui.accessibility_baseline
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/accessibility.spec.js::Keyboard navigation with Tab key works
+      - tests/playwright/accessibility.spec.js::Form inputs have associated labels
+      - tests/playwright/accessibility.spec.js::Modal dialogs are keyboard accessible
+
+  - feature_id: ui.planned.real_time_collaboration
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/collaboration-version.spec.js::real-time collaboration supports multi-user editing
+
+  - feature_id: ui.planned.version_history
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/collaboration-version.spec.js::version history supports rollback
+
+  - feature_id: ui.planned.advanced_search
+    status: active
+    implemented: true
+    required_tests:
+      - tests/playwright/advanced-search.spec.js::advanced search returns full-text results

@@ -27,10 +27,44 @@ function initAdmin() {
 
 const app = express();
 app.use(express.json());
+const metrics = {
+  startedAt: Date.now(),
+  requests_total: 0,
+  errors_total: 0,
+  by_status: {}
+};
+
+app.use((req, res, next) => {
+  const started = Date.now();
+  metrics.requests_total += 1;
+  res.on("finish", () => {
+    const status = String(res.statusCode);
+    metrics.by_status[status] = (metrics.by_status[status] ?? 0) + 1;
+    if (res.statusCode >= 500) metrics.errors_total += 1;
+    console.log(
+      JSON.stringify({
+        level: "info",
+        service: "worker",
+        method: req.method,
+        path: req.path,
+        status: res.statusCode,
+        duration_ms: Date.now() - started
+      })
+    );
+  });
+  next();
+});
 
 // Health endpoint for Cloud Run and docker-compose health checks
 app.get("/health", (req, res) => {
   res.json({ ok: true, service: "worker", timestamp: new Date().toISOString() });
+});
+
+app.get("/metrics", (req, res) => {
+  res.json({
+    ...metrics,
+    uptime_seconds: Math.floor((Date.now() - metrics.startedAt) / 1000)
+  });
 });
 
 app.post("/tasks/process", async (req, res) => {

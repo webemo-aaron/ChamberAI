@@ -33,10 +33,14 @@ router.post("/retention/sweep", requireRole("admin", "secretary"), async (req, r
 
     if (deleted.length > 0) {
       await db.collection("auditLogs").add({
+        meeting_id: "system",
         event_type: "RETENTION_SWEEP",
         actor: req.user?.email ?? "user",
         timestamp: serverTimestamp(),
-        details: { deleted_count: deleted.length }
+        details: {
+          deleted_count: deleted.length,
+          meeting_ids: Array.from(new Set(deleted.map((entry) => entry.meeting_id)))
+        }
       });
     }
 

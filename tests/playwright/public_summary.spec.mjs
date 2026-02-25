@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { waitForApi } from "./utils.mjs";
+import { API_BASE, UI_BASE, waitForApi } from "./utils.mjs";
+import { attachConsoleGuard } from "./support/console_guard.mjs";
 
-test("public summary publish flow", async ({ browser, request }) => {
+test("public summary publish flow @critical", async ({ browser, request }) => {
   await waitForApi(request);
-  await request.post("http://127.0.0.1:4100/meetings", {
+  const meetingLocation = `Chamber Hall ${Date.now()}`;
+  await request.post(`${API_BASE}/meetings`, {
     headers: {
       Authorization: "Bearer demo-token",
       "x-demo-email": "admin@acme.com",
@@ -12,7 +14,7 @@ test("public summary publish flow", async ({ browser, request }) => {
     data: {
       date: "2026-01-23",
       start_time: "18:00",
-      location: "Chamber Hall",
+      location: meetingLocation,
       chair_name: "Alex Chair",
       secretary_name: "Riley Secretary",
       tags: "demo"
@@ -21,24 +23,16 @@ test("public summary publish flow", async ({ browser, request }) => {
 
   const context = await browser.newContext();
   const page = await context.newPage();
-  page.on("console", (msg) => {
-    if (msg.type() === "error") {
-      console.log(`console error: ${msg.text()}`);
-    }
-  });
-  page.on("pageerror", (error) => {
-    console.log(`page error: ${error.message}`);
-  });
+  const guard = attachConsoleGuard(page);
   page.on("dialog", async (dialog) => {
-    console.log(`dialog: ${dialog.message()}`);
     await dialog.dismiss();
   });
 
-  await page.goto("http://127.0.0.1:5174/");
+  await page.goto(`${UI_BASE}/`);
   await page.locator("#loginEmail").fill("admin@acme.com");
   await page.locator("#loginRole").selectOption("admin");
   await page.locator("#loginSubmit").click();
-  await page.locator("#apiBase").fill("http://127.0.0.1:4100");
+  await page.locator("#apiBase").fill(API_BASE);
   await page.locator("#saveApiBase").click();
   const state = await page.evaluate(() => ({
     role: localStorage.getItem("camRole"),
@@ -47,7 +41,7 @@ test("public summary publish flow", async ({ browser, request }) => {
   }));
   console.log(`state: ${JSON.stringify(state)}`);
   await page.locator("#refreshMeetings").click();
-  await page.locator(".meeting-card").first().click();
+  await page.locator(".meeting-card", { hasText: meetingLocation }).first().click();
   await expect(page.locator("#meetingStatus")).toHaveText(/CREATED|UPLOADED|PROCESSING|DRAFT_READY|APPROVED/);
 
   const publicFlag = page.locator("#featureFlags input[data-flag='public_summary']");
@@ -86,5 +80,72 @@ test("public summary publish flow", async ({ browser, request }) => {
   await page.locator("#publishPublicSummary").click();
 
   await expect(page.locator("#publicSummaryPublishStatus")).toContainText("Published");
+  await guard.assertNoUnexpected();
+  await context.close();
+});
+
+test("public summary async refresh does not overwrite in-progress edits", async ({ browser, request }) => {
+  await waitForApi(request);
+  const meetingLocation = `Chamber Hall Async ${Date.now()}`;
+  await request.post(`${API_BASE}/meetings`, {
+    headers: {
+      Authorization: "Bearer demo-token",
+      "x-demo-email": "admin@acme.com",
+      "Content-Type": "application/json"
+    },
+    data: {
+      date: "2026-01-23",
+      start_time: "18:00",
+      location: meetingLocation,
+      chair_name: "Alex Chair",
+      secretary_name: "Riley Secretary",
+      tags: "demo"
+    }
+  });
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const guard = attachConsoleGuard(page);
+
+  await page.goto(`${UI_BASE}/`);
+  await page.locator("#loginEmail").fill("admin@acme.com");
+  await page.locator("#loginRole").selectOption("admin");
+  await page.locator("#loginSubmit").click();
+  await page.locator("#apiBase").fill(API_BASE);
+  await page.locator("#saveApiBase").click();
+  await page.locator("#refreshMeetings").click();
+  await page.locator(".meeting-card", { hasText: meetingLocation }).first().click();
+
+  const publicFlag = page.locator("#featureFlags input[data-flag='public_summary']");
+  await publicFlag.check();
+  await page.locator("#saveSettings").click();
+
+  let intercepted = false;
+  let releaseSummaryFetch;
+  const summaryFetchRelease = new Promise((resolve) => {
+    releaseSummaryFetch = resolve;
+  });
+  await page.route(`${API_BASE}/meetings/**/public-summary`, async (route) => {
+    if (route.request().method() === "GET" && !intercepted) {
+      intercepted = true;
+      await summaryFetchRelease;
+    }
+    await route.continue();
+  });
+
+  await page.locator("#refreshMeetings").click();
+  await page.locator(".meeting-card", { hasText: meetingLocation }).first().click();
+  await page.locator("#publicSummaryTab").click();
+  await page.locator("#tab-public-summary").waitFor({ state: "visible" });
+
+  await page.locator("#publicSummaryTitle").fill("Typing before async summary load finishes");
+  await expect(page.locator("#publicSummaryTitle")).toHaveValue("Typing before async summary load finishes");
+
+  releaseSummaryFetch();
+  await page.waitForTimeout(400);
+
+  expect(intercepted).toBe(true);
+  await expect(page.locator("#publicSummaryTitle")).toHaveValue("Typing before async summary load finishes");
+  await guard.assertNoUnexpected();
   await context.close();
 });

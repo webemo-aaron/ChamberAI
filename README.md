@@ -23,6 +23,9 @@ Pilot intake: https://webemo-aaron.github.io/ChamberAI/pilot-intake.html
 - Public summary generation and publishing
 - Audit log and retention sweep
 - Settings management and feature flags
+- Advanced full-text meeting search
+- Real-time collaborative minutes editing
+- Minutes version history with rollback
 
 ## Free vs Paid
 
@@ -56,6 +59,7 @@ npm install
 docker-compose up -d
 
 # Console UI: http://localhost:5173
+# Console Health: http://localhost:5173/healthz
 # API Health: http://localhost:4001/health
 # Firebase UI: http://localhost:4000
 ```
@@ -77,6 +81,7 @@ docker-compose down
 - Governance: `docs/governance-policy.md`
 - Roadmap: `docs/roadmap.md`
 - Changelog: `CHANGELOG.md`
+- Rollback runbook: `docs/ROLLBACK.md`
 - Support: `SUPPORT.md`
 - Outreach one-pager: `docs/mission-vision.md`
 - Landing page outline: `docs/landing-page-outline.md`
@@ -105,9 +110,61 @@ npm run test:unit
 # E2E tests
 npm run test:e2e
 
+# Critical E2E flows
+npm run test:e2e:critical
+
+# API contract tests (requires local stack)
+npm run test:contracts
+
+# UI test quality gate
+npm run test:quality
+
 # Full test suite
 npm test
+
+# One-command release gate report
+./scripts/release_gate.sh
+
+# Reset dockerized test state
+./scripts/reset_test_state.sh
+
+# Seed baseline test data
+./scripts/seed_test_data.sh
+
+# Seed deterministic fixture dataset
+./scripts/seed_fixture_data.sh
+# Optional fixture cleanup strategy before seeding (docker reset):
+FIXTURE_CLEANUP_MODE=reset ./scripts/seed_fixture_data.sh
+
+# Rollback validation drill
+./scripts/rollback_drill.sh
+
+# Build release evidence bundle (after release gate + rollback drill)
+./scripts/build_release_evidence.sh
+
+# Verify evidence manifest/checksums
+./scripts/verify_release_evidence.sh
+
+# Package evidence archive for release draft attachment
+tar -czf artifacts/release-evidence.tar.gz -C artifacts release-evidence
+
+# Verify draft release assets and publish
+./scripts/promote_release_draft.sh vX.Y.Z
+
+# Track console guard warning trends without failing (warn mode)
+npm run test:console-guard-trend
+
+# Fail on warning-regression vs baseline
+npm run test:console-guard-regression
+
+# Verify packaged release archive checksums
+npm run test:verify-release-archive
 ```
+
+If local Playwright is blocked by Chromium sandbox constraints, use GitHub Actions `e2e` job as the canonical browser E2E signal and run `./scripts/verify_local_stack.sh` for local stack health.
+
+Feature-to-test mapping: `docs/testing/feature_test_matrix.yaml`  
+Quality gate policy: `docs/testing/quality_gates.md`
 
 ## Contributing
 

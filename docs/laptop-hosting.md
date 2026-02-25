@@ -24,12 +24,12 @@ This starts:
 - Firebase emulators (Auth/Firestore/Storage)
 - API (`http://127.0.0.1:4100`)
 - Worker (`http://127.0.0.1:4001`)
-- Console (`http://127.0.0.1:5174`)
+- Console (prefers `http://127.0.0.1:5173`, auto-falls back if occupied)
 
 Note: Emulator rules are set to allow all reads/writes in `firestore.rules` and `storage.rules`.
 
 ## 4) Open the Console
-- `http://127.0.0.1:5174`
+- `http://127.0.0.1:5173` (or the URL printed by `dev_laptop.sh`)
 Set API Base (top-right) to `http://127.0.0.1:4100`.
 
 ## 5) Troubleshooting

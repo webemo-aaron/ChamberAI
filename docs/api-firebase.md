@@ -17,3 +17,10 @@ Notes:
 - Processing pipeline endpoints are stubbed (worker hook).
 - CSV export for action items is implemented.
 - Audio download URL endpoint is available at `/audio-sources/{id}/download-url`.
+- Advanced full-text meeting search endpoint is available at `/search/meetings?q=...`.
+- Runtime service metrics are available at `/metrics`.
+- Minutes version history endpoint: `GET /meetings/{id}/draft-minutes/versions?limit={1-100}&offset={0+}` returns `{ items, offset, limit, next_offset, has_more, total }`.
+  - Query policy: non-numeric `limit`/`offset` returns HTTP `400`; numeric values are clamped (`limit` to 1..100, `offset` to 0+).
+- Minutes rollback endpoint: `POST /meetings/{id}/draft-minutes/rollback` (admin/secretary role required).
+- For CI/integration auth path tests, `FIREBASE_AUTH_MOCK_TOKENS` can map bearer tokens to mocked user payloads when `FIREBASE_AUTH_ENABLED=true`.
+- Retention sweep audit events are written with `meeting_id: "system"` so they are retrievable via `GET /meetings/system/audit-log`.

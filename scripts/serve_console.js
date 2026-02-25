@@ -2,10 +2,13 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import net from "node:net";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../apps/secretary-console");
-const port = Number(process.env.PORT ?? 5173);
+const preferredPort = Number(process.env.CONSOLE_PORT ?? process.env.PORT ?? 5173);
+const host = process.env.CONSOLE_HOST ?? "127.0.0.1";
+const strictPort = process.env.CONSOLE_STRICT_PORT === "true";
 
 const mimeTypes = {
   ".html": "text/html",
@@ -19,6 +22,12 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   let pathname = url.pathname;
+
+  if (pathname === "/healthz") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true, root }));
+    return;
+  }
 
   if (pathname === "/") {
     pathname = "/index.html";
@@ -45,6 +54,46 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Secretary Console served at http://127.0.0.1:${port}`);
-});
+findAvailablePort(preferredPort, host, strictPort)
+  .then((port) => {
+    server.listen(port, host, () => {
+      console.log(
+        JSON.stringify({
+          event: "console_server_started",
+          host,
+          port,
+          root,
+          pid: process.pid
+        })
+      );
+    });
+  })
+  .catch((err) => {
+    console.error(`Failed to start console server: ${err.message}`);
+    process.exit(1);
+  });
+
+function findAvailablePort(startPort, bindHost, strict) {
+  return new Promise((resolve, reject) => {
+    const tryPort = (candidate) => {
+      const tester = net.createServer();
+      tester.unref();
+      tester.on("error", (err) => {
+        if (err.code === "EADDRINUSE" && !strict) {
+          tryPort(candidate + 1);
+          return;
+        }
+        if (err.code === "EADDRINUSE" && strict) {
+          reject(new Error(`Port ${candidate} is already in use and CONSOLE_STRICT_PORT=true`));
+          return;
+        }
+        reject(err);
+      });
+      tester.listen(candidate, bindHost, () => {
+        const { port } = tester.address();
+        tester.close(() => resolve(port));
+      });
+    };
+    tryPort(startPort);
+  });
+}

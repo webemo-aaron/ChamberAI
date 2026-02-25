@@ -25,21 +25,338 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Test Quality Gates
+        run: npm run test:quality
+
       - name: Unit Tests
         run: npm run test:unit
+
+  auth-middleware:
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Install API Firebase Dependencies
+        run: npm --prefix services/api-firebase ci
+
+      - name: Firebase Auth Invalid Token Test
+        run: node --test tests/integration/firebase-auth-token.test.mjs
+
+  security:
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Dependency Security Audit
+        run: ./scripts/check_security_audit.sh
+
+      - name: Secret Scan
+        run: ./scripts/check_no_secrets.sh
+
+      - name: Upload Security Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-artifacts
+          path: artifacts/security
+          if-no-files-found: ignore
+          retention-days: 30
+
+  compose-smoke:
+    runs-on: ubuntu-latest
+    needs: [ci, auth-middleware, security]
+    env:
+      PLAYWRIGHT_CONSOLE_GUARD_MODE: strict
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start Clean Local Stack
+        run: ./scripts/reset_test_state.sh
+
+      - name: Seed Compose Fixture Data
+        run: SEED_TAG=ci-compose FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
+
+      - name: Verify Stack
+        run: ./scripts/verify_local_stack.sh
+
+      - name: Check Metrics Thresholds
+        run: ./scripts/check_metrics_thresholds.sh
+
+      - name: Canary Metrics Observation
+        run: ./scripts/check_metrics_canary.sh
+
+      - name: Run E2E Critical Against Compose Stack
+        run: npm run test:e2e:critical
+
+      - name: Console Guard Trend (Warn Mode)
+        env:
+          PLAYWRIGHT_CONSOLE_GUARD_MODE: warn
+        run: npm run test:e2e:critical | tee artifacts/console-guard-warn.log
+
+      - name: Track Console Guard Warnings
+        run: ./scripts/track_console_guard_warnings.sh artifacts/console-guard-warn.log artifacts/console-guard-warning-count.txt artifacts/console-guard-warning-trend.json
+
+      - name: Check Console Guard Regression
+        run: ./scripts/check_console_guard_regression.sh artifacts/console-guard-warning-trend.json docs/testing/console_guard_baseline.json
+
+      - name: Rollback Drill
+        if: github.event_name != 'pull_request'
+        run: ./scripts/rollback_drill.sh
+
+      - name: Collect Compose Logs On Failure
+        if: failure()
+        run: docker compose logs --no-color > compose-smoke.log
+
+      - name: Upload Compose Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-smoke-log
+          path: compose-smoke.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload Console Guard Trend Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: console-guard-trend
+          path: |
+            artifacts/console-guard-warn.log
+            artifacts/console-guard-warning-count.txt
+            artifacts/console-guard-warning-trend.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Shutdown Stack
+        if: always()
+        run: docker compose down -v
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [ci, auth-middleware, security, compose-smoke]
+    env:
+      PLAYWRIGHT_CONSOLE_GUARD_MODE: strict
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start API and Console
+        run: |
+          PORT=4100 npm run dev:api > /tmp/chamberai-api.log 2>&1 &
+          npm run dev:console > /tmp/chamberai-console.log 2>&1 &
+
+      - name: Wait for Services
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4100/health >/dev/null && curl -fsS http://127.0.0.1:5173/healthz >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API/Console failed to become ready"
+          echo "--- api log ---"
+          cat /tmp/chamberai-api.log || true
+          echo "--- console log ---"
+          cat /tmp/chamberai-console.log || true
+          exit 1
+
+      - name: E2E Critical Tests
+        run: |
+          API_BASE=http://127.0.0.1:4100 SEED_TAG=ci-e2e-critical FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
+          npm run test:e2e:critical
+
+      - name: E2E Full Suite
+        if: github.event_name != 'pull_request'
+        run: |
+          API_BASE=http://127.0.0.1:4100 SEED_TAG=ci-e2e-full FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
+          npm run test:e2e
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+          retention-days: 14
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    needs: [ci, auth-middleware, security, compose-smoke, e2e]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start Local Stack
+        run: docker compose up -d
+
+      - name: Run Release Gate
+        run: ./scripts/release_gate.sh
+
+      - name: Run Rollback Drill
+        run: ./scripts/rollback_drill.sh 2>&1 | tee artifacts/rollback-drill-report.txt
+
+      - name: Assert Rollback Warning Threshold
+        run: ./scripts/check_rollback_warnings.sh artifacts/rollback-drill-report.txt artifacts/rollback-warning-count.txt artifacts/rollback-warning-trend.json
+
+      - name: Generate Console Guard Trend Artifact
+        run: npm run test:console-guard-trend
+
+      - name: Build Release Evidence Bundle
+        run: ./scripts/build_release_evidence.sh
+
+      - name: Verify Release Evidence Bundle
+        run: ./scripts/verify_release_evidence.sh
+
+      - name: Package Release Evidence Archive
+        run: tar -czf artifacts/release-evidence.tar.gz -C artifacts release-evidence
+
+      - name: Verify Release Attachments
+        run: |
+          test -f artifacts/release-gate-report.txt
+          test -f artifacts/rollback-drill-report.txt
+          test -f artifacts/rollback-warning-trend.json
+          test -f artifacts/console-guard-warning-trend.json
+          test -f artifacts/release-evidence.tar.gz
+
+      - name: Verify Release Evidence Archive
+        run: ./scripts/verify_release_archive.sh artifacts/release-evidence.tar.gz
+
+      - name: Assert Release Gate Report
+        run: |
+          test -f artifacts/release-gate-report.txt
+          if grep -q "RESULT: FAIL" artifacts/release-gate-report.txt; then
+            echo "Release gate report contains failures"
+            cat artifacts/release-gate-report.txt
+            exit 1
+          fi
+
+      - name: Upload Release Gate Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gate-report
+          path: artifacts/release-gate-report.txt
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload Release Evidence Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence
+          path: artifacts/release-evidence
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload Release Evidence Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-archive
+          path: artifacts/release-evidence.tar.gz
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload Rollback Warning Trend Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-warning-trend
+          path: |
+            artifacts/rollback-warning-count.txt
+            artifacts/rollback-warning-trend.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload Console Guard Trend Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: console-guard-trend-release
+          path: |
+            artifacts/console-guard-warning-count.txt
+            artifacts/console-guard-warning-trend.json
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Build Release Notes
         run: |
           ./scripts/release_notes.sh > release-notes.txt
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release Draft
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           body_path: release-notes.txt
+          files: |
+            artifacts/release-gate-report.txt
+            artifacts/rollback-drill-report.txt
+            artifacts/rollback-warning-trend.json
+            artifacts/console-guard-warning-trend.json
+            artifacts/release-evidence.tar.gz
+
+      - name: Verify Draft Assets and Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/promote_release_draft.sh "${{ github.ref_name }}"
+
+      - name: Shutdown Stack
+        if: always()
+        run: docker compose down -v

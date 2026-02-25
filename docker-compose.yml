@@ -11,6 +11,9 @@ services:
       - "4000:4000"  # Emulator Suite UI
     volumes:
       - firebase-data:/root/.config/firebase
+      - ./firebase.json:/app/firebase.json:ro
+      - ./firestore.rules:/app/firestore.rules:ro
+      - ./storage.rules:/app/storage.rules:ro
     environment:
       - FIRESTORE_EMULATOR_HOST=0.0.0.0:8080
       - FIREBASE_AUTH_EMULATOR_HOST=0.0.0.0:9099
@@ -18,7 +21,7 @@ services:
     networks:
       - chamberofcommerceai-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +41,7 @@ services:
       - FIREBASE_AUTH_EMULATOR_HOST=${FIREBASE_AUTH_EMULATOR_HOST:-firebase-emulators:9099}
       - FIREBASE_STORAGE_EMULATOR_HOST=${FIREBASE_STORAGE_EMULATOR_HOST:-firebase-emulators:9199}
       - GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-chamberofcommerceai-local-audio}
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5174}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://127.0.0.1:5173}
       - WORKER_ENDPOINT=${WORKER_ENDPOINT:-http://worker:8080/tasks/process}
     depends_on:
       firebase-emulators:
@@ -89,6 +92,34 @@ services:
           "node",
           "-e",
           "require('http').get('http://localhost:8080/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1));"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Secretary Console (static frontend)
+  console:
+    build:
+      context: .
+      dockerfile: Dockerfile.console
+    ports:
+      - "5173:5173"
+    environment:
+      - CONSOLE_HOST=0.0.0.0
+      - CONSOLE_PORT=5173
+      - CONSOLE_STRICT_PORT=true
+    volumes:
+      - ./scripts/serve_console.js:/app/scripts/serve_console.js:ro
+      - ./apps/secretary-console:/app/apps/secretary-console:ro
+    networks:
+      - chamberofcommerceai-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:5173/healthz', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1));"
         ]
       interval: 10s
       timeout: 5s

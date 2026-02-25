@@ -1,7 +1,7 @@
 # Secretary Console (Mock UI)
 
 Quickstart (Local)
-- `npm run dev:console` (defaults to http://127.0.0.1:5173; use `PORT=5174` if 5173 is taken)
+- `npm run dev:console` (defaults to `http://127.0.0.1:5173`; auto-falls back to next free port unless `CONSOLE_STRICT_PORT=true`)
 - `npm run dev:api` (defaults to http://localhost:4000)
 - `./scripts/dev_all_firebase.sh` (runs Firebase API + console together)
 - `./scripts/dev_laptop.sh` (runs Firebase emulators + API + worker + console)
@@ -12,6 +12,7 @@ Quickstart (Docker)
   - `docker build -t chamberofcommerceai-worker:local -f services/worker-firebase/Dockerfile services/worker-firebase`
 - Start stack: `docker-compose up -d`
 - Health checks:
+  - `curl -s http://localhost:5173/healthz`
   - `curl -s http://localhost:4001/health`
   - `curl -s http://localhost:4002/health`
 

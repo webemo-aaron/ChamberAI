@@ -57,7 +57,7 @@ docker run -d \
     -e FIREBASE_AUTH_EMULATOR_HOST=$HOST_IP:9099 \
     -e FIREBASE_STORAGE_EMULATOR_HOST=$HOST_IP:9199 \
     -e GCS_BUCKET_NAME=chamberofcommerceai-local-audio \
-    -e CORS_ORIGIN="http://localhost:5174" \
+    -e CORS_ORIGIN="http://localhost:5173" \
     -e WORKER_ENDPOINT="http://localhost:4002/tasks/process" \
     chamberofcommerceai-api:local > /dev/null
 

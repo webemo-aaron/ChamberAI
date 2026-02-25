@@ -101,6 +101,14 @@
             <span class="hint">Press Esc to clear.</span>
           </label>
           <label class="filter">
+            Advanced Search
+            <input id="advancedSearchQuery" type="text" placeholder="Search minutes, motions, action items" data-testid="advanced-search-query" />
+          </label>
+          <div class="inline-actions">
+            <button id="advancedSearchBtn" class="btn ghost" type="button" data-testid="advanced-search-run">Run Search</button>
+            <button id="advancedSearchReset" class="btn ghost" type="button" data-testid="advanced-search-reset">Reset Search</button>
+          </div>
+          <label class="filter">
             Status
             <select id="statusFilter" data-testid="status-filter">
               <option value="">All</option>
@@ -234,8 +242,18 @@
             <div class="tab-content" id="tab-minutes">
               <div class="minutes-block">
                 <textarea id="minutesContent" rows="12" placeholder="Draft minutes will appear here..." data-testid="minutes-content"></textarea>
+                <div id="collabStatus" class="hint" data-testid="collab-status">Collaboration inactive.</div>
                 <div class="inline-actions">
                   <button id="saveMinutes" class="btn ghost" data-testid="save-minutes">Save Draft</button>
+                </div>
+                <div class="version-history">
+                  <div class="list-head">Version History</div>
+                  <div class="version-history-controls">
+                    <button id="versionHistoryPrev" class="btn ghost" type="button" data-testid="version-history-prev">Previous</button>
+                    <span id="versionHistoryPage" class="hint" data-testid="version-history-page">Page 1/1</span>
+                    <button id="versionHistoryNext" class="btn ghost" type="button" data-testid="version-history-next">Next</button>
+                  </div>
+                  <div id="versionHistoryList" class="version-list"></div>
                 </div>
               </div>
             </div>

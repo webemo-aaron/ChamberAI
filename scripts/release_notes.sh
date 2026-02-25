@@ -8,10 +8,16 @@ if [[ ! -f "$changelog" ]]; then
   exit 1
 fi
 
-# Extract the latest release block (first heading after [Unreleased])
+# Extract only the latest concrete release block (first semantic-version heading after [Unreleased]).
 awk '
-  BEGIN {in_release=0}
-  /^## \[[0-9]/ {if (in_release==0) {in_release=1; print; next}}
-  in_release==1 {print}
-  /^## \[/ && in_release==1 && NR>1 {exit}
-' "$changelog" | sed '1,0{/^## \[/!d}'
+  BEGIN {started=0}
+  /^## \[[0-9]/ {
+    if (started==0) {
+      started=1
+      print
+      next
+    }
+    exit
+  }
+  started==1 {print}
+' "$changelog"

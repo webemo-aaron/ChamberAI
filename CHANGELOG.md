@@ -6,7 +6,20 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
-- Placeholder for upcoming changes
+## [0.2.0] - 2026-02-25
+
+- Added full-text advanced search endpoint (`GET /search/meetings?q=`) and console controls.
+- Added real-time collaborative minutes editing across active console sessions.
+- Added minutes version history with rollback support in the minutes panel.
+- Hardened API response parsing for non-JSON/error responses in secretary console.
+- Added clean-room compose smoke validation in CI.
+- Added release-time report assertion and release artifact attachment in GitHub Actions.
+- Added API contract test suite (`npm run test:contracts`).
+- Added release gate automation script (`./scripts/release_gate.sh`) with report artifact output.
+- Added rollback runbook (`docs/ROLLBACK.md`) and clean test state reset script (`./scripts/reset_test_state.sh`).
+- Added rollback drill automation script (`./scripts/rollback_drill.sh`).
+- Added metrics threshold gate script (`./scripts/check_metrics_thresholds.sh`).
+- Added basic observability endpoints (`/metrics`) and structured request logs for API and worker services.
 
 ## [0.1.0] - 2026-02-16
 

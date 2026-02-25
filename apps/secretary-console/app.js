@@ -32,6 +32,11 @@ const processBtn = document.getElementById("processMeeting");
 const approveBtn = document.getElementById("approveMeeting");
 const saveMinutesBtn = document.getElementById("saveMinutes");
 const minutesContent = document.getElementById("minutesContent");
+const collabStatus = document.getElementById("collabStatus");
+const versionHistoryList = document.getElementById("versionHistoryList");
+const versionHistoryPrev = document.getElementById("versionHistoryPrev");
+const versionHistoryNext = document.getElementById("versionHistoryNext");
+const versionHistoryPage = document.getElementById("versionHistoryPage");
 const actionDescription = document.getElementById("actionDescription");
 const actionOwner = document.getElementById("actionOwner");
 const actionDue = document.getElementById("actionDue");
@@ -109,6 +114,9 @@ const loginSubmit = document.getElementById("loginSubmit");
 const quickModal = document.getElementById("quickModal");
 const tagFilter = document.getElementById("tagFilter");
 const meetingSearch = document.getElementById("meetingSearch");
+const advancedSearchQuery = document.getElementById("advancedSearchQuery");
+const advancedSearchBtn = document.getElementById("advancedSearchBtn");
+const advancedSearchReset = document.getElementById("advancedSearchReset");
 const clearFilters = document.getElementById("clearFilters");
 const clearExportHistory = document.getElementById("clearExportHistory");
 const tagChips = document.getElementById("tagChips");
@@ -144,6 +152,17 @@ let recentDays = "";
 let pendingCsvItems = [];
 let currentRole = localStorage.getItem("camRole") || "";
 let featureFlags = defaultFlags();
+let settingsSyncVersion = 0;
+let currentMinutesVersion = 0;
+let minutesSyncTimer = null;
+let minutesAutosaveTimer = null;
+let startupRetriesInProgress = false;
+let versionHistoryOffset = 0;
+const versionHistoryLimit = 5;
+let versionHistoryHasMore = false;
+let versionHistoryTotal = 0;
+let summaryLoadToken = 0;
+let summaryUserEditing = false;
 
 const defaultApiBase = localStorage.getItem("camApiBase") || "http://localhost:4000";
 apiBaseInput.value = defaultApiBase;
@@ -162,6 +181,7 @@ saveApiBaseBtn.addEventListener("click", () => {
   const value = apiBaseInput.value.trim();
   if (value) {
     localStorage.setItem("camApiBase", value);
+    syncSettingsFromApi({ startup: true });
   }
 });
 
@@ -171,6 +191,7 @@ loginSubmit.addEventListener("click", () => {
   localStorage.setItem("camRole", role);
   localStorage.setItem("camEmail", email);
   setRole(role, email);
+  syncSettingsFromApi({ startup: true });
   loginModal.classList.add("hidden");
 });
 
@@ -207,6 +228,10 @@ document.addEventListener("keydown", (event) => {
     meetingSearch.focus();
   }
   if (event.key === "Escape") {
+    if (!quickModal.classList.contains("hidden")) {
+      quickModal.classList.add("hidden");
+      return;
+    }
     meetingSearch.value = "";
     searchQuery = "";
     meetingSearch.blur();
@@ -281,6 +306,22 @@ tagFilter.addEventListener("change", () => {
 meetingSearch.addEventListener("input", (event) => {
   searchQuery = event.target.value.toLowerCase();
   renderMeetings();
+});
+
+advancedSearchBtn.addEventListener("click", () => {
+  runAdvancedSearch();
+});
+
+advancedSearchQuery.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    runAdvancedSearch();
+  }
+});
+
+advancedSearchReset.addEventListener("click", async () => {
+  advancedSearchQuery.value = "";
+  await loadMeetings();
 });
 
 statusFilter.addEventListener("change", () => {
@@ -436,9 +477,16 @@ approveBtn.addEventListener("click", async () => {
 
 saveMinutesBtn.addEventListener("click", async () => {
   if (!selectedMeetingId) return;
-  await request(`/meetings/${selectedMeetingId}/draft-minutes`, "PUT", {
-    content: minutesContent.value
-  });
+  await saveMinutesDraft();
+});
+
+minutesContent.addEventListener("input", () => {
+  if (!selectedMeetingId) return;
+  collabStatus.textContent = "Editing draft…";
+  if (minutesAutosaveTimer) clearTimeout(minutesAutosaveTimer);
+  minutesAutosaveTimer = setTimeout(() => {
+    saveMinutesDraft({ silent: true });
+  }, 800);
 });
 
 savePublicSummary.addEventListener("click", async () => {
@@ -457,7 +505,7 @@ generatePublicSummary.addEventListener("click", async () => {
   if (!selectedMeetingId) return;
   const result = await request(`/meetings/${selectedMeetingId}/public-summary/generate`, "POST");
   if (result) {
-    applyPublicSummary(result);
+    applyPublicSummary(result, { force: true });
   }
 });
 
@@ -469,7 +517,7 @@ publishPublicSummary.addEventListener("click", async () => {
   }
   const result = await request(`/meetings/${selectedMeetingId}/public-summary/publish`, "POST");
   if (result) {
-    applyPublicSummary(result);
+    applyPublicSummary(result, { force: true });
     showToast("Public summary published.");
   }
 });
@@ -482,6 +530,22 @@ publishPublicSummary.addEventListener("click", async () => {
   summaryChairApproved
 ].forEach((checkbox) => {
   checkbox.addEventListener("change", updatePublicSummaryReady);
+});
+
+[
+  publicSummaryTitle,
+  publicSummaryHighlights,
+  publicSummaryImpact,
+  publicSummaryMotions,
+  publicSummaryActions,
+  publicSummaryAttendance,
+  publicSummaryCTA,
+  publicSummaryNotes,
+  publicSummaryContent
+].forEach((input) => {
+  input.addEventListener("input", () => {
+    summaryUserEditing = true;
+  });
 });
 
 addActionBtn.addEventListener("click", async () => {
@@ -535,6 +599,7 @@ clearFilters.addEventListener("click", () => {
   recentDays = "";
   tagFilter.value = "";
   meetingSearch.value = "";
+  advancedSearchQuery.value = "";
   statusFilter.value = "";
   recentFilter.value = "";
   renderMeetings();
@@ -627,12 +692,13 @@ csvApply.addEventListener("click", async () => {
   showToast("Action items imported.");
 });
 
-async function loadMeetings() {
-  const data = await request("/meetings", "GET");
-  if (!Array.isArray(data)) return;
+async function loadMeetings(options = {}) {
+  const data = await request("/meetings", "GET", undefined, options);
+  if (!Array.isArray(data)) return false;
   meetings = data;
   refreshTagFilter();
   renderMeetings();
+  return true;
 }
 
 function renderMeetings() {
@@ -693,6 +759,11 @@ async function loadMeetingDetail(meetingId) {
   const meeting = await request(`/meetings/${meetingId}`, "GET");
   if (!meeting || meeting.error) return;
 
+  // Reset summary readiness state early so stale checkbox state cannot leak across meetings.
+  summaryLoadToken += 1;
+  summaryUserEditing = false;
+  applyPublicSummary({ content: "", fields: {}, checklist: {} }, { force: true });
+
   meetingStatus.textContent = meeting.status;
   const tagLabel = (meeting.tags ?? []).length > 0 ? meeting.tags.join(", ") : "—";
   meetingMeta.innerHTML = `
@@ -713,6 +784,11 @@ async function loadMeetingDetail(meetingId) {
 
   const minutes = await request(`/meetings/${meetingId}/draft-minutes`, "GET");
   minutesContent.value = minutes?.content ?? "";
+  currentMinutesVersion = Number(minutes?.minutes_version ?? 0);
+  collabStatus.textContent = "Collaboration active.";
+  versionHistoryOffset = 0;
+  await renderVersionHistory(meetingId);
+  startMinutesSync(meetingId);
   exportResults.textContent = "";
 
   actionItems = (await request(`/meetings/${meetingId}/action-items`, "GET")) ?? [];
@@ -742,7 +818,9 @@ async function loadMeetingDetail(meetingId) {
   approveBtn.disabled = !approvalStatus?.ok || currentRole === "viewer";
 
   if (featureFlags.public_summary) {
+    const loadToken = summaryLoadToken;
     const summary = await request(`/meetings/${meetingId}/public-summary`, "GET");
+    if (loadToken !== summaryLoadToken) return;
     if (summary) {
       applyPublicSummary(summary);
     } else {
@@ -1255,36 +1333,99 @@ function authHeaders() {
   return headers;
 }
 
-async function request(path, method, payload) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function request(path, method, payload, options = {}) {
+  const retries = Number(options.retries ?? 0);
+  const retryDelayMs = Number(options.retryDelayMs ?? 350);
+  const suppressAlert = Boolean(options.suppressAlert);
   const base = apiBaseInput.value.trim() || "http://localhost:4000";
-  try {
-    const response = await fetch(`${base}${path}`, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders()
-      },
-      body: payload ? JSON.stringify(payload) : undefined
-    });
-    const text = await response.text();
-    return text ? JSON.parse(text) : null;
-  } catch (error) {
-    console.error(error);
-    alert("API request failed. Check API base and console.");
-    return null;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetch(`${base}${path}`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders()
+        },
+        body: payload ? JSON.stringify(payload) : undefined
+      });
+      const text = await response.text();
+      if (!text) return null;
+
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        return { error: `Unexpected response content-type: ${contentType || "unknown"}` };
+      }
+
+      const data = JSON.parse(text);
+      if (!response.ok) {
+        return data?.error ? data : { error: `HTTP ${response.status}` };
+      }
+      return data;
+    } catch (error) {
+      if (attempt < retries) {
+        await sleep(retryDelayMs * (attempt + 1));
+        continue;
+      }
+      if (!suppressAlert) {
+        console.error(error);
+      }
+      if (!suppressAlert) {
+        showToast("API request failed. Check API base and console.");
+        alert("API request failed. Check API base and console.");
+      }
+      return null;
+    }
   }
 }
 
-loadMeetings();
-loadSettings(request).then((settings) => {
-  if (!settings || settings.error) return;
-  settingRetention.value = settings.retentionDays ?? 60;
-  settingMaxSize.value = settings.maxFileSizeMb ?? 500;
-  settingMaxDuration.value = settings.maxDurationSeconds ?? 14400;
-  featureFlags = { ...defaultFlags(), ...(settings.featureFlags ?? {}) };
-  renderFeatureFlags();
-  settingsStatus.classList.add("hidden");
-});
+async function runAdvancedSearch() {
+  const term = advancedSearchQuery.value.trim();
+  if (!term) {
+    await loadMeetings();
+    return;
+  }
+  const results = await request(`/search/meetings?q=${encodeURIComponent(term)}`, "GET");
+  if (!Array.isArray(results)) {
+    showToast("Advanced search failed.");
+    return;
+  }
+  meetings = results;
+  activeTagFilter = "";
+  searchQuery = "";
+  statusQuery = "";
+  recentDays = "";
+  tagFilter.value = "";
+  meetingSearch.value = "";
+  statusFilter.value = "";
+  recentFilter.value = "";
+  refreshTagFilter();
+  renderMeetings();
+}
+
+function syncSettingsFromApi(options = {}) {
+  const startup = Boolean(options.startup);
+  const requestOptions = startup
+    ? { suppressAlert: true, retries: 4, retryDelayMs: 500 }
+    : undefined;
+  const runVersion = ++settingsSyncVersion;
+  return loadSettings((path, method, payload) => request(path, method, payload, requestOptions)).then((settings) => {
+    if (runVersion !== settingsSyncVersion) return;
+    if (!settings || settings.error) return;
+    settingRetention.value = settings.retentionDays ?? 60;
+    settingMaxSize.value = settings.maxFileSizeMb ?? 500;
+    settingMaxDuration.value = settings.maxDurationSeconds ?? 14400;
+    featureFlags = { ...defaultFlags(), ...(settings.featureFlags ?? {}) };
+    renderFeatureFlags();
+    settingsStatus.classList.add("hidden");
+  });
+}
+
+renderFeatureFlags();
+void startApp();
 
 function refreshTagFilter() {
   const tags = new Set();
@@ -1387,7 +1528,9 @@ function collectPublicSummaryPayload() {
   };
 }
 
-function applyPublicSummary(summary) {
+function applyPublicSummary(summary, options = {}) {
+  const force = Boolean(options.force);
+  if (summaryUserEditing && !force) return;
   publicSummaryTitle.value = summary?.fields?.title ?? "";
   publicSummaryHighlights.value = summary?.fields?.highlights ?? "";
   publicSummaryImpact.value = summary?.fields?.impact ?? "";
@@ -1409,6 +1552,7 @@ function applyPublicSummary(summary) {
   } else {
     publicSummaryPublishStatus.textContent = "Not published yet.";
   }
+  summaryUserEditing = false;
   updatePublicSummaryReady();
 }
 
@@ -1637,6 +1781,133 @@ function splitCsvLine(line) {
   }
   values.push(current);
   return values.map((value) => value.trim());
+}
+
+async function saveMinutesDraft(options = {}) {
+  if (!selectedMeetingId) return;
+  const silent = Boolean(options.silent);
+  const result = await request(`/meetings/${selectedMeetingId}/draft-minutes`, "PUT", {
+    content: minutesContent.value,
+    base_version: currentMinutesVersion
+  }, { suppressAlert: silent });
+  if (!result || result.error) {
+    if (result?.current_version !== undefined) {
+      currentMinutesVersion = Number(result.current_version);
+      minutesContent.value = result.current_content ?? "";
+      collabStatus.textContent = "Conflict detected. Loaded latest draft.";
+      if (!silent) alert("Draft conflict detected. Latest content has been loaded.");
+      await renderVersionHistory(selectedMeetingId);
+      return;
+    }
+    collabStatus.textContent = "Draft save failed.";
+    return;
+  }
+  currentMinutesVersion = Number(result.minutes_version ?? currentMinutesVersion);
+  collabStatus.textContent = silent ? "Draft auto-saved." : "Draft saved.";
+  await renderVersionHistory(selectedMeetingId);
+}
+
+function startMinutesSync(meetingId) {
+  if (minutesSyncTimer) clearInterval(minutesSyncTimer);
+  if (!meetingId) return;
+  minutesSyncTimer = setInterval(async () => {
+    if (!selectedMeetingId || selectedMeetingId !== meetingId) return;
+    const remote = await request(`/meetings/${meetingId}/draft-minutes`, "GET", undefined, { suppressAlert: true });
+    if (!remote || remote.error) return;
+    const remoteVersion = Number(remote.minutes_version ?? 0);
+    if (remoteVersion > currentMinutesVersion) {
+      currentMinutesVersion = remoteVersion;
+      minutesContent.value = remote.content ?? "";
+      collabStatus.textContent = "Synced from server.";
+      await renderVersionHistory(meetingId);
+    }
+  }, 2000);
+}
+
+async function renderVersionHistory(meetingId) {
+  versionHistoryList.innerHTML = "";
+  const response = await request(
+    `/meetings/${meetingId}/draft-minutes/versions?limit=${versionHistoryLimit}&offset=${versionHistoryOffset}`,
+    "GET",
+    undefined,
+    { suppressAlert: true }
+  );
+  const versions = Array.isArray(response) ? response : response?.items ?? [];
+  versionHistoryHasMore = Boolean(response?.has_more);
+  versionHistoryTotal = Number(response?.total ?? versions.length ?? 0);
+  versionHistoryPrev.disabled = versionHistoryOffset <= 0;
+  versionHistoryNext.disabled = !versionHistoryHasMore;
+  const totalPages = Math.max(1, Math.ceil(versionHistoryTotal / versionHistoryLimit));
+  const currentPage = Math.min(Math.floor(versionHistoryOffset / versionHistoryLimit) + 1, totalPages);
+  versionHistoryPage.textContent = `Page ${currentPage}/${totalPages}`;
+  if (!Array.isArray(versions) || versions.length === 0) {
+    versionHistoryList.textContent = "No saved versions yet.";
+    return;
+  }
+
+  versions.forEach((version) => {
+    const row = document.createElement("div");
+    row.className = "version-item";
+    const preview = (version.content ?? "").slice(0, 64).replace(/\s+/g, " ").trim() || "(empty)";
+    const meta = document.createElement("div");
+    meta.className = "version-meta";
+    meta.textContent = `v${version.version} · ${preview}`;
+    const rollbackBtn = document.createElement("button");
+    rollbackBtn.className = "btn ghost";
+    rollbackBtn.type = "button";
+    rollbackBtn.dataset.version = String(version.version);
+    rollbackBtn.textContent = "Rollback";
+    rollbackBtn.addEventListener("click", async () => {
+      if (!selectedMeetingId) return;
+      const rollback = await request(`/meetings/${selectedMeetingId}/draft-minutes/rollback`, "POST", {
+        version: version.version
+      });
+      if (rollback?.error) {
+        collabStatus.textContent = `Rollback failed: ${rollback.error}`;
+        return;
+      }
+      currentMinutesVersion = Number(rollback.minutes_version ?? currentMinutesVersion);
+      minutesContent.value = rollback.content ?? "";
+      collabStatus.textContent = "Rolled back to selected version.";
+      showToast("Minutes rolled back.");
+      await renderVersionHistory(selectedMeetingId);
+    });
+    row.appendChild(meta);
+    row.appendChild(rollbackBtn);
+    versionHistoryList.appendChild(row);
+  });
+}
+
+versionHistoryPrev.addEventListener("click", async () => {
+  if (!selectedMeetingId || versionHistoryOffset <= 0) return;
+  versionHistoryOffset = Math.max(versionHistoryOffset - versionHistoryLimit, 0);
+  await renderVersionHistory(selectedMeetingId);
+});
+
+versionHistoryNext.addEventListener("click", async () => {
+  if (!selectedMeetingId || !versionHistoryHasMore) return;
+  const nextOffset = versionHistoryOffset + versionHistoryLimit;
+  if (versionHistoryTotal > 0 && nextOffset >= versionHistoryTotal) {
+    versionHistoryHasMore = false;
+    versionHistoryNext.disabled = true;
+    return;
+  }
+  versionHistoryOffset += versionHistoryLimit;
+  await renderVersionHistory(selectedMeetingId);
+});
+
+async function startApp() {
+  if (startupRetriesInProgress) return;
+  startupRetriesInProgress = true;
+  const startupRequestOptions = { suppressAlert: true, retries: 4, retryDelayMs: 500 };
+  const [meetingsResult] = await Promise.all([
+    loadMeetings(startupRequestOptions),
+    syncSettingsFromApi({ startup: true })
+  ]);
+  if (!meetingsResult) {
+    showToast("API is warming up. Retry when services are ready.");
+  }
+  startupRetriesInProgress = false;
 }
 
 function getExportStorageKey(meetingId) {

@@ -116,35 +116,17 @@ test.describe("Accessibility and WCAG Compliance", () => {
     // Open quick create modal
     await page.click('[data-testid="quick-create"]');
 
-    // Wait for modal to be interactive
     const modal = page.locator("#quickModal");
-    await page.waitForTimeout(200);
+    await expect(modal).toBeVisible();
 
-    // Check if modal is showing (doesn't have hidden class or is visible)
-    const isVisible = await modal.isVisible().catch(() => false);
-    
-    if (isVisible) {
-      // Find and fill inputs in the modal
-      const location = page.locator('#quickLocation');
-      await location.fill("Accessible Location");
+    const location = page.locator("#quickLocation");
+    await location.focus();
+    await expect(location).toBeFocused();
+    await location.fill("Accessible Location");
 
-      const chair = page.locator('#quickChair');
-      await chair.fill("Accessible Chair");
-
-      // Click submit
-      const submitBtn = page.locator('[data-testid="quick-submit"]');
-      const submitExists = await submitBtn.isVisible().catch(() => false);
-      
-      if (submitExists) {
-        await submitBtn.click();
-      }
-
-      // Wait for potential modal close
-      await page.waitForTimeout(200);
-    }
-
-    // Modal keyboard accessibility verified - modal can be opened and interacted with
-    expect(true).toBeTruthy();
+    // Modal should be keyboard-closeable.
+    await page.keyboard.press("Escape");
+    await expect(modal).toHaveClass(/hidden/);
   });
 
   test("Focus is visible on all interactive elements", async ({ page }) => {

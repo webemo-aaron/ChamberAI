@@ -86,12 +86,13 @@ Defined in `docker-compose.yml` and built with `Dockerfile.emulator`.
 - `firebase-emulators` for Auth/Firestore/Storage
 - `api` for REST endpoints
 - `worker` for background processing
+- `console` for the static Secretary Console UI (`http://localhost:5173`)
 
 ### Local Development (Node.js)
 
 - `npm run dev:firebase`
 - `npm run dev:api`
-- `npm run dev:console`
+- `npm run dev:console` (prefers `5173`, auto-falls back unless `CONSOLE_STRICT_PORT=true`)
 
 ### Production (Self-Hosted)
 

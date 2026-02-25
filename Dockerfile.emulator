@@ -12,6 +12,9 @@ RUN apt-get update && \
 # Install Firebase CLI globally
 RUN npm install -g firebase-tools
 
+# Pre-download Firestore emulator jar to avoid runtime fetches
+RUN firebase setup:emulators:firestore
+
 # Set working directory
 WORKDIR /app
 

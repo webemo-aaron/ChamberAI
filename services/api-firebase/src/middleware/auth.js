@@ -12,6 +12,16 @@ export async function requireAuth(req, res, next) {
   const token = authHeader.replace("Bearer ", "");
 
   if (process.env.FIREBASE_AUTH_ENABLED === "true") {
+    const mockedUsers = parseMockedUsers(process.env.FIREBASE_AUTH_MOCK_TOKENS);
+    if (mockedUsers && mockedUsers[token]) {
+      const mocked = mockedUsers[token];
+      req.user = {
+        uid: mocked.uid ?? "mocked-user",
+        email: mocked.email ?? demoEmail,
+        role: mocked.role ?? "secretary"
+      };
+      return next();
+    }
     try {
       const decoded = await admin.auth().verifyIdToken(token);
       req.user = {
@@ -27,4 +37,14 @@ export async function requireAuth(req, res, next) {
 
   req.user = { role: "secretary", email: demoEmail };
   return next();
+}
+
+function parseMockedUsers(raw) {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
 }
