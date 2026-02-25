@@ -172,6 +172,45 @@
               </div>
             </div>
           </details>
+          <details class="disclosure" id="settingsInviteDisclosure">
+            <summary>Email Invites</summary>
+            <div class="disclosure-body">
+              <label>
+                Authorized Sender Email (admin)
+                <input id="inviteAuthorizedEmail" type="email" placeholder="aaron@mahoosuc.solutions" />
+              </label>
+              <div class="inline-actions">
+                <button id="inviteAuthorizeSender" class="btn ghost" type="button">Authorize Sender</button>
+              </div>
+              <div id="inviteAuthorizedList" class="hint">Authorized senders will appear here.</div>
+              <hr />
+              <label>
+                Invite Recipient
+                <input id="inviteRecipientEmail" type="email" placeholder="chair@chamber.org" />
+              </label>
+              <label>
+                Meeting Title
+                <input id="inviteMeetingTitle" type="text" placeholder="Board Meeting - March 2026" />
+              </label>
+              <label>
+                Motion Link (optional)
+                <input id="inviteMotionLink" type="url" placeholder="https://app.usemotion.com/..." />
+              </label>
+              <label>
+                Invite Link (optional)
+                <input id="inviteJoinLink" type="url" placeholder="https://secretary-console.vercel.app" />
+              </label>
+              <label>
+                Note (optional)
+                <input id="inviteNote" type="text" placeholder="Please join from your laptop 10 minutes early." />
+              </label>
+              <div class="inline-actions">
+                <button id="inviteSendBtn" class="btn" type="button">Send Invite</button>
+                <button id="inviteRefreshBtn" class="btn ghost" type="button">Refresh Invite Data</button>
+              </div>
+              <div id="inviteStatus" class="hint"></div>
+            </div>
+          </details>
           <button id="saveSettings" class="btn ghost" data-testid="save-settings">Save Settings</button>
           <div id="retentionResult" class="hint"></div>
           <div id="settingsStatus" class="settings-banner hidden"></div>

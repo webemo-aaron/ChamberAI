@@ -138,6 +138,18 @@ const runRetentionSweep = document.getElementById("runRetentionSweep");
 const retentionResult = document.getElementById("retentionResult");
 const toast = document.getElementById("toast");
 const featureFlagsEl = document.getElementById("featureFlags");
+const settingsInviteDisclosure = document.getElementById("settingsInviteDisclosure");
+const inviteAuthorizedEmail = document.getElementById("inviteAuthorizedEmail");
+const inviteAuthorizeSender = document.getElementById("inviteAuthorizeSender");
+const inviteAuthorizedList = document.getElementById("inviteAuthorizedList");
+const inviteRecipientEmail = document.getElementById("inviteRecipientEmail");
+const inviteMeetingTitle = document.getElementById("inviteMeetingTitle");
+const inviteMotionLink = document.getElementById("inviteMotionLink");
+const inviteJoinLink = document.getElementById("inviteJoinLink");
+const inviteNote = document.getElementById("inviteNote");
+const inviteSendBtn = document.getElementById("inviteSendBtn");
+const inviteRefreshBtn = document.getElementById("inviteRefreshBtn");
+const inviteStatus = document.getElementById("inviteStatus");
 
 let meetings = [];
 let selectedMeetingId = null;
@@ -169,6 +181,7 @@ let firebaseUser = null;
 let signInWithPopupFn = null;
 let signOutFn = null;
 let googleProvider = null;
+let inviteAuthorizedSenders = [];
 
 const hostedApiBase = "https://chamberai-api-ecfgvedexq-uc.a.run.app";
 const inferredApiBase = window.location.hostname.endsWith(".vercel.app") ? hostedApiBase : "http://localhost:4000";
@@ -178,11 +191,16 @@ apiBaseInput.value = defaultApiBase;
 if (localStorage.getItem("camOnboardingDismissed") === "true") {
   onboardingBanner.style.display = "none";
 }
+inviteJoinLink.value = window.location.origin;
 
 if (!currentRole) {
   loginModal.classList.remove("hidden");
 } else {
-  setRole(currentRole, localStorage.getItem("camEmail") || "user@example.com");
+  setRole(
+    currentRole,
+    localStorage.getItem("camEmail") || "user@example.com",
+    localStorage.getItem("camDisplayName") || ""
+  );
 }
 
 saveApiBaseBtn.addEventListener("click", () => {
@@ -196,9 +214,10 @@ saveApiBaseBtn.addEventListener("click", () => {
 loginSubmit.addEventListener("click", () => {
   const email = loginEmail.value.trim() || "user@example.com";
   const role = loginRole.value;
+  localStorage.setItem("camDisplayName", "");
   localStorage.setItem("camRole", role);
   localStorage.setItem("camEmail", email);
-  setRole(role, email);
+  setRole(role, email, "");
   syncSettingsFromApi({ startup: true });
   loginModal.classList.add("hidden");
 });
@@ -212,21 +231,25 @@ loginGoogle.addEventListener("click", async () => {
     const result = await signInWithPopupFn(firebaseAuth, googleProvider);
     const role = loginRole.value || localStorage.getItem("camRole") || "secretary";
     const email = result.user?.email || loginEmail.value.trim() || "user@example.com";
+    const displayName = result.user?.displayName || "";
     localStorage.setItem("camRole", role);
     localStorage.setItem("camEmail", email);
-    setRole(role, email);
+    localStorage.setItem("camDisplayName", displayName);
+    setRole(role, email, displayName);
     syncSettingsFromApi({ startup: true });
     loginModal.classList.add("hidden");
     showToast("Signed in with Google.");
   } catch (error) {
     console.error(error);
-    showToast("Google sign-in failed.");
+    const code = error?.code ? ` (${error.code})` : "";
+    showToast(`Google sign-in failed${code}.`);
   }
 });
 
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("camRole");
   localStorage.removeItem("camEmail");
+  localStorage.removeItem("camDisplayName");
   currentRole = "";
   roleBadge.textContent = "Role: Guest";
   applyRolePermissions("guest");
@@ -397,6 +420,57 @@ runRetentionSweep.addEventListener("click", async () => {
   const deletedCount = Array.isArray(result?.deleted) ? result.deleted.length : 0;
   retentionResult.textContent = `Sweep complete. Deleted ${deletedCount} audio source(s).`;
   showToast("Retention sweep complete.");
+});
+
+inviteAuthorizeSender.addEventListener("click", async () => {
+  if (currentRole !== "admin") {
+    inviteStatus.textContent = "Only admins can authorize sender emails.";
+    return;
+  }
+  const email = inviteAuthorizedEmail.value.trim().toLowerCase();
+  if (!email) {
+    inviteStatus.textContent = "Enter an email to authorize.";
+    return;
+  }
+  const result = await request("/invites/authorized-senders", "POST", { email });
+  if (!result || result.error) {
+    inviteStatus.textContent = `Authorization failed: ${result?.error ?? "unknown error"}`;
+    return;
+  }
+  inviteAuthorizedEmail.value = "";
+  inviteStatus.textContent = `${email} authorized.`;
+  inviteAuthorizedSenders = Array.isArray(result.authorizedSenders) ? result.authorizedSenders : inviteAuthorizedSenders;
+  renderAuthorizedSenders();
+});
+
+inviteSendBtn.addEventListener("click", async () => {
+  const recipient = inviteRecipientEmail.value.trim().toLowerCase();
+  if (!recipient) {
+    inviteStatus.textContent = "Recipient email is required.";
+    return;
+  }
+  const payload = {
+    to: recipient,
+    meetingTitle: inviteMeetingTitle.value.trim(),
+    motionLink: inviteMotionLink.value.trim(),
+    inviteUrl: inviteJoinLink.value.trim() || window.location.origin,
+    note: inviteNote.value.trim(),
+    chamberName: "ChamberAI",
+    senderName: localStorage.getItem("camDisplayName") || "Chamber Secretary"
+  };
+  const response = await request("/invites/send", "POST", payload);
+  if (!response || response.error) {
+    inviteStatus.textContent = `Send failed: ${response?.error ?? "unknown error"}`;
+    return;
+  }
+  inviteStatus.textContent = `Invite sent to ${recipient}.`;
+  inviteRecipientEmail.value = "";
+  inviteNote.value = "";
+  showToast("Invite sent.");
+});
+
+inviteRefreshBtn.addEventListener("click", () => {
+  loadInviteWorkspace();
 });
 
 quickCreateBtn.addEventListener("click", () => {
@@ -1444,9 +1518,11 @@ async function initFirebaseAuth() {
       if (!user) return;
       const role = localStorage.getItem("camRole") || loginRole.value || "secretary";
       const email = user.email || localStorage.getItem("camEmail") || "user@example.com";
+      const displayName = user.displayName || localStorage.getItem("camDisplayName") || "";
       localStorage.setItem("camRole", role);
       localStorage.setItem("camEmail", email);
-      setRole(role, email);
+      localStorage.setItem("camDisplayName", displayName);
+      setRole(role, email, displayName);
       loginModal.classList.add("hidden");
     });
   } catch (error) {
@@ -1496,6 +1572,31 @@ function syncSettingsFromApi(options = {}) {
     renderFeatureFlags();
     settingsStatus.classList.add("hidden");
   });
+}
+
+function renderAuthorizedSenders() {
+  if (!Array.isArray(inviteAuthorizedSenders) || inviteAuthorizedSenders.length === 0) {
+    inviteAuthorizedList.textContent = "No authorized senders yet.";
+    return;
+  }
+  inviteAuthorizedList.textContent = `Authorized senders: ${inviteAuthorizedSenders.join(", ")}`;
+}
+
+async function loadInviteWorkspace() {
+  if (!(currentRole === "admin" || currentRole === "secretary")) {
+    inviteAuthorizedSenders = [];
+    renderAuthorizedSenders();
+    inviteStatus.textContent = "Invite tools require admin or secretary role.";
+    return;
+  }
+  const response = await request("/invites/authorized-senders", "GET", null, { suppressAlert: true });
+  if (!response || response.error) {
+    inviteStatus.textContent = `Invite config unavailable: ${response?.error ?? "unknown error"}`;
+    return;
+  }
+  inviteAuthorizedSenders = Array.isArray(response.authorizedSenders) ? response.authorizedSenders : [];
+  inviteStatus.textContent = "";
+  renderAuthorizedSenders();
 }
 
 renderFeatureFlags();
@@ -1678,7 +1779,9 @@ function renderFeatureFlags() {
     featureFlagsEl.appendChild(label);
   });
   const hidePublicSummary = !featureFlags.public_summary;
+  const hideInviteTools = !featureFlags.integrations_email;
   publicSummaryTab.classList.toggle("hidden", hidePublicSummary);
+  settingsInviteDisclosure.classList.toggle("hidden", hideInviteTools);
   if (hidePublicSummary && publicSummaryTab.classList.contains("active")) {
     tabs.forEach((tab) => tab.classList.remove("active"));
     if (tabs.length > 0) tabs[0].classList.add("active");
@@ -1705,13 +1808,15 @@ function showSettingsBanner(message, variant) {
   settingsStatus.classList.add(variant);
 }
 
-function setRole(role, email) {
+function setRole(role, email, displayName = "") {
   currentRole = role;
-  roleBadge.textContent = `Role: ${role}`;
+  const identity = displayName || email || "user";
+  roleBadge.textContent = `Role: ${role} · ${identity}`;
   loginEmail.value = email;
   loginRole.value = role;
   loginModal.classList.add("hidden");
   applyRolePermissions(role);
+  loadInviteWorkspace();
 }
 
 function applyRolePermissions(role) {
@@ -1731,12 +1836,17 @@ function applyRolePermissions(role) {
     csvApply,
     saveAdjournmentFlag,
     saveSettingsBtn,
-    quickSubmit
+    quickSubmit,
+    inviteSendBtn,
+    inviteRefreshBtn
   ];
   controls.forEach((control) => {
     if (!control) return;
     control.disabled = isViewer;
   });
+  if (inviteAuthorizeSender) {
+    inviteAuthorizeSender.disabled = role !== "admin";
+  }
 
   [
     "newDate",
@@ -1761,7 +1871,13 @@ function applyRolePermissions(role) {
     "motionOutcome",
     "settingRetention",
     "settingMaxSize",
-    "settingMaxDuration"
+    "settingMaxDuration",
+    "inviteAuthorizedEmail",
+    "inviteRecipientEmail",
+    "inviteMeetingTitle",
+    "inviteMotionLink",
+    "inviteJoinLink",
+    "inviteNote"
   ].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.disabled = isViewer;
@@ -1976,7 +2092,8 @@ async function startApp() {
   const startupRequestOptions = { suppressAlert: true, retries: 4, retryDelayMs: 500 };
   const [meetingsResult] = await Promise.all([
     loadMeetings(startupRequestOptions),
-    syncSettingsFromApi({ startup: true })
+    syncSettingsFromApi({ startup: true }),
+    loadInviteWorkspace()
   ]);
   if (!meetingsResult) {
     showToast("API is warming up. Retry when services are ready.");

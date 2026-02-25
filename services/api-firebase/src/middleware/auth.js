@@ -1,5 +1,6 @@
 import admin from "firebase-admin";
-import { initFirebaseAdminApp } from "../db/firestore.js";
+import { initFirebaseAdminApp, initFirestore } from "../db/firestore.js";
+import { normalizeEmail, parseEnvInviteAllowedSenders } from "../services/invite_email.js";
 
 export async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization || "";
@@ -26,10 +27,41 @@ export async function requireAuth(req, res, next) {
     try {
       initFirebaseAdminApp();
       const decoded = await admin.auth().verifyIdToken(token);
+      const email = normalizeEmail(decoded.email ?? demoEmail);
+      const roleFromToken = decoded.role ?? "secretary";
+      const enforceMembership = process.env.FIREBASE_REQUIRE_MEMBERSHIP !== "false";
+      const bootstrapAdmins = parseEnvInviteAllowedSenders(process.env.AUTH_BOOTSTRAP_ADMINS);
+
+      if (enforceMembership) {
+        const db = initFirestore();
+        const membershipDoc = await db.collection("memberships").doc(email).get();
+        if (membershipDoc.exists) {
+          const membership = membershipDoc.data() ?? {};
+          const status = String(membership.status ?? "active");
+          if (status !== "active") {
+            return res.status(403).json({ error: "User account is disabled." });
+          }
+          req.user = {
+            uid: decoded.uid,
+            email,
+            role: membership.role ?? roleFromToken
+          };
+          return next();
+        }
+        if (bootstrapAdmins.includes(email)) {
+          req.user = {
+            uid: decoded.uid,
+            email,
+            role: "admin"
+          };
+          return next();
+        }
+        return res.status(403).json({ error: "User is not authorized for this chamber." });
+      }
       req.user = {
         uid: decoded.uid,
-        email: decoded.email ?? demoEmail,
-        role: decoded.role ?? "secretary"
+        email,
+        role: roleFromToken
       };
       return next();
     } catch (error) {

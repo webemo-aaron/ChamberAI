@@ -95,8 +95,18 @@ Then:
    - `npm run deploy:vercel-console`
 5. Re-enable strict backend auth:
    - set Cloud Run API env `FIREBASE_AUTH_ENABLED=true`
+   - set Cloud Run API env `FIREBASE_REQUIRE_MEMBERSHIP=true`
+   - set bootstrap/admin env `AUTH_BOOTSTRAP_ADMINS=aaron@mahoosuc.solutions` (or your admin email)
 
-## 6) Monthly/On-Demand Readiness
+## 6) Configure invite sending via Resend
+
+Set Cloud Run API env vars:
+
+- `RESEND_API_KEY=<your-resend-api-key>`
+- `RESEND_FROM_EMAIL=<verified-from-email>`
+- `INVITE_ALLOWED_SENDERS=aaron@mahoosuc.solutions` (comma-separated allowed sender emails)
+
+## 7) Monthly/On-Demand Readiness
 
 Run before each meeting:
 

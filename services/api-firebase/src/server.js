@@ -13,6 +13,7 @@ import publicSummary from "./routes/public_summary.js";
 import approval from "./routes/approval.js";
 import retention from "./routes/retention.js";
 import search from "./routes/search.js";
+import invitations from "./routes/invitations.js";
 import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
@@ -69,6 +70,7 @@ app.use(publicSummary);
 app.use(approval);
 app.use(retention);
 app.use(search);
+app.use(invitations);
 
 app.use((err, req, res, next) => {
   metrics.errors_total += 1;
