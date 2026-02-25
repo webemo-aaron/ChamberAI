@@ -181,6 +181,9 @@ cp .env.gcp.vercel.example .env.gcp.vercel
 ./scripts/deploy_gcp_vercel_low_cost.sh .env.gcp.vercel
 ./scripts/configure_gcp_low_cost_controls.sh .env.gcp.vercel
 ./scripts/check_gcp_monthly_readiness.sh .env.gcp.vercel
+
+# Deploy secretary console to Vercel production
+./scripts/deploy_vercel_console.sh
 ```
 
 If local Playwright is blocked by Chromium sandbox constraints, use GitHub Actions `e2e` job as the canonical browser E2E signal and run `./scripts/verify_local_stack.sh` for local stack health.
