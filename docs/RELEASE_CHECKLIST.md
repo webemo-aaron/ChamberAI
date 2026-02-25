@@ -47,6 +47,7 @@ Use this checklist for stable, repeatable releases of the self-hosted tier.
 
 ## Release
 
+- [ ] Confirm the exact commit/tag has a fully green CI workflow before publishing the GitHub release
 - [ ] Tag release in Git (`vX.Y.Z`)
 - [ ] Publish release notes (copy from `CHANGELOG.md`)
 - [ ] Announce release location and upgrade notes
