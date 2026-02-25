@@ -164,7 +164,9 @@ let versionHistoryTotal = 0;
 let summaryLoadToken = 0;
 let summaryUserEditing = false;
 
-const defaultApiBase = localStorage.getItem("camApiBase") || "http://localhost:4000";
+const hostedApiBase = "https://chamberai-api-ecfgvedexq-uc.a.run.app";
+const inferredApiBase = window.location.hostname.endsWith(".vercel.app") ? hostedApiBase : "http://localhost:4000";
+const defaultApiBase = localStorage.getItem("camApiBase") || inferredApiBase;
 apiBaseInput.value = defaultApiBase;
 
 if (localStorage.getItem("camOnboardingDismissed") === "true") {
