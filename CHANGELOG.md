@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-02-25
+
+- Updated Node test scripts to use shell-expanded file paths (`tests/unit/*.test.js`, `tests/contracts/*.test.mjs`) for CI compatibility.
+
 ## [0.2.2] - 2026-02-25
 
 - Added portable fallback from `rg` to `grep` in `scripts/check_test_quality.sh` so CI quality gates run on runners without ripgrep.
