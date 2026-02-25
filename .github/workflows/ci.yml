@@ -148,7 +148,9 @@ jobs:
       - name: Console Guard Trend (Warn Mode)
         env:
           PLAYWRIGHT_CONSOLE_GUARD_MODE: warn
-        run: npm run test:e2e:critical | tee artifacts/console-guard-warn.log
+        run: |
+          mkdir -p artifacts
+          npm run test:e2e:critical | tee artifacts/console-guard-warn.log
 
       - name: Track Console Guard Warnings
         run: ./scripts/track_console_guard_warnings.sh artifacts/console-guard-warn.log artifacts/console-guard-warning-count.txt artifacts/console-guard-warning-trend.json

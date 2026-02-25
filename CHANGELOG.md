@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-02-25
+
+- Fixed compose smoke console trend artifact generation by ensuring `artifacts/` exists before teeing warning logs in CI and local scripts.
+
 ## [0.2.7] - 2026-02-25
 
 - Made `scripts/verify_local_stack.sh` and `scripts/diag_frontend.sh` compatible with both `docker-compose` and `docker compose` to fix compose smoke CI failures on GitHub runners.

@@ -18,7 +18,7 @@
     "test:reset-state": "./scripts/reset_test_state.sh",
     "test:seed-data": "./scripts/seed_test_data.sh",
     "test:seed-fixtures": "./scripts/seed_fixture_data.sh",
-    "test:console-guard-trend": "bash -o pipefail -c 'PLAYWRIGHT_CONSOLE_GUARD_MODE=warn npm run test:e2e:critical | tee artifacts/console-guard-warn.log' && ./scripts/track_console_guard_warnings.sh artifacts/console-guard-warn.log artifacts/console-guard-warning-count.txt artifacts/console-guard-warning-trend.json",
+    "test:console-guard-trend": "mkdir -p artifacts && bash -o pipefail -c 'PLAYWRIGHT_CONSOLE_GUARD_MODE=warn npm run test:e2e:critical | tee artifacts/console-guard-warn.log' && ./scripts/track_console_guard_warnings.sh artifacts/console-guard-warn.log artifacts/console-guard-warning-count.txt artifacts/console-guard-warning-trend.json",
     "test:console-guard-regression": "./scripts/check_console_guard_regression.sh artifacts/console-guard-warning-trend.json docs/testing/console_guard_baseline.json",
     "test:rollback-warning-threshold": "./scripts/check_rollback_warnings.sh artifacts/rollback-drill-report.txt",
     "test:verify-release-archive": "./scripts/verify_release_archive.sh artifacts/release-evidence.tar.gz",
