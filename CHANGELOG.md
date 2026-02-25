@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-02-25
+
+- Added explicit `build` definitions for API and worker services in `docker-compose.yml` so CI compose workflows do not attempt missing remote images.
+
 ## [0.2.4] - 2026-02-25
 
 - Updated `auth-middleware` CI job to boot Firebase emulator and set Firestore emulator environment for auth integration tests.
