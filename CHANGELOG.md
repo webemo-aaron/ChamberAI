@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.12] - 2026-02-25
+
+- Stabilized minutes editing E2E further by waiting for meeting status `DRAFT_READY` before editing and extending persistence polling to avoid asynchronous generation races in CI.
+
 ## [0.2.11] - 2026-02-25
 
 - Hardened minutes editing E2E persistence check by polling draft content through API before UI reload assertions, reducing intermittent CI failures.

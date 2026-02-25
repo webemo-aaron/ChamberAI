@@ -10,6 +10,17 @@ test.describe("Minutes Editing and Management", () => {
     const location = `Minutes Edit Room ${Date.now()}`;
     const meeting = await createMeeting(request, location);
     await request.post(`${API_BASE}/meetings/${meeting.id}/process`);
+
+    // Wait until backend processing reaches DRAFT_READY to avoid async worker overwrite races.
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const statusRes = await request.get(`${API_BASE}/meetings/${meeting.id}`);
+      const statusBody = await statusRes.json();
+      if (statusBody?.status === "DRAFT_READY" || statusBody?.status === "APPROVED") {
+        break;
+      }
+      await page.waitForTimeout(250);
+    }
+
     await openMeeting(page, location);
 
     const updatedText = "Updated draft minutes for board review.";
@@ -17,9 +28,9 @@ test.describe("Minutes Editing and Management", () => {
     await page.locator('[data-testid="save-minutes"]').click();
     await expect(page.locator('[data-testid="collab-status"]')).toContainText("Draft saved.");
 
-    // Confirm persistence at API layer before forcing a UI reload, avoiding eventual-consistency flakes.
+    // Confirm persistence at API layer before forcing a UI reload.
     let persisted = false;
-    for (let attempt = 0; attempt < 20; attempt += 1) {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
       const draft = await request.get(`${API_BASE}/meetings/${meeting.id}/draft-minutes`);
       if (draft.ok()) {
         const body = await draft.json();
