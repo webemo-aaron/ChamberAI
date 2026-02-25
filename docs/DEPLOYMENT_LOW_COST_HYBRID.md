@@ -32,16 +32,24 @@ Recommended baseline:
 - 1 vCPU / 2GB RAM
 - Docker + Docker Compose installed
 
-Harden basic network:
+Use one-command bootstrap (Docker + firewall + fail2ban + backup cron):
 
-- Allow inbound: `22`, `80`, `443`
-- Block public access to internal emulator/service ports
+```bash
+sudo APP_DIR=/opt/chamberai SSH_PORT=22 ./scripts/bootstrap_vps.sh
+```
+
+This enforces:
+
+- UFW allowlist (`22`, `80`, `443`)
+- fail2ban SSH protection
+- nightly backup cron using `scripts/backup_hybrid_data.sh`
 
 ## 3) Configure Environment
 
 On VPS:
 
 ```bash
+cd /opt/chamberai
 cp .env.hybrid.example .env.hybrid
 ```
 

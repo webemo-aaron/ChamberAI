@@ -170,6 +170,7 @@ npm run test:console-guard-regression
 npm run test:verify-release-archive
 
 # Hybrid VPS deploy (frontend hosted separately)
+sudo APP_DIR=/opt/chamberai SSH_PORT=22 ./scripts/bootstrap_vps.sh
 ./scripts/deploy_hybrid_vps.sh .env.hybrid
 ./scripts/verify_hybrid_stack.sh .env.hybrid
 ./scripts/backup_hybrid_data.sh .env.hybrid
