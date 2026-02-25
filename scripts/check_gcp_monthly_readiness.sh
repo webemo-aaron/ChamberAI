@@ -35,7 +35,11 @@ curl -fsS "${API_URL}/health"
 echo
 
 echo "== Cloud Run cost controls =="
-gcloud run services describe "${API_SERVICE}" --region "${REGION}" --format="value(spec.template.metadata.annotations.autoscaling\\.knative\\.dev/minScale,spec.template.metadata.annotations.autoscaling\\.knative\\.dev/maxScale)"
-gcloud run services describe "${WORKER_SERVICE}" --region "${REGION}" --format="value(spec.template.metadata.annotations.autoscaling\\.knative\\.dev/minScale,spec.template.metadata.annotations.autoscaling\\.knative\\.dev/maxScale)"
+api_min="$(gcloud run services describe "${API_SERVICE}" --region "${REGION}" --format="value(spec.template.metadata.annotations['autoscaling.knative.dev/minScale'])")"
+api_max="$(gcloud run services describe "${API_SERVICE}" --region "${REGION}" --format="value(spec.template.metadata.annotations['autoscaling.knative.dev/maxScale'])")"
+worker_min="$(gcloud run services describe "${WORKER_SERVICE}" --region "${REGION}" --format="value(spec.template.metadata.annotations['autoscaling.knative.dev/minScale'])")"
+worker_max="$(gcloud run services describe "${WORKER_SERVICE}" --region "${REGION}" --format="value(spec.template.metadata.annotations['autoscaling.knative.dev/maxScale'])")"
+echo "API scale: min=${api_min:-unset}, max=${api_max:-unset}"
+echo "Worker scale: min=${worker_min:-unset}, max=${worker_max:-unset}"
 
 echo "Monthly readiness checks complete."

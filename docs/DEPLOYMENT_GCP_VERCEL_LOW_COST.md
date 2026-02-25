@@ -36,6 +36,9 @@ Set at least:
 - `VERCEL_FRONTEND_URL`
 - `GCS_BUCKET_NAME`
 
+If you need to deploy immediately before your final Vercel URL is known, set
+`VERCEL_FRONTEND_URL=*` temporarily, then tighten it to the exact `https://<app>.vercel.app` value afterward.
+
 ## 2) Deploy Backend
 
 ```bash
@@ -48,6 +51,7 @@ This will:
 - Deploy worker private Cloud Run service
 - Deploy public API Cloud Run service
 - Apply env vars including `CORS_ORIGIN` and `WORKER_ENDPOINT`
+- Configure worker ingress as internal-only with low-cost scale limits
 
 ## 3) Apply Low-Cost Controls
 

@@ -23,7 +23,8 @@ source "${ENV_FILE}"
 : "${AR_REPO:?AR_REPO is required}"
 : "${API_SERVICE:?API_SERVICE is required}"
 : "${WORKER_SERVICE:?WORKER_SERVICE is required}"
-: "${VERCEL_FRONTEND_URL:?VERCEL_FRONTEND_URL is required}"
+# If unknown yet, set "*" temporarily and tighten later.
+VERCEL_FRONTEND_URL="${VERCEL_FRONTEND_URL:-*}"
 : "${GCS_BUCKET_NAME:?GCS_BUCKET_NAME is required}"
 
 API_MIN_INSTANCES="${API_MIN_INSTANCES:-0}"
@@ -48,6 +49,11 @@ gcloud services enable \
   firestore.googleapis.com \
   storage.googleapis.com >/dev/null
 
+echo "== Ensure Firebase/Firestore bootstrap =="
+if ! gcloud firestore databases describe --project "${PROJECT_ID}" --database="(default)" >/dev/null 2>&1; then
+  gcloud firestore databases create --project "${PROJECT_ID}" --database="(default)" --location="${REGION}" --type=firestore-native >/dev/null
+fi
+
 echo "== Ensure Artifact Registry repo exists =="
 if ! gcloud artifacts repositories describe "${AR_REPO}" --location="${REGION}" >/dev/null 2>&1; then
   gcloud artifacts repositories create "${AR_REPO}" \
@@ -58,6 +64,11 @@ fi
 
 API_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/api-firebase:latest"
 WORKER_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/worker-firebase:latest"
+
+echo "== Ensure Cloud Storage bucket exists =="
+if ! gcloud storage buckets describe "gs://${GCS_BUCKET_NAME}" >/dev/null 2>&1; then
+  gcloud storage buckets create "gs://${GCS_BUCKET_NAME}" --project "${PROJECT_ID}" --location "${REGION}" --uniform-bucket-level-access >/dev/null
+fi
 
 echo "== Build and push API image =="
 gcloud builds submit services/api-firebase --tag "${API_IMAGE}" >/dev/null
@@ -70,7 +81,8 @@ gcloud run deploy "${WORKER_SERVICE}" \
   --image "${WORKER_IMAGE}" \
   --region "${REGION}" \
   --platform managed \
-  --no-allow-unauthenticated \
+  --allow-unauthenticated \
+  --ingress internal \
   --cpu "${WORKER_CPU}" \
   --memory "${WORKER_MEMORY}" \
   --min-instances "${WORKER_MIN_INSTANCES}" \
