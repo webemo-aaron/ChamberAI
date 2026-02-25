@@ -19,6 +19,10 @@ test.describe("Advanced Search", () => {
     });
 
     await bootstrapPage(page);
+    const advancedFilters = page.locator("#advancedFiltersDisclosure");
+    if (!(await advancedFilters.evaluate((el) => el.hasAttribute("open")))) {
+      await advancedFilters.locator("summary").click();
+    }
     await page.locator('[data-testid="advanced-search-query"]').fill(phrase);
     await page.locator('[data-testid="advanced-search-run"]').click();
     await expect(page.locator(".meeting-card", { hasText: location }).first()).toBeVisible();

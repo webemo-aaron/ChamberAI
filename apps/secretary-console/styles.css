@@ -95,11 +95,19 @@ body {
   padding: 24px 40px 60px;
 }
 
+.left-pane,
+.right-pane {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
 .panel {
   background: var(--panel);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 20px;
+  border: 1px solid #e7ded2;
+  padding: 22px;
   position: relative;
   overflow: hidden;
   animation: lift 0.6s ease;
@@ -182,6 +190,11 @@ body {
   margin: 0 0 6px;
 }
 
+.panel h2,
+.panel h3 {
+  margin: 0 0 10px;
+}
+
 .hero p {
   margin: 0;
   color: var(--muted);
@@ -234,7 +247,7 @@ textarea {
 
 .btn {
   border: none;
-  padding: 10px 18px;
+  padding: 10px 16px;
   border-radius: 14px;
   background: var(--accent);
   color: #f8f3eb;
@@ -389,6 +402,11 @@ textarea {
   grid-template-columns: 1.1fr 0.9fr;
   gap: 18px;
   margin-bottom: 18px;
+}
+
+.detail-body {
+  display: grid;
+  gap: 14px;
 }
 
 .meta {
@@ -559,21 +577,24 @@ textarea {
 
 .tab-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin: 10px 0 12px;
 }
 
 .tab {
-  border: none;
-  background: transparent;
-  padding: 8px 0;
+  border: 1px solid #e6dbcd;
+  background: #f5eee4;
+  padding: 8px 12px;
+  border-radius: 999px;
   font-weight: 600;
-  border-bottom: 2px solid transparent;
   cursor: pointer;
 }
 
 .tab.active {
   border-color: var(--accent);
+  background: #e4f0ed;
+  color: #0f4f46;
 }
 
 .tab-content.hidden {
@@ -614,6 +635,9 @@ textarea {
 .inline-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .action-row {
@@ -777,6 +801,42 @@ textarea {
   padding-left: 18px;
   margin: 10px 0 0;
   color: var(--muted);
+}
+
+.disclosure {
+  border: 1px solid #e6dbcd;
+  border-radius: 12px;
+  background: #fbf6ee;
+  padding: 8px 10px;
+  margin: 6px 0 10px;
+}
+
+.disclosure > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3f4d4a;
+}
+
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure > summary::before {
+  content: "▸";
+  margin-right: 6px;
+  color: #5b6a67;
+}
+
+.disclosure[open] > summary::before {
+  content: "▾";
+}
+
+.disclosure-body {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
 }
 
 .footer {

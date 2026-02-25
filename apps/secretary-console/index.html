@@ -101,14 +101,6 @@
             <span class="hint">Press Esc to clear.</span>
           </label>
           <label class="filter">
-            Advanced Search
-            <input id="advancedSearchQuery" type="text" placeholder="Search minutes, motions, action items" data-testid="advanced-search-query" />
-          </label>
-          <div class="inline-actions">
-            <button id="advancedSearchBtn" class="btn ghost" type="button" data-testid="advanced-search-run">Run Search</button>
-            <button id="advancedSearchReset" class="btn ghost" type="button" data-testid="advanced-search-reset">Reset Search</button>
-          </div>
-          <label class="filter">
             Status
             <select id="statusFilter" data-testid="status-filter">
               <option value="">All</option>
@@ -119,18 +111,31 @@
               <option value="APPROVED">APPROVED</option>
             </select>
           </label>
-          <label class="filter">
-            Recent
-            <select id="recentFilter" data-testid="recent-filter">
-              <option value="">All</option>
-              <option value="30">Last 30 days</option>
-              <option value="60">Last 60 days</option>
-              <option value="90">Last 90 days</option>
-            </select>
-          </label>
-          <div class="inline-actions">
-            <button id="clearFilters" class="btn ghost" type="button" data-testid="clear-filters">Clear Filters</button>
-          </div>
+          <details class="disclosure" id="advancedFiltersDisclosure">
+            <summary>Advanced Filters & Search</summary>
+            <div class="disclosure-body">
+              <label class="filter">
+                Advanced Search
+                <input id="advancedSearchQuery" type="text" placeholder="Search minutes, motions, action items" data-testid="advanced-search-query" />
+              </label>
+              <div class="inline-actions">
+                <button id="advancedSearchBtn" class="btn ghost" type="button" data-testid="advanced-search-run">Run Search</button>
+                <button id="advancedSearchReset" class="btn ghost" type="button" data-testid="advanced-search-reset">Reset Search</button>
+              </div>
+              <label class="filter">
+                Recent
+                <select id="recentFilter" data-testid="recent-filter">
+                  <option value="">All</option>
+                  <option value="30">Last 30 days</option>
+                  <option value="60">Last 60 days</option>
+                  <option value="90">Last 90 days</option>
+                </select>
+              </label>
+              <div class="inline-actions">
+                <button id="clearFilters" class="btn ghost" type="button" data-testid="clear-filters">Clear Filters</button>
+              </div>
+            </div>
+          </details>
           <div id="meetingList" class="meeting-list"></div>
           <div id="meetingEmpty" class="empty">No meetings yet. Create your first meeting.</div>
         </div>
@@ -139,28 +144,35 @@
           <div class="panel-head">
             <h2>Settings</h2>
           </div>
-          <div class="settings-section">
-            <h3>Modules</h3>
-            <div id="featureFlags" class="flag-grid"></div>
-          </div>
-          <div class="grid">
-            <label>
-              Retention Days
-              <input id="settingRetention" type="number" min="1" max="365" />
-            </label>
-            <label>
-              Max File Size (MB)
-              <input id="settingMaxSize" type="number" min="1" max="1024" />
-            </label>
-            <label>
-              Max Duration (seconds)
-              <input id="settingMaxDuration" type="number" min="300" max="21600" />
-            </label>
-          </div>
+          <details class="disclosure" id="settingsModulesDisclosure" open>
+            <summary>Modules</summary>
+            <div class="disclosure-body">
+              <div id="featureFlags" class="flag-grid"></div>
+            </div>
+          </details>
+          <details class="disclosure" id="settingsOpsDisclosure">
+            <summary>Retention & Limits</summary>
+            <div class="disclosure-body">
+              <div class="grid">
+                <label>
+                  Retention Days
+                  <input id="settingRetention" type="number" min="1" max="365" />
+                </label>
+                <label>
+                  Max File Size (MB)
+                  <input id="settingMaxSize" type="number" min="1" max="1024" />
+                </label>
+                <label>
+                  Max Duration (seconds)
+                  <input id="settingMaxDuration" type="number" min="300" max="21600" />
+                </label>
+              </div>
+              <div class="inline-actions">
+                <button id="runRetentionSweep" class="btn ghost" data-testid="run-retention-sweep" type="button">Run Retention Sweep</button>
+              </div>
+            </div>
+          </details>
           <button id="saveSettings" class="btn ghost" data-testid="save-settings">Save Settings</button>
-          <div class="inline-actions">
-            <button id="runRetentionSweep" class="btn ghost" data-testid="run-retention-sweep" type="button">Run Retention Sweep</button>
-          </div>
           <div id="retentionResult" class="hint"></div>
           <div id="settingsStatus" class="settings-banner hidden"></div>
         </div>
@@ -313,25 +325,30 @@
                   <button id="addMotion" class="btn ghost" data-testid="add-motion">Add Motion</button>
                 </div>
                 <div class="export-block">
-                  <div class="export-filters">
-                    <label class="check">
-                      <input id="exportLatestOnly" type="checkbox" />
-                      Show latest only
-                    </label>
-                    <label>
-                      Group by
-                      <select id="exportGroup">
-                        <option value="none">None</option>
-                        <option value="format">Format</option>
-                      </select>
-                    </label>
-                  </div>
                   <div class="export-actions">
                     <button id="exportPdf" class="btn ghost" data-testid="export-pdf">Export PDF</button>
                     <button id="exportDocx" class="btn ghost" data-testid="export-docx">Export DOCX</button>
                     <button id="exportMinutesMd" class="btn ghost" data-testid="export-minutes-md">Download Minutes MD</button>
                     <button id="clearExportHistory" class="btn ghost">Clear Export History</button>
                   </div>
+                  <details class="disclosure">
+                    <summary>Advanced Export Options</summary>
+                    <div class="disclosure-body">
+                      <div class="export-filters">
+                        <label class="check">
+                          <input id="exportLatestOnly" type="checkbox" />
+                          Show latest only
+                        </label>
+                        <label>
+                          Group by
+                          <select id="exportGroup">
+                            <option value="none">None</option>
+                            <option value="format">Format</option>
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                  </details>
                   <div id="exportResults" class="export-results"></div>
                   <div id="exportHistory" class="export-results"></div>
                 </div>
@@ -341,40 +358,45 @@
 
             <div class="tab-content hidden" id="tab-public-summary">
               <div class="minutes-block">
-                <div class="summary-grid">
-                  <label>
-                    Summary Title
-                    <input id="publicSummaryTitle" type="text" placeholder="Board meeting highlights" />
-                  </label>
-                  <label>
-                    Key Highlights
-                    <textarea id="publicSummaryHighlights" rows="3" placeholder="Top 2-3 outcomes or updates."></textarea>
-                  </label>
-                  <label>
-                    Community Impact
-                    <textarea id="publicSummaryImpact" rows="3" placeholder="Why this matters to members or visitors."></textarea>
-                  </label>
-                  <label>
-                    Motions & Decisions
-                    <textarea id="publicSummaryMotions" rows="3" placeholder="Public-safe summary of motions/outcomes."></textarea>
-                  </label>
-                  <label>
-                    Action Items (Public)
-                    <textarea id="publicSummaryActions" rows="3" placeholder="Member-facing actions or next steps."></textarea>
-                  </label>
-                  <label>
-                    Attendance / Guests
-                    <textarea id="publicSummaryAttendance" rows="2" placeholder="Optional acknowledgements or guests."></textarea>
-                  </label>
-                  <label>
-                    Call to Action
-                    <textarea id="publicSummaryCTA" rows="2" placeholder="How members can engage or respond."></textarea>
-                  </label>
-                  <label>
-                    Notes
-                    <textarea id="publicSummaryNotes" rows="2" placeholder="Optional notes to include in the summary."></textarea>
-                  </label>
-                </div>
+                <label>
+                  Summary Title
+                  <input id="publicSummaryTitle" type="text" placeholder="Board meeting highlights" />
+                </label>
+                <details class="disclosure">
+                  <summary>Edit Summary Sections</summary>
+                  <div class="disclosure-body">
+                    <div class="summary-grid">
+                      <label>
+                        Key Highlights
+                        <textarea id="publicSummaryHighlights" rows="3" placeholder="Top 2-3 outcomes or updates."></textarea>
+                      </label>
+                      <label>
+                        Community Impact
+                        <textarea id="publicSummaryImpact" rows="3" placeholder="Why this matters to members or visitors."></textarea>
+                      </label>
+                      <label>
+                        Motions & Decisions
+                        <textarea id="publicSummaryMotions" rows="3" placeholder="Public-safe summary of motions/outcomes."></textarea>
+                      </label>
+                      <label>
+                        Action Items (Public)
+                        <textarea id="publicSummaryActions" rows="3" placeholder="Member-facing actions or next steps."></textarea>
+                      </label>
+                      <label>
+                        Attendance / Guests
+                        <textarea id="publicSummaryAttendance" rows="2" placeholder="Optional acknowledgements or guests."></textarea>
+                      </label>
+                      <label>
+                        Call to Action
+                        <textarea id="publicSummaryCTA" rows="2" placeholder="How members can engage or respond."></textarea>
+                      </label>
+                      <label>
+                        Notes
+                        <textarea id="publicSummaryNotes" rows="2" placeholder="Optional notes to include in the summary."></textarea>
+                      </label>
+                    </div>
+                  </div>
+                </details>
 
                 <div class="summary-checklist">
                   <div class="hint">Publish Readiness Checklist</div>

@@ -139,6 +139,9 @@ FIXTURE_CLEANUP_MODE=reset ./scripts/seed_fixture_data.sh
 # Rollback validation drill
 ./scripts/rollback_drill.sh
 
+# Assert rollback drill has zero failed critical tests
+npm run test:rollback-critical-gate
+
 # Build release evidence bundle (after release gate + rollback drill)
 ./scripts/build_release_evidence.sh
 

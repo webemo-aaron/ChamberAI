@@ -33,6 +33,10 @@ test.describe("Feature Flags", () => {
   });
 
   test("retention sweep button appears in settings", async ({ page }) => {
+    const disclosure = page.locator("#settingsOpsDisclosure");
+    if (!(await disclosure.evaluate((el) => el.hasAttribute("open")))) {
+      await disclosure.locator("summary").click();
+    }
     const retentionButton = page.locator('[data-testid="run-retention-sweep"]');
     await expect(retentionButton).toBeVisible();
     await expect(retentionButton).toBeEnabled();

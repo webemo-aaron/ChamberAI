@@ -6,8 +6,15 @@ test.describe("Settings and Features UI", () => {
     await bootstrapPage(page);
   });
 
+  async function openOpsSettings(page) {
+    const disclosure = page.locator("#settingsOpsDisclosure");
+    if (!(await disclosure.evaluate((el) => el.hasAttribute("open")))) {
+      await disclosure.locator("summary").click();
+    }
+  }
+
   test("Feature flags render in settings section", async ({ page }) => {
-    await expect(page.locator("h3", { hasText: "Modules" })).toBeVisible();
+    await expect(page.locator("#settingsModulesDisclosure > summary")).toContainText("Modules");
     const checkboxes = page.locator("#featureFlags input[data-flag]");
     await expect(checkboxes).toHaveCount(11);
   });
@@ -26,12 +33,14 @@ test.describe("Settings and Features UI", () => {
   });
 
   test("Run retention sweep from settings", async ({ page }) => {
+    await openOpsSettings(page);
     const retentionButton = page.locator('[data-testid="run-retention-sweep"]');
     await retentionButton.click();
     await expect(page.locator("#retentionResult")).toContainText("Sweep complete.");
   });
 
   test("Settings changes persist across page reload", async ({ page }) => {
+    await openOpsSettings(page);
     const retentionInput = page.locator("#settingRetention");
     await expect(retentionInput).toHaveValue(/^\d+$/);
     await retentionInput.fill("45");
@@ -39,10 +48,12 @@ test.describe("Settings and Features UI", () => {
     await page.locator('[data-testid="save-settings"]').click();
     await expect(page.locator("#settingsStatus")).toContainText("Settings saved.");
     await page.reload();
+    await openOpsSettings(page);
     await expect(page.locator("#settingRetention")).toHaveValue("45");
   });
 
   test("Settings displays retention sweep option", async ({ page }) => {
+    await openOpsSettings(page);
     await expect(page.locator('[data-testid="run-retention-sweep"]')).toBeVisible();
     await expect(page.locator("#settingRetention")).toBeVisible();
     await expect(page.locator("#settingMaxSize")).toBeVisible();

@@ -166,7 +166,11 @@ jobs:
 
       - name: Rollback Drill
         if: github.event_name != 'pull_request'
-        run: ./scripts/rollback_drill.sh
+        run: ./scripts/rollback_drill.sh 2>&1 | tee artifacts/rollback-drill-report-compose.txt
+
+      - name: Assert Rollback Critical Tests (Compose Smoke)
+        if: github.event_name != 'pull_request'
+        run: ./scripts/check_rollback_critical_failures.sh artifacts/rollback-drill-report-compose.txt
 
       - name: Collect Compose Logs On Failure
         if: failure()
@@ -190,6 +194,15 @@ jobs:
             artifacts/console-guard-warn.log
             artifacts/console-guard-warning-count.txt
             artifacts/console-guard-warning-trend.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload Rollback Drill Compose Report
+        if: always() && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-drill-compose-report
+          path: artifacts/rollback-drill-report-compose.txt
           if-no-files-found: ignore
           retention-days: 14
 
@@ -277,6 +290,9 @@ jobs:
 
       - name: Run Rollback Drill
         run: ./scripts/rollback_drill.sh 2>&1 | tee artifacts/rollback-drill-report.txt
+
+      - name: Assert Rollback Critical Tests
+        run: ./scripts/check_rollback_critical_failures.sh artifacts/rollback-drill-report.txt
 
       - name: Assert Rollback Warning Threshold
         run: ./scripts/check_rollback_warnings.sh artifacts/rollback-drill-report.txt artifacts/rollback-warning-count.txt artifacts/rollback-warning-trend.json

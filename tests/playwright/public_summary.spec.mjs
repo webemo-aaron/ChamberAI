@@ -50,6 +50,10 @@ test("public summary publish flow @critical", async ({ browser, request }) => {
 
   await page.locator("#publicSummaryTab").click();
   await page.locator("#tab-public-summary").waitFor({ state: "visible" });
+  const summarySections = page.locator("#tab-public-summary details.disclosure").first();
+  if (!(await summarySections.evaluate((el) => el.hasAttribute("open")))) {
+    await summarySections.locator("summary").click();
+  }
 
   await page.locator("#publicSummaryTitle").fill("Board meeting highlights");
   await expect(page.locator("#publicSummaryTitle")).toHaveValue("Board meeting highlights");

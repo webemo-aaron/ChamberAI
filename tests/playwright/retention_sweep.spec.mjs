@@ -51,6 +51,10 @@ test("retention sweep runs from settings", async ({ browser, request }) => {
   await page.locator("#loginSubmit").click();
   await page.locator("#apiBase").fill(API_BASE);
   await page.locator("#saveApiBase").click();
+  const disclosure = page.locator("#settingsOpsDisclosure");
+  if (!(await disclosure.evaluate((el) => el.hasAttribute("open")))) {
+    await disclosure.locator("summary").click();
+  }
 
   await page.locator("#runRetentionSweep").click();
   await expect(page.locator("#retentionResult")).toContainText("Sweep complete");

@@ -6,6 +6,7 @@ Use this checklist for stable, repeatable releases of the self-hosted tier.
 
 - [ ] Run release gate script (`./scripts/release_gate.sh`) and archive `artifacts/release-gate-report.txt`
 - [ ] Run rollback drill (`./scripts/rollback_drill.sh`) and archive `artifacts/rollback-drill-report.txt`
+- [ ] Rollback critical-test gate passes (`./scripts/check_rollback_critical_failures.sh artifacts/rollback-drill-report.txt`)
 - [ ] Build release evidence bundle (`./scripts/build_release_evidence.sh`) and archive `artifacts/release-evidence/`
 - [ ] Verify release evidence integrity (`./scripts/verify_release_evidence.sh`)
 - [ ] Package evidence archive (`tar -czf artifacts/release-evidence.tar.gz -C artifacts release-evidence`)

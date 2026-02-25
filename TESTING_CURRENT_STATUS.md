@@ -1,6 +1,6 @@
 # ChamberOfCommerceAI Testing - Current Status
 **Date:** 2026-02-25
-**Status:** Release gate and rollback drill passing
+**Status:** Release gate and rollback drill passing; UI streamlining pass validated
 
 ## Latest Validation Snapshot
 
@@ -25,9 +25,20 @@ Validated on February 25, 2026 using Docker Compose stack (`api`, `worker`, `con
 ## Current Grade
 
 - Unit/API contracts: **A**
-- UI automation breadth: **A-**
+- UI automation breadth: **A**
 - Release/rollback evidence automation: **A**
-- Overall current testing grade: **A-**
+- Overall current testing grade: **A**
+
+## UI Review Snapshot (2026-02-25)
+
+- UI organization grade: **B+** (improved from **B** after spacing/polish pass)
+- Streamlining changes shipped:
+  - Advanced queue search/filters moved into disclosure (`#advancedFiltersDisclosure`)
+  - Settings split into focused disclosures (`#settingsModulesDisclosure`, `#settingsOpsDisclosure`)
+  - Advanced export controls collapsed into disclosure under export block
+  - Public summary sections moved behind `Edit Summary Sections` disclosure
+  - Spacing/polish pass applied for panel rhythm, tab clarity, and action-group consistency
+- Updated visual snapshot: `artifacts/ui-audit-admin.png`
 
 ## Remaining Gaps
 
