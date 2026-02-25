@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-02-25
+
+- Added portable fallback from `rg` to `grep` in `scripts/check_test_quality.sh` so CI quality gates run on runners without ripgrep.
+
 ## [0.2.1] - 2026-02-25
 
 - Fixed CI quality gate path handling to use repository-relative locations in `scripts/check_test_quality.sh`.

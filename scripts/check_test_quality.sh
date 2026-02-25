@@ -11,13 +11,22 @@ fi
 
 echo "Running Playwright quality checks..."
 
-if rg -n "expect\\(true\\)\\.toBeTruthy\\(\\)" "${ROOT}" --glob '!placeholders/**' --glob '*.js' --glob '*.mjs'; then
+search_pattern() {
+  local pattern="$1"
+  if command -v rg >/dev/null 2>&1; then
+    rg -n "${pattern}" "${ROOT}" --glob '!placeholders/**' --glob '*.js' --glob '*.mjs'
+  else
+    grep -R -n -E "${pattern}" "${ROOT}" --exclude-dir=placeholders --include='*.js' --include='*.mjs'
+  fi
+}
+
+if search_pattern "expect\\(true\\)\\.toBeTruthy\\(\\)"; then
   echo "Quality gate failed: placeholder assertions found."
   exit 1
 fi
 
 # Allow accessibility spec attribute probes, but block blanket swallowed errors elsewhere.
-if rg -n "\\.catch\\(\\(\\) => null\\)" "${ROOT}" --glob '!placeholders/**' --glob '*.js' --glob '*.mjs' | rg -v "accessibility\\.spec\\.js"; then
+if search_pattern "\\.catch\\(\\(\\) => null\\)" | grep -v "accessibility\\.spec\\.js"; then
   echo "Quality gate failed: swallowed errors found outside approved accessibility probes."
   exit 1
 fi
