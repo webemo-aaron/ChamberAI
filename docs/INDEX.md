@@ -5,6 +5,7 @@ Welcome to the ChamberOfCommerceAI docs hub.
 ## Getting Started
 
 - Deployment: `docs/DEPLOYMENT.md`
+- Lowest-cost hybrid deployment: `docs/DEPLOYMENT_LOW_COST_HYBRID.md`
 - Architecture: `docs/ARCHITECTURE.md`
 - Governance: `docs/governance-policy.md`
 - Release checklist: `docs/RELEASE_CHECKLIST.md`
