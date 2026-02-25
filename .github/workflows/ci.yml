@@ -51,7 +51,12 @@ jobs:
         run: npm --prefix services/api-firebase ci
 
       - name: Start Firebase Emulator
-        run: docker compose up -d firebase-emulators
+        run: |
+          timeout 5m docker compose up -d firebase-emulators || {
+            echo "Firebase emulator startup timed out"
+            docker compose logs --no-color firebase-emulators || true
+            exit 1
+          }
 
       - name: Wait for Firestore Emulator
         run: |
