@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-02-25
+
+- Updated `auth-middleware` CI job to boot Firebase emulator and set Firestore emulator environment for auth integration tests.
+
 ## [0.2.3] - 2026-02-25
 
 - Updated Node test scripts to use shell-expanded file paths (`tests/unit/*.test.js`, `tests/contracts/*.test.mjs`) for CI compatibility.
