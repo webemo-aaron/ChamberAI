@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-emulator_cmd=(npx firebase-tools emulators:start --only firestore,auth,storage --project cam-aims-dev)
+emulator_cmd=(npx firebase-tools emulators:start --only firestore,auth,storage --project cam-aim-dev)
 api_cmd=(env PORT=4100 npm run dev)
 worker_cmd=(npm run dev)
 console_port="$(bash /home/webemo-aaron/projects/ChamberAI/scripts/resolve_console_port.sh 5173)"
