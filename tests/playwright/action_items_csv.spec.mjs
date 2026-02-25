@@ -20,13 +20,15 @@ test("action items CSV import/export @critical", async ({ browser, request }) =>
       tags: "csv"
     }
   });
-  await createRes.json();
+  const createdMeeting = await createRes.json();
+  const createdMeetingId = createdMeeting?.id;
 
   const context = await browser.newContext();
   const page = await context.newPage();
   const guard = attachConsoleGuard(page);
 
   await page.goto(`${UI_BASE}/`);
+  await page.waitForLoadState("networkidle");
   await page.locator("#loginEmail").fill("admin@acme.com");
   await page.locator("#loginRole").selectOption("admin");
   await page.locator("#loginSubmit").click();
@@ -52,10 +54,21 @@ test("action items CSV import/export @critical", async ({ browser, request }) =>
   });
 
   await expect(page.locator("#csvPreviewModal")).toBeVisible();
+  const applyResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PUT" &&
+      (createdMeetingId
+        ? response.url().includes(`/meetings/${createdMeetingId}/action-items`)
+        : response.url().includes("/action-items")) &&
+      response.status() === 200,
+    { timeout: 15000 }
+  );
   await page.locator("#csvApply").click();
+  await applyResponse;
+  await expect(page.locator("#csvPreviewModal")).toBeHidden();
 
   const descInputs = page.locator("#actionItemsList input[placeholder='Description']");
-  await expect(descInputs).toHaveCount(2);
+  await expect(descInputs).toHaveCount(2, { timeout: 15000 });
   await expect(descInputs.nth(0)).toHaveValue("Follow up with vendor");
   await expect(descInputs.nth(1)).toHaveValue("Send member update");
 
