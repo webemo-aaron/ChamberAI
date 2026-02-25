@@ -125,7 +125,8 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+        run: |
+          timeout 5m npx playwright install --with-deps chromium || npx playwright install chromium
 
       - name: Start Clean Local Stack
         run: ./scripts/reset_test_state.sh
@@ -210,7 +211,8 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+        run: |
+          timeout 5m npx playwright install --with-deps chromium || npx playwright install chromium
 
       - name: Start Clean Local Stack
         run: ./scripts/reset_test_state.sh
