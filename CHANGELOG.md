@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.17-rc1] - 2026-02-25
+
+- Streamlined and polished secretary console layout with clearer spacing, grouped controls, and progressive disclosure for advanced options.
+- Updated UI automation specs for new collapsed/default states (advanced filters, settings operations, public summary section editor).
+- Added rollback critical-test gate script and CI enforcement to fail when rollback drill includes any failed critical tests.
+- Completed local soak validation (`critical x10`, `rollback drill x3`) with zero failures.
+
 ## [0.2.16-rc1] - 2026-02-25
 
 - Aligned repository Firebase defaults to `cam-aim-dev` (`.firebaserc`, `scripts/dev_laptop.sh`) for consistent local/CLI project targeting.
