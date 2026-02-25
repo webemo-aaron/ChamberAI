@@ -125,6 +125,11 @@ npm test
 # One-command release gate report
 ./scripts/release_gate.sh
 
+# One-command local RC pipeline (no GitHub Actions required)
+npm run rc:local
+# Optional tuning:
+# SOAK_CRITICAL_RUNS=5 SOAK_ROLLBACK_RUNS=2 SKIP_RESET=1 npm run rc:local
+
 # Reset dockerized test state
 ./scripts/reset_test_state.sh
 

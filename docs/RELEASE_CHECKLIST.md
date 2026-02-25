@@ -4,6 +4,7 @@ Use this checklist for stable, repeatable releases of the self-hosted tier.
 
 ## Pre-Release
 
+- [ ] Run local RC candidate pipeline (`npm run rc:local`) and confirm PASS
 - [ ] Run release gate script (`./scripts/release_gate.sh`) and archive `artifacts/release-gate-report.txt`
 - [ ] Run rollback drill (`./scripts/rollback_drill.sh`) and archive `artifacts/rollback-drill-report.txt`
 - [ ] Rollback critical-test gate passes (`./scripts/check_rollback_critical_failures.sh artifacts/rollback-drill-report.txt`)
