@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-02-25
+
+- Fixed Docker Compose CI build contexts for API and worker services (`services/api-firebase`, `services/worker-firebase`) to prevent compose smoke build failures.
+
 ## [0.2.5] - 2026-02-25
 
 - Added explicit `build` definitions for API and worker services in `docker-compose.yml` so CI compose workflows do not attempt missing remote images.

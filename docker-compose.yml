@@ -29,8 +29,8 @@ services:
   # ChamberOfCommerceAI API Service
   api:
     build:
-      context: .
-      dockerfile: services/api-firebase/Dockerfile
+      context: services/api-firebase
+      dockerfile: Dockerfile
     image: chamberofcommerceai-api:local
     ports:
       - "4001:8080"
@@ -69,8 +69,8 @@ services:
   # ChamberOfCommerceAI Worker Service
   worker:
     build:
-      context: .
-      dockerfile: services/worker-firebase/Dockerfile
+      context: services/worker-firebase
+      dockerfile: Dockerfile
     image: chamberofcommerceai-worker:local
     ports:
       - "4002:8080"
