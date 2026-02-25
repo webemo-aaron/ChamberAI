@@ -43,6 +43,9 @@ echo "[5/5] API CORS env (docker compose)"
 if command -v docker-compose >/dev/null 2>&1; then
   docker-compose ps >/dev/null 2>&1 || true
   docker-compose exec -T api /bin/sh -lc 'echo "CORS_ORIGIN=${CORS_ORIGIN:-unset}"' 2>/dev/null || true
+elif command -v docker >/dev/null 2>&1; then
+  docker compose ps >/dev/null 2>&1 || true
+  docker compose exec -T api /bin/sh -lc 'echo "CORS_ORIGIN=${CORS_ORIGIN:-unset}"' 2>/dev/null || true
 else
-  echo "docker-compose not installed"
+  echo "docker compose not installed"
 fi

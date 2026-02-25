@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-02-25
+
+- Made `scripts/verify_local_stack.sh` and `scripts/diag_frontend.sh` compatible with both `docker-compose` and `docker compose` to fix compose smoke CI failures on GitHub runners.
+
 ## [0.2.6] - 2026-02-25
 
 - Fixed Docker Compose CI build contexts for API and worker services (`services/api-firebase`, `services/worker-firebase`) to prevent compose smoke build failures.
