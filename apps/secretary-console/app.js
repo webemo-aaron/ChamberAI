@@ -106,6 +106,7 @@ const exportGroup = document.getElementById("exportGroup");
 const onboardingBanner = document.getElementById("onboardingBanner");
 const dismissBanner = document.getElementById("dismissBanner");
 const roleBadge = document.getElementById("roleBadge");
+const authCycleStatus = document.getElementById("authCycleStatus");
 const logoutBtn = document.getElementById("logout");
 const loginModal = document.getElementById("loginModal");
 const loginEmail = document.getElementById("loginEmail");
@@ -139,17 +140,27 @@ const retentionResult = document.getElementById("retentionResult");
 const toast = document.getElementById("toast");
 const featureFlagsEl = document.getElementById("featureFlags");
 const settingsInviteDisclosure = document.getElementById("settingsInviteDisclosure");
+const settingsMotionDisclosure = document.getElementById("settingsMotionDisclosure");
 const inviteAuthorizedEmail = document.getElementById("inviteAuthorizedEmail");
 const inviteAuthorizeSender = document.getElementById("inviteAuthorizeSender");
 const inviteAuthorizedList = document.getElementById("inviteAuthorizedList");
 const inviteRecipientEmail = document.getElementById("inviteRecipientEmail");
 const inviteMeetingTitle = document.getElementById("inviteMeetingTitle");
 const inviteMotionLink = document.getElementById("inviteMotionLink");
+const inviteMotionSource = document.getElementById("inviteMotionSource");
 const inviteJoinLink = document.getElementById("inviteJoinLink");
 const inviteNote = document.getElementById("inviteNote");
 const inviteSendBtn = document.getElementById("inviteSendBtn");
 const inviteRefreshBtn = document.getElementById("inviteRefreshBtn");
 const inviteStatus = document.getElementById("inviteStatus");
+const motionEnabled = document.getElementById("motionEnabled");
+const motionApiKey = document.getElementById("motionApiKey");
+const motionWorkspaceId = document.getElementById("motionWorkspaceId");
+const motionProjectId = document.getElementById("motionProjectId");
+const motionLinkTemplate = document.getElementById("motionLinkTemplate");
+const motionSaveBtn = document.getElementById("motionSaveBtn");
+const motionTestBtn = document.getElementById("motionTestBtn");
+const motionStatus = document.getElementById("motionStatus");
 
 let meetings = [];
 let selectedMeetingId = null;
@@ -182,6 +193,7 @@ let signInWithPopupFn = null;
 let signOutFn = null;
 let googleProvider = null;
 let inviteAuthorizedSenders = [];
+let motionConfig = null;
 
 const hostedApiBase = "https://chamberai-api-ecfgvedexq-uc.a.run.app";
 const inferredApiBase = window.location.hostname.endsWith(".vercel.app") ? hostedApiBase : "http://localhost:4000";
@@ -192,6 +204,8 @@ if (localStorage.getItem("camOnboardingDismissed") === "true") {
   onboardingBanner.style.display = "none";
 }
 inviteJoinLink.value = window.location.origin;
+updateInviteMotionSource();
+updateAuthCycleStatus();
 
 if (!currentRole) {
   loginModal.classList.remove("hidden");
@@ -218,6 +232,7 @@ loginSubmit.addEventListener("click", () => {
   localStorage.setItem("camRole", role);
   localStorage.setItem("camEmail", email);
   setRole(role, email, "");
+  updateAuthCycleStatus();
   syncSettingsFromApi({ startup: true });
   loginModal.classList.add("hidden");
 });
@@ -257,6 +272,7 @@ logoutBtn.addEventListener("click", () => {
   if (firebaseAuth && signOutFn) {
     signOutFn(firebaseAuth).catch(() => {});
   }
+  updateAuthCycleStatus();
 });
 
 dismissBanner.addEventListener("click", () => {
@@ -471,6 +487,42 @@ inviteSendBtn.addEventListener("click", async () => {
 
 inviteRefreshBtn.addEventListener("click", () => {
   loadInviteWorkspace();
+});
+
+inviteMotionLink.addEventListener("input", () => {
+  updateInviteMotionSource();
+});
+
+motionSaveBtn.addEventListener("click", async () => {
+  const payload = {
+    enabled: motionEnabled.checked,
+    workspaceId: motionWorkspaceId.value.trim(),
+    defaultProjectId: motionProjectId.value.trim(),
+    defaultLinkTemplate: motionLinkTemplate.value.trim()
+  };
+  if (motionApiKey.value.trim()) {
+    payload.apiKey = motionApiKey.value.trim();
+  }
+
+  const response = await request("/integrations/motion/config", "PUT", payload);
+  if (!response || response.error) {
+    motionStatus.textContent = `Save failed: ${response?.error ?? "unknown error"}`;
+    return;
+  }
+  motionStatus.textContent = "Motion config saved.";
+  motionApiKey.value = "";
+  motionConfig = response;
+  applyMotionConfigToForm();
+});
+
+motionTestBtn.addEventListener("click", async () => {
+  const response = await request("/integrations/motion/test", "POST", {});
+  if (!response || response.error) {
+    motionStatus.textContent = `Connection failed: ${response?.error ?? "unknown error"}`;
+    return;
+  }
+  const displayName = response.name || response.email || response.userId || "connected";
+  motionStatus.textContent = `Motion connection OK (${displayName}).`;
 });
 
 quickCreateBtn.addEventListener("click", () => {
@@ -1442,8 +1494,13 @@ async function authHeaders() {
     }
   }
   const role = localStorage.getItem("camRole");
-  if (role && role !== "guest") {
+  const isLocalDevHost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  if (isLocalDevHost && role && role !== "guest") {
     headers.Authorization = "Bearer demo-token";
+  } else if (!firebaseUser && role && role !== "guest") {
+    console.warn("Google auth session missing; not sending demo token in hosted mode.");
   }
   return headers;
 }
@@ -1510,11 +1567,13 @@ async function initFirebaseAuth() {
     const app = initializeApp(config);
     firebaseAuth = authModule.getAuth(app);
     googleProvider = new authModule.GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: "select_account" });
     signInWithPopupFn = authModule.signInWithPopup;
     signOutFn = authModule.signOut;
 
     authModule.onAuthStateChanged(firebaseAuth, (user) => {
       firebaseUser = user;
+      updateAuthCycleStatus();
       if (!user) return;
       const role = localStorage.getItem("camRole") || loginRole.value || "secretary";
       const email = user.email || localStorage.getItem("camEmail") || "user@example.com";
@@ -1531,6 +1590,20 @@ async function initFirebaseAuth() {
 }
 
 initFirebaseAuth();
+
+function updateAuthCycleStatus() {
+  if (!authCycleStatus) return;
+  if (firebaseUser?.email) {
+    authCycleStatus.textContent = `Auth: Google connected (${firebaseUser.email})`;
+    return;
+  }
+  const role = localStorage.getItem("camRole");
+  if (role && role !== "guest") {
+    authCycleStatus.textContent = "Auth: local/demo session";
+    return;
+  }
+  authCycleStatus.textContent = "Auth: not connected";
+}
 
 async function runAdvancedSearch() {
   const term = advancedSearchQuery.value.trim();
@@ -1597,6 +1670,50 @@ async function loadInviteWorkspace() {
   inviteAuthorizedSenders = Array.isArray(response.authorizedSenders) ? response.authorizedSenders : [];
   inviteStatus.textContent = "";
   renderAuthorizedSenders();
+}
+
+function applyMotionConfigToForm() {
+  const cfg = motionConfig ?? {};
+  motionEnabled.checked = Boolean(cfg.enabled);
+  motionWorkspaceId.value = cfg.workspaceId ?? "";
+  motionProjectId.value = cfg.defaultProjectId ?? "";
+  motionLinkTemplate.value = cfg.defaultLinkTemplate ?? "";
+  updateInviteMotionSource();
+}
+
+function updateInviteMotionSource() {
+  const manualLink = inviteMotionLink.value.trim();
+  const template = motionConfig?.defaultLinkTemplate ?? "";
+  if (manualLink) {
+    inviteMotionSource.textContent = "Motion link source: manual link for this invite.";
+    return;
+  }
+  if (template) {
+    inviteMotionSource.textContent = "Motion link source: chamber default template.";
+    return;
+  }
+  inviteMotionSource.textContent = "Motion link source: none configured.";
+}
+
+async function loadMotionConfig() {
+  if (!(currentRole === "admin" || currentRole === "secretary")) {
+    motionStatus.textContent = "Motion config requires admin or secretary role.";
+    motionConfig = null;
+    applyMotionConfigToForm();
+    return;
+  }
+  const response = await request("/integrations/motion/config", "GET", null, { suppressAlert: true });
+  if (!response || response.error) {
+    motionStatus.textContent = `Motion config unavailable: ${response?.error ?? "unknown error"}`;
+    return;
+  }
+  motionConfig = response;
+  applyMotionConfigToForm();
+  if (response.hasApiKey) {
+    motionStatus.textContent = "Motion API key is configured.";
+  } else {
+    motionStatus.textContent = "Set Motion API key to enable API operations.";
+  }
 }
 
 renderFeatureFlags();
@@ -1782,6 +1899,7 @@ function renderFeatureFlags() {
   const hideInviteTools = !featureFlags.integrations_email;
   publicSummaryTab.classList.toggle("hidden", hidePublicSummary);
   settingsInviteDisclosure.classList.toggle("hidden", hideInviteTools);
+  settingsMotionDisclosure.classList.toggle("hidden", hideInviteTools);
   if (hidePublicSummary && publicSummaryTab.classList.contains("active")) {
     tabs.forEach((tab) => tab.classList.remove("active"));
     if (tabs.length > 0) tabs[0].classList.add("active");
@@ -1817,6 +1935,7 @@ function setRole(role, email, displayName = "") {
   loginModal.classList.add("hidden");
   applyRolePermissions(role);
   loadInviteWorkspace();
+  loadMotionConfig();
 }
 
 function applyRolePermissions(role) {
@@ -1838,7 +1957,9 @@ function applyRolePermissions(role) {
     saveSettingsBtn,
     quickSubmit,
     inviteSendBtn,
-    inviteRefreshBtn
+    inviteRefreshBtn,
+    motionSaveBtn,
+    motionTestBtn
   ];
   controls.forEach((control) => {
     if (!control) return;
@@ -1877,7 +1998,12 @@ function applyRolePermissions(role) {
     "inviteMeetingTitle",
     "inviteMotionLink",
     "inviteJoinLink",
-    "inviteNote"
+    "inviteNote",
+    "motionEnabled",
+    "motionApiKey",
+    "motionWorkspaceId",
+    "motionProjectId",
+    "motionLinkTemplate"
   ].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.disabled = isViewer;
@@ -2093,7 +2219,8 @@ async function startApp() {
   const [meetingsResult] = await Promise.all([
     loadMeetings(startupRequestOptions),
     syncSettingsFromApi({ startup: true }),
-    loadInviteWorkspace()
+    loadInviteWorkspace(),
+    loadMotionConfig()
   ]);
   if (!meetingsResult) {
     showToast("API is warming up. Retry when services are ready.");

@@ -24,15 +24,25 @@ export async function requireAuth(req, res, next) {
       };
       return next();
     }
+    let decoded;
     try {
       initFirebaseAdminApp();
-      const decoded = await admin.auth().verifyIdToken(token);
-      const email = normalizeEmail(decoded.email ?? demoEmail);
-      const roleFromToken = decoded.role ?? "secretary";
-      const enforceMembership = process.env.FIREBASE_REQUIRE_MEMBERSHIP !== "false";
-      const bootstrapAdmins = parseEnvInviteAllowedSenders(process.env.AUTH_BOOTSTRAP_ADMINS);
+      decoded = await admin.auth().verifyIdToken(token);
+    } catch (error) {
+      console.error("Firebase token verification failed", {
+        code: error?.code ?? null,
+        message: error?.message ?? null
+      });
+      return res.status(401).json({ error: "Invalid auth token", code: error?.code ?? undefined });
+    }
 
-      if (enforceMembership) {
+    const email = normalizeEmail(decoded.email ?? demoEmail);
+    const roleFromToken = decoded.role ?? "secretary";
+    const enforceMembership = process.env.FIREBASE_REQUIRE_MEMBERSHIP !== "false";
+    const bootstrapAdmins = parseEnvInviteAllowedSenders(process.env.AUTH_BOOTSTRAP_ADMINS);
+
+    if (enforceMembership) {
+      try {
         const db = initFirestore();
         const membershipDoc = await db.collection("memberships").doc(email).get();
         if (membershipDoc.exists) {
@@ -48,25 +58,30 @@ export async function requireAuth(req, res, next) {
           };
           return next();
         }
-        if (bootstrapAdmins.includes(email)) {
-          req.user = {
-            uid: decoded.uid,
-            email,
-            role: "admin"
-          };
-          return next();
-        }
-        return res.status(403).json({ error: "User is not authorized for this chamber." });
+      } catch (error) {
+        console.error("Membership lookup failed", {
+          code: error?.code ?? null,
+          message: error?.message ?? null
+        });
+        return res.status(500).json({ error: "Membership lookup failed." });
       }
-      req.user = {
-        uid: decoded.uid,
-        email,
-        role: roleFromToken
-      };
-      return next();
-    } catch (error) {
-      return res.status(401).json({ error: "Invalid auth token" });
+
+      if (bootstrapAdmins.includes(email)) {
+        req.user = {
+          uid: decoded.uid,
+          email,
+          role: "admin"
+        };
+        return next();
+      }
+      return res.status(403).json({ error: "User is not authorized for this chamber." });
     }
+    req.user = {
+      uid: decoded.uid,
+      email,
+      role: roleFromToken
+    };
+    return next();
   }
 
   req.user = { role: "secretary", email: demoEmail };

@@ -25,10 +25,24 @@ async function getSystemSettings(db) {
   return doc.exists ? doc.data() : {};
 }
 
+async function getMotionConfig(db) {
+  const doc = await db.collection("settings").doc("integrations").get();
+  if (!doc.exists) return {};
+  return doc.data()?.motion ?? {};
+}
+
+function buildMotionLinkFromTemplate(template, meetingTitle) {
+  const rawTemplate = String(template ?? "").trim();
+  if (!rawTemplate) return "";
+  const encodedTitle = encodeURIComponent(String(meetingTitle ?? "").trim());
+  return rawTemplate.replace(/\{\{\s*meeting_title\s*\}\}/g, encodedTitle);
+}
+
 router.get("/invites/authorized-senders", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
     const settings = await getSystemSettings(db);
+    const motionConfig = await getMotionConfig(db);
     const envAllowed = parseEnvInviteAllowedSenders(process.env.INVITE_ALLOWED_SENDERS);
     const settingsAllowed = Array.isArray(settings.emailInviteAuthorizedSenders) ? settings.emailInviteAuthorizedSenders : [];
     res.json({ authorizedSenders: mergeAuthorizedSenders(envAllowed, settingsAllowed) });
@@ -85,13 +99,17 @@ router.post("/invites/send", requireRole("admin", "secretary"), async (req, res,
       return res.status(403).json({ error: "Sender is not authorized to send invites." });
     }
 
+    const computedMotionLink =
+      String(req.body?.motionLink ?? "").trim() ||
+      buildMotionLinkFromTemplate(motionConfig.defaultLinkTemplate, req.body?.meetingTitle);
+
     const inviteEmail = buildInviteEmail({
       chamberName: req.body?.chamberName,
       senderName: req.body?.senderName,
       recipientName: req.body?.recipientName,
       meetingTitle: req.body?.meetingTitle,
       inviteUrl: req.body?.inviteUrl,
-      motionLink: req.body?.motionLink,
+      motionLink: computedMotionLink,
       note: req.body?.note,
       subject: req.body?.subject
     });
@@ -126,7 +144,7 @@ router.post("/invites/send", requireRole("admin", "secretary"), async (req, res,
       meeting_id: req.body?.meetingId ?? null,
       meeting_title: req.body?.meetingTitle ?? null,
       invite_url: req.body?.inviteUrl ?? null,
-      motion_link: req.body?.motionLink ?? null,
+      motion_link: computedMotionLink || null,
       role_assigned: req.body?.role ?? "viewer",
       resend_id: result.id ?? null,
       status: "sent",

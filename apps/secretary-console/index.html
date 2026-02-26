@@ -20,6 +20,15 @@
         <label for="apiBase">API Base</label>
         <input id="apiBase" type="url" placeholder="http://localhost:4000" />
         <button id="saveApiBase" class="btn ghost" data-testid="save-api-base">Save</button>
+        <a
+          href="https://webemo-aaron.github.io/ChamberAI/docs/viewer.html?doc=USER_GUIDE.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn ghost"
+        >
+          Docs
+        </a>
+        <span id="authCycleStatus" class="pill">Auth: not connected</span>
         <span id="roleBadge" class="pill">Role: Guest</span>
         <button id="logout" class="btn ghost" data-testid="logout">Logout</button>
       </div>
@@ -196,6 +205,7 @@
                 Motion Link (optional)
                 <input id="inviteMotionLink" type="url" placeholder="https://app.usemotion.com/..." />
               </label>
+              <div id="inviteMotionSource" class="hint"></div>
               <label>
                 Invite Link (optional)
                 <input id="inviteJoinLink" type="url" placeholder="https://secretary-console.vercel.app" />
@@ -209,6 +219,40 @@
                 <button id="inviteRefreshBtn" class="btn ghost" type="button">Refresh Invite Data</button>
               </div>
               <div id="inviteStatus" class="hint"></div>
+            </div>
+          </details>
+          <details class="disclosure" id="settingsMotionDisclosure">
+            <summary>Motion Integration</summary>
+            <div class="disclosure-body">
+              <label class="check">
+                <input id="motionEnabled" type="checkbox" />
+                Enable Motion integration for all meetings
+              </label>
+              <label>
+                Motion API Key
+                <input id="motionApiKey" type="password" placeholder="motion-api-key" />
+              </label>
+              <label>
+                Workspace ID (optional)
+                <input id="motionWorkspaceId" type="text" placeholder="workspace-id" />
+              </label>
+              <label>
+                Default Project ID (optional)
+                <input id="motionProjectId" type="text" placeholder="project-id" />
+              </label>
+              <label>
+                Default Meeting Link Template
+                <input
+                  id="motionLinkTemplate"
+                  type="url"
+                  placeholder="https://app.usemotion.com/?q={{meeting_title}}"
+                />
+              </label>
+              <div class="inline-actions">
+                <button id="motionSaveBtn" class="btn ghost" type="button">Save Motion Config</button>
+                <button id="motionTestBtn" class="btn ghost" type="button">Test Connection</button>
+              </div>
+              <div id="motionStatus" class="hint"></div>
             </div>
           </details>
           <button id="saveSettings" class="btn ghost" data-testid="save-settings">Save Settings</button>

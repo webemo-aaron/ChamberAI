@@ -2,6 +2,7 @@ import admin from "firebase-admin";
 import fs from "node:fs";
 
 let app;
+let firestore;
 
 export function initFirebaseAdminApp() {
   if (app) return app;
@@ -24,9 +25,9 @@ export function initFirebaseAdminApp() {
 }
 
 export function initFirestore() {
+  if (firestore) return firestore;
   initFirebaseAdminApp();
-
-  const firestore = admin.firestore();
+  firestore = admin.firestore();
   firestore.settings({ ignoreUndefinedProperties: true });
   return firestore;
 }

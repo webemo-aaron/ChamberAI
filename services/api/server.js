@@ -231,6 +231,89 @@ export function createRequestHandler(db) {
         return sendJson(res, 200, updated);
       }
 
+      if (path === "/invites/authorized-senders" && method === "GET") {
+        return sendJson(res, 200, { authorizedSenders: Array.from(db.inviteAuthorizedSenders.values()) });
+      }
+
+      if (path === "/invites/authorized-senders" && method === "POST") {
+        const body = await readJsonBody(req);
+        const email = String(body.email ?? "").trim().toLowerCase();
+        if (!email.includes("@")) {
+          return sendJson(res, 400, { error: "Valid email is required." });
+        }
+        db.inviteAuthorizedSenders.add(email);
+        return sendJson(res, 201, { authorizedSenders: Array.from(db.inviteAuthorizedSenders.values()) });
+      }
+
+      if (path === "/invites/send" && method === "POST") {
+        const body = await readJsonBody(req);
+        const to = String(body.to ?? "").trim().toLowerCase();
+        if (!to.includes("@")) {
+          return sendJson(res, 400, { error: "Valid recipient email is required." });
+        }
+        const template = String(db.motionConfig.defaultLinkTemplate ?? "").trim();
+        const motionLink =
+          String(body.motionLink ?? "").trim() ||
+          (template
+            ? template.replace(/\{\{\s*meeting_title\s*\}\}/g, encodeURIComponent(String(body.meetingTitle ?? "").trim()))
+            : "");
+        const invite = {
+          id: `invite_${db.invites.length + 1}`,
+          to,
+          meeting_title: body.meetingTitle ?? null,
+          motion_link: motionLink || null,
+          invite_url: body.inviteUrl ?? null,
+          status: "sent",
+          created_at: db.now().toISOString()
+        };
+        db.invites.unshift(invite);
+        db.memberships.set(to, {
+          email: to,
+          role: body.role ?? "viewer",
+          status: "active",
+          updated_at: db.now().toISOString()
+        });
+        return sendJson(res, 202, { ok: true, inviteId: invite.id, resendId: "mock-resend-id" });
+      }
+
+      if (path === "/integrations/motion/config" && method === "GET") {
+        const cfg = db.motionConfig;
+        return sendJson(res, 200, {
+          enabled: Boolean(cfg.enabled),
+          workspaceId: cfg.workspaceId ?? "",
+          defaultProjectId: cfg.defaultProjectId ?? "",
+          defaultLinkTemplate: cfg.defaultLinkTemplate ?? "",
+          hasApiKey: Boolean(cfg.apiKey)
+        });
+      }
+
+      if (path === "/integrations/motion/config" && method === "PUT") {
+        const body = await readJsonBody(req);
+        db.motionConfig = {
+          ...db.motionConfig,
+          enabled: Boolean(body.enabled),
+          workspaceId: String(body.workspaceId ?? ""),
+          defaultProjectId: String(body.defaultProjectId ?? ""),
+          defaultLinkTemplate: String(body.defaultLinkTemplate ?? ""),
+          apiKey: typeof body.apiKey === "string" ? body.apiKey.trim() : db.motionConfig.apiKey
+        };
+        const cfg = db.motionConfig;
+        return sendJson(res, 200, {
+          enabled: Boolean(cfg.enabled),
+          workspaceId: cfg.workspaceId ?? "",
+          defaultProjectId: cfg.defaultProjectId ?? "",
+          defaultLinkTemplate: cfg.defaultLinkTemplate ?? "",
+          hasApiKey: Boolean(cfg.apiKey)
+        });
+      }
+
+      if (path === "/integrations/motion/test" && method === "POST") {
+        if (!db.motionConfig.apiKey) {
+          return sendJson(res, 400, { error: "Motion API key is not configured." });
+        }
+        return sendJson(res, 200, { ok: true, name: "Mock Motion User", email: "motion@mock.local" });
+      }
+
       return sendJson(res, 404, { error: "Not found" });
     } catch (error) {
       const status = error.details ? 422 : 400;

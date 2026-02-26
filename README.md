@@ -9,6 +9,7 @@ follow-ups. The self-hosted (free) tier runs locally with the Firebase Emulator 
 can be switched to real Firebase services for production.
 
 Docs index: `docs/INDEX.md`
+Web docs viewer: `docs/viewer.html`
 
 GitHub Pages: https://webemo-aaron.github.io/ChamberAI/
 
@@ -75,6 +76,8 @@ docker-compose down
 - Deployment: `docs/DEPLOYMENT.md`
 - Lowest-cost hybrid deployment: `docs/DEPLOYMENT_LOW_COST_HYBRID.md`
 - GCP + Vercel low-cost deployment: `docs/DEPLOYMENT_GCP_VERCEL_LOW_COST.md`
+- User guide: `docs/USER_GUIDE.md`
+- Product info: `docs/PRODUCT_INFO.md`
 - Docs index: `docs/INDEX.md`
 - Architecture: `docs/ARCHITECTURE.md`
 - API (mock): `docs/api.md`
@@ -126,6 +129,9 @@ npm test
 
 # One-command release gate report
 ./scripts/release_gate.sh
+
+# Manual production auth smoke (Google sign-in + membership + motion endpoint checks)
+npm run test:auth-smoke:prod
 
 # One-command local RC pipeline (no GitHub Actions required)
 npm run rc:local

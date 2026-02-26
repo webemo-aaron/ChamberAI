@@ -20,7 +20,17 @@ export function createInMemoryDb(options = {}) {
     actionItems: new Map(),
     draftMinutes: new Map(),
     publicSummary: new Map(),
-    auditLog: []
+    auditLog: [],
+    inviteAuthorizedSenders: new Set(["admin@acme.com"]),
+    invites: [],
+    memberships: new Map(),
+    motionConfig: {
+      enabled: false,
+      workspaceId: "",
+      defaultProjectId: "",
+      defaultLinkTemplate: "",
+      apiKey: ""
+    }
   };
 
   return db;

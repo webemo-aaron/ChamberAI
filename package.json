@@ -23,6 +23,7 @@
     "test:rollback-warning-threshold": "./scripts/check_rollback_warnings.sh artifacts/rollback-drill-report.txt",
     "test:rollback-critical-gate": "./scripts/check_rollback_critical_failures.sh artifacts/rollback-drill-report.txt",
     "test:verify-release-archive": "./scripts/verify_release_archive.sh artifacts/release-evidence.tar.gz",
+    "test:auth-smoke:prod": "./scripts/run_production_auth_smoke.sh",
     "test:release-gate": "./scripts/release_gate.sh",
     "rc:local": "./scripts/local_rc_candidate.sh",
     "deploy:hybrid": "./scripts/deploy_hybrid_vps.sh .env.hybrid",
