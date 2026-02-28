@@ -7,10 +7,11 @@
     "start": "node src/server.js"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.13.0",
+    "ai": "^6.0.104",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "firebase-admin": "^12.5.0",
-    "@google-cloud/storage": "^7.13.0"
+    "firebase-admin": "^12.5.0"
   }
 }

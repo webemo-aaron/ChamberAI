@@ -1,6 +1,7 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
 import { requireRole } from "../middleware/rbac.js";
+import { maybeEnhancePublicSummary } from "../services/ai_generation.js";
 
 const router = express.Router();
 
@@ -74,10 +75,23 @@ router.post(
         .filter(Boolean)
         .join("\n\n");
 
+      const seed = { fields, content };
+      const { output, meta } = await maybeEnhancePublicSummary(seed, {
+        meeting: {
+          id: req.params.id,
+          date: meeting.date,
+          location: meeting.location,
+          chair_name: meeting.chair_name,
+          secretary_name: meeting.secretary_name
+        },
+        motions_count: motionsCount,
+        action_items_count: actionCount
+      });
+
       const summary = {
         meeting_id: req.params.id,
-        content,
-        fields,
+        content: output.content,
+        fields: output.fields,
         checklist: {
           no_confidential: false,
           names_approved: false,
@@ -85,6 +99,7 @@ router.post(
           actions_reviewed: false,
           chair_approved: false
         },
+        generation_meta: meta,
         updated_at: serverTimestamp()
       };
       await db.collection("publicSummaries").doc(req.params.id).set(summary, { merge: true });
