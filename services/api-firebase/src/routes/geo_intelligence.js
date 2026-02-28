@@ -8,6 +8,7 @@ import {
   buildGeoProfile,
   buildGeoContentBrief
 } from "../services/geo_intelligence.js";
+import { maybeEnhanceGeoBrief } from "../services/ai_generation.js";
 
 const router = express.Router();
 
@@ -149,10 +150,23 @@ router.post("/geo-content-briefs/generate", requireRole("admin", "secretary"), a
     }
 
     const profile = profileDoc.data();
-    const brief = buildGeoContentBrief({
+    const seedBrief = buildGeoContentBrief({
       profile,
       nowIso: new Date().toISOString()
     });
+    const { output, meta } = await maybeEnhanceGeoBrief(seedBrief, {
+      scope_type: profile.scope_type,
+      scope_id: profile.scope_id,
+      scope_label: profile.scope_label,
+      business_density_score: profile.business_density_score,
+      ai_readiness_score: profile.ai_readiness_score,
+      demand_gap_tags: profile.demand_gap_tags,
+      provider_supply_tags: profile.provider_supply_tags
+    });
+    const brief = {
+      ...output,
+      generation_meta: meta
+    };
 
     await db.collection("geoContentBriefs").doc(brief.id).set(brief);
     await db.collection("auditLogs").add({
