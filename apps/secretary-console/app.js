@@ -733,7 +733,11 @@ minutesContent.addEventListener("input", () => {
 savePublicSummary.addEventListener("click", async () => {
   if (!selectedMeetingId) return;
   const payload = collectPublicSummaryPayload();
-  await request(`/meetings/${selectedMeetingId}/public-summary`, "PUT", payload);
+  const result = await request(`/meetings/${selectedMeetingId}/public-summary`, "PUT", payload);
+  if (!result || result.error) {
+    showToast(`Public summary save failed: ${result?.error ?? "unknown error"}`);
+    return;
+  }
   showToast("Public summary saved.");
 });
 
@@ -757,10 +761,12 @@ publishPublicSummary.addEventListener("click", async () => {
     return;
   }
   const result = await request(`/meetings/${selectedMeetingId}/public-summary/publish`, "POST");
-  if (result) {
-    applyPublicSummary(result, { force: true });
-    showToast("Public summary published.");
+  if (!result || result.error) {
+    showToast(`Public summary publish failed: ${result?.error ?? "unknown error"}`);
+    return;
   }
+  applyPublicSummary(result, { force: true });
+  showToast("Public summary published.");
 });
 
 [

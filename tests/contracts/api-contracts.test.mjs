@@ -236,31 +236,39 @@ test("API contracts: retention sweep deletes aged fixture audio and writes audit
   execSync(`SEED_TAG=${tag} ./scripts/seed_fixture_data.sh`, { stdio: "pipe" });
   await waitForApiHealth();
 
-  await api("/settings", "PUT", {
-    retentionDays: 30,
-    maxFileSizeMb: 500,
-    maxDurationSeconds: 14400
-  });
+  try {
+    await api("/settings", "PUT", {
+      retentionDays: 0,
+      maxFileSizeMb: 500,
+      maxDurationSeconds: 14400
+    });
 
-  const sweep = await api("/retention/sweep", "POST", {});
-  assert.equal(Array.isArray(sweep.deleted), true);
-  assert.equal(sweep.deleted.some((entry) => entry.file_uri === "fixture-retention.wav"), true);
-  const deletedMeetingIds = new Set(sweep.deleted.map((entry) => entry.meeting_id));
+    const sweep = await api("/retention/sweep", "POST", {});
+    assert.equal(Array.isArray(sweep.deleted), true);
+    assert.equal(sweep.deleted.some((entry) => entry.file_uri === "fixture-retention.wav"), true);
+    const deletedMeetingIds = new Set(sweep.deleted.map((entry) => entry.meeting_id));
 
-  const audit = await api("/meetings/system/audit-log", "GET");
-  assert.equal(Array.isArray(audit), true);
-  const event = audit.find((entry) => {
-    if (entry.event_type !== "RETENTION_SWEEP") return false;
-    if (Number(entry.details?.deleted_count) !== sweep.deleted.length) return false;
-    if (!Array.isArray(entry.details?.meeting_ids)) return false;
-    return entry.details.meeting_ids.every((id) => deletedMeetingIds.has(id));
-  });
-  assert.equal(Boolean(event), true);
-  assert.equal(Number(event.details?.deleted_count) > 0, true);
-  assert.equal(Number(event.details?.deleted_count), sweep.deleted.length);
-  assert.equal(Array.isArray(event.details?.meeting_ids), true);
-  assert.equal(event.details.meeting_ids.length > 0, true);
-  for (const id of event.details.meeting_ids) {
-    assert.equal(deletedMeetingIds.has(id), true, `audit meeting_id ${id} missing from deleted payload`);
+    const audit = await api("/meetings/system/audit-log", "GET");
+    assert.equal(Array.isArray(audit), true);
+    const event = audit.find((entry) => {
+      if (entry.event_type !== "RETENTION_SWEEP") return false;
+      if (Number(entry.details?.deleted_count) !== sweep.deleted.length) return false;
+      if (!Array.isArray(entry.details?.meeting_ids)) return false;
+      return entry.details.meeting_ids.every((id) => deletedMeetingIds.has(id));
+    });
+    assert.equal(Boolean(event), true);
+    assert.equal(Number(event.details?.deleted_count) > 0, true);
+    assert.equal(Number(event.details?.deleted_count), sweep.deleted.length);
+    assert.equal(Array.isArray(event.details?.meeting_ids), true);
+    assert.equal(event.details.meeting_ids.length > 0, true);
+    for (const id of event.details.meeting_ids) {
+      assert.equal(deletedMeetingIds.has(id), true, `audit meeting_id ${id} missing from deleted payload`);
+    }
+  } finally {
+    await api("/settings", "PUT", {
+      retentionDays: 60,
+      maxFileSizeMb: 500,
+      maxDurationSeconds: 14400
+    });
   }
 });

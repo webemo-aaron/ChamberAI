@@ -105,6 +105,14 @@ test("retention deletes audio older than retention window for approved meetings"
 
   const result = runRetentionSweep(db, new Date("2026-01-01T10:00:00Z"));
   assert.equal(result.deleted.length, 1);
+  assert.equal(result.deleted[0].meeting_id, meeting.id);
+  assert.equal(result.deleted[0].file_uri, "meeting_good.wav");
+
+  const sweepEvent = db.auditLog.find((entry) => entry.event_type === "RETENTION_SWEEP");
+  assert.equal(Boolean(sweepEvent), true);
+  assert.equal(sweepEvent.meeting_id, "system");
+  assert.equal(sweepEvent.details.deleted_count, 1);
+  assert.deepEqual(sweepEvent.details.meeting_ids, [meeting.id]);
 });
 
 test("retention does not delete audio for meetings not approved", () => {
