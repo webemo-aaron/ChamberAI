@@ -24,6 +24,10 @@ Web viewer: `docs/viewer.html` (supports `?doc=<file>.md`)
 - Production auth smoke: `docs/testing/production_auth_smoke.md`
 
 ## Product and Planning
+- Unified vision brief (2026-02-28): `docs/plans/2026-02-28-unified-vision-brief.md`
+- Venture thesis (AI Opportunity Exchange): `docs/plans/2026-02-28-ai-opportunity-exchange-venture-thesis.md`
+- Pilot backlog v1: `docs/plans/2026-02-28-ai-opportunity-exchange-pilot-backlog-v1.md`
+- Pilot scoreboard template: `docs/plans/2026-02-28-ai-opportunity-exchange-pilot-scoreboard-template.md`
 
 - Roadmap: `docs/roadmap.md`
 - Spec: `docs/spec.md`

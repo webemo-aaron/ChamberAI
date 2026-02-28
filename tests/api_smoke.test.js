@@ -154,3 +154,59 @@ test("API smoke: public summary endpoints", async () => {
   assert.equal(publishRes.status, 200);
   assert.ok(publishRes.body.published_at);
 });
+
+test("API smoke: geo profile scan and content brief generation", async () => {
+  const { handler } = createServer();
+
+  const meetingRes = await invoke(handler, "/meetings", {
+    method: "POST",
+    body: JSON.stringify({
+      date: "2026-02-28",
+      start_time: "08:30",
+      location: "Bethel",
+      tags: "tourism,member"
+    })
+  });
+  assert.equal(meetingRes.status, 201);
+
+  const scanRes = await invoke(handler, "/geo-profiles/scan", {
+    method: "POST",
+    body: JSON.stringify({
+      scopeType: "city",
+      scopeId: "Bethel",
+      existingDetails: ["Downtown restaurants", "Seasonal tourism traffic"]
+    })
+  });
+  assert.equal(scanRes.status, 200);
+  assert.equal(scanRes.body.scope_type, "city");
+  assert.equal(scanRes.body.scope_id, "Bethel");
+  assert.ok(typeof scanRes.body.ai_readiness_score === "number");
+
+  const briefRes = await invoke(handler, "/geo-content-briefs/generate", {
+    method: "POST",
+    body: JSON.stringify({
+      scopeType: "city",
+      scopeId: "Bethel"
+    })
+  });
+  assert.equal(briefRes.status, 200);
+  assert.equal(briefRes.body.scope_type, "city");
+  assert.ok(Array.isArray(briefRes.body.top_use_cases));
+  assert.ok(briefRes.body.top_use_cases.length > 0);
+
+  const listRes = await invoke(handler, "/geo-content-briefs?scopeType=city&scopeId=Bethel", {
+    method: "GET"
+  });
+  assert.equal(listRes.status, 200);
+  assert.ok(Array.isArray(listRes.body.items));
+  assert.ok(listRes.body.items.length >= 1);
+  assert.equal(typeof listRes.body.total, "number");
+
+  const pagedRes = await invoke(handler, "/geo-content-briefs?scopeType=city&scopeId=Bethel&limit=1&offset=0", {
+    method: "GET"
+  });
+  assert.equal(pagedRes.status, 200);
+  assert.equal(pagedRes.body.limit, 1);
+  assert.ok(Array.isArray(pagedRes.body.items));
+  assert.ok(pagedRes.body.items.length <= 1);
+});
