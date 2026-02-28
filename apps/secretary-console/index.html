@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CAM-AIMS Secretary Console</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -663,7 +664,20 @@
     </div>
 
     <script src="./firebase-config.js"></script>
-    <script src="./firebase-config.local.js"></script>
+    <script>
+      (function loadOptionalLocalFirebaseConfig() {
+        if (window.localStorage?.getItem("camLoadLocalFirebaseConfig") !== "true") {
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "./firebase-config.local.js";
+        script.async = false;
+        script.onerror = function () {
+          // Local override is optional and gitignored.
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
     <script src="./app.js" type="module"></script>
   </body>
 </html>

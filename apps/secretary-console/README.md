@@ -9,7 +9,10 @@ Quickstart (Local)
 Firebase config (local-only)
 - `firebase-config.js` in this folder is a safe placeholder committed to git.
 - Copy `firebase-config.local.example.js` to `firebase-config.local.js` and set real values.
-- `firebase-config.local.js` is gitignored and loaded by `index.html` after the placeholder, so it overrides locally without entering version control.
+- `firebase-config.local.js` is gitignored and loaded only when local override is enabled:
+  - In browser devtools console: `localStorage.setItem(\"camLoadLocalFirebaseConfig\", \"true\")`
+  - Reload the page.
+  - Disable override: `localStorage.removeItem(\"camLoadLocalFirebaseConfig\")`
 
 Quickstart (Docker)
 - Build images:
