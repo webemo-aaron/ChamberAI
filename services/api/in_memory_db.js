@@ -20,6 +20,8 @@ export function createInMemoryDb(options = {}) {
     actionItems: new Map(),
     draftMinutes: new Map(),
     publicSummary: new Map(),
+    geoProfiles: new Map(),
+    geoContentBriefs: new Map(),
     auditLog: [],
     inviteAuthorizedSenders: new Set(["admin@acme.com"]),
     invites: [],
@@ -30,6 +32,10 @@ export function createInMemoryDb(options = {}) {
       defaultProjectId: "",
       defaultLinkTemplate: "",
       apiKey: ""
+    },
+    geoMetrics: {
+      profile_refreshed: 0,
+      content_generated: 0
     }
   };
 

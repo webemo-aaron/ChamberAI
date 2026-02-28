@@ -15,19 +15,26 @@ import retention from "./routes/retention.js";
 import search from "./routes/search.js";
 import invitations from "./routes/invitations.js";
 import integrations from "./routes/integrations.js";
+import geoIntelligence from "./routes/geo_intelligence.js";
 import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
+const host = process.env.HOST ?? "0.0.0.0";
 const metrics = {
   startedAt: Date.now(),
   requests_total: 0,
   errors_total: 0,
-  by_status: {}
+  by_status: {},
+  geo_events: {
+    profile_refreshed: 0,
+    content_generated: 0
+  }
 };
 
 app.use(cors({ origin: process.env.CORS_ORIGIN ?? "*" }));
 app.use(express.json({ limit: "5mb" }));
+app.locals.metrics = metrics;
 
 app.use((req, res, next) => {
   const started = Date.now();
@@ -73,6 +80,7 @@ app.use(retention);
 app.use(search);
 app.use(invitations);
 app.use(integrations);
+app.use(geoIntelligence);
 
 app.use((err, req, res, next) => {
   metrics.errors_total += 1;
@@ -81,7 +89,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: err.message ?? "Server error" });
 });
 
-// Listen on 0.0.0.0 for Docker/Cloud Run compatibility
-app.listen(port, "0.0.0.0", () => {
-  console.log(`API listening on http://0.0.0.0:${port}`);
+// Default to 0.0.0.0 for Docker/Cloud Run, but allow HOST override for tests.
+app.listen(port, host, () => {
+  console.log(`API listening on http://${host}:${port}`);
 });

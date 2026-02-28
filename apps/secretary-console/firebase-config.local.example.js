@@ -1,5 +1,5 @@
-// Runtime Firebase config for Google sign-in.
-// Safe default committed to git. Override locally in firebase-config.local.js.
+// Local-only Firebase web config override.
+// Copy to firebase-config.local.js (gitignored) and fill real values.
 window.CHAMBERAI_FIREBASE_CONFIG = {
   apiKey: "REPLACE_ME",
   authDomain: "REPLACE_ME.firebaseapp.com",

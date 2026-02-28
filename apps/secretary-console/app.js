@@ -161,6 +161,18 @@ const motionLinkTemplate = document.getElementById("motionLinkTemplate");
 const motionSaveBtn = document.getElementById("motionSaveBtn");
 const motionTestBtn = document.getElementById("motionTestBtn");
 const motionStatus = document.getElementById("motionStatus");
+const geoScopeType = document.getElementById("geoScopeType");
+const geoScopeId = document.getElementById("geoScopeId");
+const geoExistingDetails = document.getElementById("geoExistingDetails");
+const geoScanBtn = document.getElementById("geoScan");
+const geoGenerateBtn = document.getElementById("geoGenerate");
+const geoRefreshBtn = document.getElementById("geoRefresh");
+const geoCopyOutreachBtn = document.getElementById("geoCopyOutreach");
+const geoExportBriefsBtn = document.getElementById("geoExportBriefs");
+const geoStatus = document.getElementById("geoStatus");
+const geoProfileResult = document.getElementById("geoProfileResult");
+const geoBriefResult = document.getElementById("geoBriefResult");
+const geoBriefList = document.getElementById("geoBriefList");
 
 let meetings = [];
 let selectedMeetingId = null;
@@ -194,6 +206,8 @@ let signOutFn = null;
 let googleProvider = null;
 let inviteAuthorizedSenders = [];
 let motionConfig = null;
+let geoProfiles = [];
+let geoBriefs = [];
 
 const hostedApiBase = "https://chamberai-api-ecfgvedexq-uc.a.run.app";
 const inferredApiBase = window.location.hostname.endsWith(".vercel.app") ? hostedApiBase : "http://localhost:4000";
@@ -525,6 +539,75 @@ motionTestBtn.addEventListener("click", async () => {
   motionStatus.textContent = `Motion connection OK (${displayName}).`;
 });
 
+geoScanBtn.addEventListener("click", async () => {
+  const payload = buildGeoPayload();
+  if (!payload) return;
+  setGeoStatus("Scanning local signals…", "loading");
+  const profile = await request("/geo-profiles/scan", "POST", payload);
+  if (!profile || profile.error) {
+    setGeoStatus(`Scan failed: ${profile?.error ?? "unknown error"}`, "error");
+    return;
+  }
+  setGeoStatus(`Area scan complete for ${profile.scope_id}.`, "ready");
+  renderGeoProfile(profile);
+  await loadGeoWorkspace({ suppressAlert: true });
+});
+
+geoGenerateBtn.addEventListener("click", async () => {
+  const payload = buildGeoPayload();
+  if (!payload) return;
+  setGeoStatus("Generating localized brief…", "loading");
+  const brief = await request("/geo-content-briefs/generate", "POST", payload);
+  if (!brief || brief.error) {
+    setGeoStatus(`Brief generation failed: ${brief?.error ?? "unknown error"}`, "error");
+    return;
+  }
+  setGeoStatus(`Localized brief generated for ${brief.scope_id}.`, "ready");
+  renderGeoBrief(brief);
+  await loadGeoWorkspace({ suppressAlert: true });
+});
+
+geoRefreshBtn.addEventListener("click", () => {
+  setGeoStatus("Refreshing geo workspace…", "loading");
+  loadGeoWorkspace({ suppressAlert: true });
+});
+
+geoCopyOutreachBtn.addEventListener("click", async () => {
+  const brief = geoBriefs[0];
+  if (!brief?.outreach_draft) {
+    setGeoStatus("No outreach draft available to copy.", "error");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(brief.outreach_draft);
+    setGeoStatus("Outreach draft copied to clipboard.", "ready");
+  } catch {
+    setGeoStatus("Clipboard copy failed in this browser context.", "error");
+  }
+});
+
+geoExportBriefsBtn.addEventListener("click", () => {
+  if (!Array.isArray(geoBriefs) || geoBriefs.length === 0) {
+    setGeoStatus("No briefs available to export.", "error");
+    return;
+  }
+  const blob = new Blob([JSON.stringify(geoBriefs, null, 2)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  const stamp = new Date().toISOString().slice(0, 10);
+  link.download = `geo-briefs-${stamp}.json`;
+  link.click();
+  setGeoStatus("Briefs exported as JSON.", "ready");
+});
+
+geoScopeType.addEventListener("change", () => {
+  loadGeoWorkspace({ suppressAlert: true });
+});
+
+geoScopeId.addEventListener("change", () => {
+  loadGeoWorkspace({ suppressAlert: true });
+});
+
 quickCreateBtn.addEventListener("click", () => {
   quickLocation.value = localStorage.getItem("camLastLocation") ?? "";
   quickChair.value = localStorage.getItem("camLastChair") ?? "";
@@ -650,7 +733,11 @@ minutesContent.addEventListener("input", () => {
 savePublicSummary.addEventListener("click", async () => {
   if (!selectedMeetingId) return;
   const payload = collectPublicSummaryPayload();
-  await request(`/meetings/${selectedMeetingId}/public-summary`, "PUT", payload);
+  const result = await request(`/meetings/${selectedMeetingId}/public-summary`, "PUT", payload);
+  if (!result || result.error) {
+    showToast(`Public summary save failed: ${result?.error ?? "unknown error"}`);
+    return;
+  }
   showToast("Public summary saved.");
 });
 
@@ -674,10 +761,12 @@ publishPublicSummary.addEventListener("click", async () => {
     return;
   }
   const result = await request(`/meetings/${selectedMeetingId}/public-summary/publish`, "POST");
-  if (result) {
-    applyPublicSummary(result, { force: true });
-    showToast("Public summary published.");
+  if (!result || result.error) {
+    showToast(`Public summary publish failed: ${result?.error ?? "unknown error"}`);
+    return;
   }
+  applyPublicSummary(result, { force: true });
+  showToast("Public summary published.");
 });
 
 [
@@ -939,6 +1028,10 @@ async function loadMeetingDetail(meetingId) {
   flagNoActionItems.checked = Boolean(meeting.no_action_items);
   flagNoAdjournment.checked = Boolean(meeting.no_adjournment_time);
   flagNoAdjournmentInline.checked = Boolean(meeting.no_adjournment_time);
+  if (!geoScopeId.value.trim() && meeting.location) {
+    geoScopeType.value = "city";
+    geoScopeId.value = meeting.location;
+  }
 
   const minutes = await request(`/meetings/${meetingId}/draft-minutes`, "GET");
   minutesContent.value = minutes?.content ?? "";
@@ -1716,6 +1809,119 @@ async function loadMotionConfig() {
   }
 }
 
+function buildGeoPayload() {
+  const scopeType = geoScopeType.value;
+  const scopeId = geoScopeId.value.trim();
+  if (!scopeId) {
+    setGeoStatus("Scope ID is required (ZIP, city, or town).", "error");
+    return null;
+  }
+  const existingDetails = geoExistingDetails.value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return {
+    scopeType,
+    scopeId,
+    existingDetails
+  };
+}
+
+async function loadGeoWorkspace(options = {}) {
+  const suppressAlert = Boolean(options.suppressAlert);
+  const query = buildGeoQuery();
+  const reqOptions = { suppressAlert };
+  const [profilesRes, briefsRes] = await Promise.all([
+    request(`/geo-profiles${query}`, "GET", undefined, reqOptions),
+    request(`/geo-content-briefs${query}`, "GET", undefined, reqOptions)
+  ]);
+
+  geoProfiles = Array.isArray(profilesRes)
+    ? profilesRes
+    : Array.isArray(profilesRes?.items)
+      ? profilesRes.items
+      : [];
+  geoBriefs = Array.isArray(briefsRes)
+    ? briefsRes
+    : Array.isArray(briefsRes?.items)
+      ? briefsRes.items
+      : [];
+  renderGeoProfile(geoProfiles[0] ?? null);
+  renderGeoBrief(geoBriefs[0] ?? null);
+  renderGeoBriefList(geoBriefs);
+  if (geoProfiles.length === 0 && geoBriefs.length === 0) {
+    setGeoStatus("No geo data yet for this scope. Run scan or generate.", "ready");
+  } else {
+    setGeoStatus(
+      `Loaded ${geoProfiles.length} profile(s) and ${geoBriefs.length} brief(s) for current scope.`,
+      "ready"
+    );
+  }
+}
+
+function buildGeoQuery() {
+  const params = new URLSearchParams();
+  const scopeType = geoScopeType.value;
+  const scopeId = geoScopeId.value.trim();
+  params.set("limit", "25");
+  params.set("offset", "0");
+  if (scopeType) params.set("scopeType", scopeType);
+  if (scopeId) params.set("scopeId", scopeId);
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+function renderGeoProfile(profile) {
+  if (!profile) {
+    geoProfileResult.textContent = "No geo profile yet for this scope.";
+    return;
+  }
+  const topTags = (profile.signals?.top_tags ?? []).join(", ") || "none";
+  const gaps = (profile.demand_gap_tags ?? []).join(", ") || "none";
+  geoProfileResult.innerHTML = `
+    <div><strong>Scope:</strong> ${profile.scope_type}:${profile.scope_id}</div>
+    <div><strong>Density:</strong> ${profile.business_density_score}/100</div>
+    <div><strong>AI Readiness:</strong> ${profile.ai_readiness_score}/100</div>
+    <div><strong>Top Tags:</strong> ${topTags}</div>
+    <div><strong>Demand Gaps:</strong> ${gaps}</div>
+  `;
+}
+
+function renderGeoBrief(brief) {
+  if (!brief) {
+    geoBriefResult.textContent = "No generated brief yet for this scope.";
+    return;
+  }
+  const useCases = (brief.top_use_cases ?? []).join(", ");
+  geoBriefResult.innerHTML = `
+    <div><strong>Summary:</strong> ${brief.opportunity_summary}</div>
+    <div><strong>Top Use Cases:</strong> ${useCases}</div>
+    <div><strong>Outreach:</strong> ${brief.outreach_draft}</div>
+  `;
+}
+
+function renderGeoBriefList(briefs) {
+  if (!Array.isArray(briefs) || briefs.length === 0) {
+    geoBriefList.textContent = "No brief history yet.";
+    return;
+  }
+  geoBriefList.innerHTML = "";
+  briefs.slice(0, 5).forEach((brief) => {
+    const line = document.createElement("div");
+    line.className = "geo-brief-line";
+    const timestamp = new Date(brief.generated_at).toLocaleString();
+    line.textContent = `${timestamp} · ${brief.scope_type}:${brief.scope_id} · ${brief.top_use_cases.join(", ")}`;
+    geoBriefList.appendChild(line);
+  });
+}
+
+function setGeoStatus(message, state = "ready") {
+  geoStatus.textContent = message;
+  geoStatus.classList.remove("loading", "error");
+  if (state === "loading") geoStatus.classList.add("loading");
+  if (state === "error") geoStatus.classList.add("error");
+}
+
 renderFeatureFlags();
 void startApp();
 
@@ -1959,7 +2165,9 @@ function applyRolePermissions(role) {
     inviteSendBtn,
     inviteRefreshBtn,
     motionSaveBtn,
-    motionTestBtn
+    motionTestBtn,
+    geoScanBtn,
+    geoGenerateBtn
   ];
   controls.forEach((control) => {
     if (!control) return;
@@ -2003,7 +2211,10 @@ function applyRolePermissions(role) {
     "motionApiKey",
     "motionWorkspaceId",
     "motionProjectId",
-    "motionLinkTemplate"
+    "motionLinkTemplate",
+    "geoScopeType",
+    "geoScopeId",
+    "geoExistingDetails"
   ].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.disabled = isViewer;
@@ -2220,7 +2431,8 @@ async function startApp() {
     loadMeetings(startupRequestOptions),
     syncSettingsFromApi({ startup: true }),
     loadInviteWorkspace(),
-    loadMotionConfig()
+    loadMotionConfig(),
+    loadGeoWorkspace({ suppressAlert: true })
   ]);
   if (!meetingsResult) {
     showToast("API is warming up. Retry when services are ready.");

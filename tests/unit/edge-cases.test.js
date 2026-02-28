@@ -7,7 +7,9 @@ import {
   registerAudioSource,
   updateMeeting,
   listAudioSources,
-  updateConfig
+  updateConfig,
+  scanGeoProfile,
+  generateGeoContentBrief
 } from "../../services/api/index.js";
 
 /**
@@ -182,4 +184,34 @@ test("Configuration limits can be adjusted and applied", () => {
   // Restore original config
   updateConfig(db, { maxDurationSeconds: originalMax });
   assert.equal(db.config.maxDurationSeconds, originalMax);
+});
+
+test("Geo intelligence supports zip/city/town scopes and generates localized brief", () => {
+  const db = createInMemoryDb();
+  createMeeting(db, {
+    date: "2026-02-28",
+    start_time: "12:00",
+    location: "Bethel",
+    tags: "tourism,retention"
+  });
+
+  const profile = scanGeoProfile(db, {
+    scopeType: "city",
+    scopeId: "Bethel",
+    existingDetails: ["Hospitality businesses", "Seasonal traffic"]
+  });
+
+  assert.equal(profile.scope_type, "city");
+  assert.equal(profile.scope_id, "Bethel");
+  assert.ok(profile.business_density_score >= 0);
+  assert.ok(profile.ai_readiness_score >= 0);
+
+  const brief = generateGeoContentBrief(db, {
+    scopeType: "city",
+    scopeId: "Bethel"
+  });
+  assert.equal(brief.scope_type, "city");
+  assert.equal(brief.scope_id, "Bethel");
+  assert.ok(Array.isArray(brief.top_use_cases));
+  assert.ok(brief.opportunity_summary.includes("Bethel"));
 });

@@ -26,7 +26,12 @@ import {
   getPublicSummary,
   updatePublicSummary,
   generatePublicSummary,
-  publishPublicSummary
+  publishPublicSummary,
+  addAuditLog,
+  listGeoProfiles,
+  scanGeoProfile,
+  listGeoContentBriefs,
+  generateGeoContentBrief
 } from "./index.js";
 
 export function createRequestHandler(db) {
@@ -41,7 +46,13 @@ export function createRequestHandler(db) {
       }
 
       if (method === "GET" && path === "/health") {
-        return sendJson(res, 200, { ok: true });
+        return sendJson(res, 200, {
+          ok: true,
+          geo_metrics: {
+            profile_refreshed: Number(db.geoMetrics?.profile_refreshed ?? 0),
+            content_generated: Number(db.geoMetrics?.content_generated ?? 0)
+          }
+        });
       }
 
       if (method === "POST" && path === "/meetings") {
@@ -229,6 +240,57 @@ export function createRequestHandler(db) {
         const body = await readJsonBody(req);
         const updated = updateConfig(db, body);
         return sendJson(res, 200, updated);
+      }
+
+      if (path === "/geo-profiles" && method === "GET") {
+        const profiles = listGeoProfiles(db, {
+          scopeType: url.searchParams.get("scopeType") ?? "",
+          scopeId: url.searchParams.get("scopeId") ?? "",
+          limit: url.searchParams.get("limit"),
+          offset: url.searchParams.get("offset")
+        });
+        return sendJson(res, 200, profiles);
+      }
+
+      if (path === "/geo-profiles/scan" && method === "POST") {
+        const body = await readJsonBody(req);
+        const profile = scanGeoProfile(db, body);
+        db.geoMetrics.profile_refreshed = Number(db.geoMetrics.profile_refreshed ?? 0) + 1;
+        addAuditLog(db, {
+          meeting_id: "system",
+          event_type: "GEO_PROFILE_REFRESHED",
+          details: {
+            scope_type: profile.scope_type,
+            scope_id: profile.scope_id
+          }
+        });
+        return sendJson(res, 200, profile);
+      }
+
+      if (path === "/geo-content-briefs" && method === "GET") {
+        const briefs = listGeoContentBriefs(db, {
+          scopeType: url.searchParams.get("scopeType") ?? "",
+          scopeId: url.searchParams.get("scopeId") ?? "",
+          limit: url.searchParams.get("limit"),
+          offset: url.searchParams.get("offset")
+        });
+        return sendJson(res, 200, briefs);
+      }
+
+      if (path === "/geo-content-briefs/generate" && method === "POST") {
+        const body = await readJsonBody(req);
+        const brief = generateGeoContentBrief(db, body);
+        db.geoMetrics.content_generated = Number(db.geoMetrics.content_generated ?? 0) + 1;
+        addAuditLog(db, {
+          meeting_id: "system",
+          event_type: "GEO_CONTENT_GENERATED",
+          details: {
+            scope_type: brief.scope_type,
+            scope_id: brief.scope_id,
+            geo_profile_id: brief.geo_profile_id
+          }
+        });
+        return sendJson(res, 200, brief);
       }
 
       if (path === "/invites/authorized-senders" && method === "GET") {

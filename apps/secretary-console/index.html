@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CAM-AIMS Secretary Console</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -258,6 +259,55 @@
           <button id="saveSettings" class="btn ghost" data-testid="save-settings">Save Settings</button>
           <div id="retentionResult" class="hint"></div>
           <div id="settingsStatus" class="settings-banner hidden"></div>
+        </div>
+
+        <div class="panel form">
+          <div class="panel-head">
+            <h2>Geo Intelligence</h2>
+          </div>
+          <p class="hint">
+            Scan local signals by ZIP, city, or town and generate localized opportunity content.
+          </p>
+          <div class="grid">
+            <label>
+              Scope Type
+              <select id="geoScopeType">
+                <option value="zip_code">ZIP Code</option>
+                <option value="city">City</option>
+                <option value="town">Town</option>
+              </select>
+            </label>
+            <label>
+              Scope ID
+              <input id="geoScopeId" type="text" placeholder="04032 or Bethel" />
+            </label>
+          </div>
+          <label>
+            Existing Local Details (optional, one per line)
+            <textarea id="geoExistingDetails" rows="4" placeholder="Downtown restaurants&#10;Main street retail"></textarea>
+          </label>
+          <div class="inline-actions">
+            <button id="geoScan" class="btn" type="button">Scan Area</button>
+            <button id="geoGenerate" class="btn ghost" type="button">Generate Brief</button>
+            <button id="geoRefresh" class="btn ghost" type="button">Refresh</button>
+            <button id="geoCopyOutreach" class="btn ghost" type="button">Copy Outreach</button>
+            <button id="geoExportBriefs" class="btn ghost" type="button">Export Briefs JSON</button>
+          </div>
+          <div id="geoStatus" class="hint geo-status">Ready.</div>
+          <div class="geo-grid">
+            <div class="geo-card">
+              <h3>Geo Profile</h3>
+              <div id="geoProfileResult" class="hint">No geo profile yet for this scope.</div>
+            </div>
+            <div class="geo-card">
+              <h3>Latest Brief</h3>
+              <div id="geoBriefResult" class="hint">No generated brief yet for this scope.</div>
+            </div>
+          </div>
+          <div class="geo-card">
+            <h3>Recent Briefs</h3>
+            <div id="geoBriefList" class="hint">No brief history yet.</div>
+          </div>
         </div>
       </section>
 
@@ -614,6 +664,20 @@
     </div>
 
     <script src="./firebase-config.js"></script>
+    <script>
+      (function loadOptionalLocalFirebaseConfig() {
+        if (window.localStorage?.getItem("camLoadLocalFirebaseConfig") !== "true") {
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "./firebase-config.local.js";
+        script.async = false;
+        script.onerror = function () {
+          // Local override is optional and gitignored.
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
     <script src="./app.js" type="module"></script>
   </body>
 </html>

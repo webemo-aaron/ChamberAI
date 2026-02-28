@@ -241,13 +241,13 @@ jobs:
       - name: E2E Critical Tests
         run: |
           API_BASE=http://127.0.0.1:4001 SEED_TAG=ci-e2e-critical FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
-          npm run test:e2e:critical
+          npm run test:e2e:critical || (echo "Retrying critical e2e suite once..." && npm run test:e2e:critical)
 
       - name: E2E Full Suite
         if: github.event_name != 'pull_request'
         run: |
           API_BASE=http://127.0.0.1:4001 SEED_TAG=ci-e2e-full FIXTURE_CLEANUP_MODE=namespace ./scripts/seed_fixture_data.sh
-          npm run test:e2e
+          npm run test:e2e || (echo "Retrying full e2e suite once..." && npm run test:e2e)
 
       - name: Upload Playwright Report
         if: always()

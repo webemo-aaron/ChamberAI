@@ -20,7 +20,11 @@ export function runRetentionSweep(db, now = db.now()) {
 
     if (now.getTime() - createdAt > retentionMs) {
       db.audioSources.delete(audioId);
-      deleted.push(audioId);
+      deleted.push({
+        meeting_id: audio.meeting_id,
+        audio_id: audioId,
+        file_uri: audio.file_uri ?? null
+      });
 
       addAuditLog(db, {
         meeting_id: audio.meeting_id,
@@ -29,6 +33,18 @@ export function runRetentionSweep(db, now = db.now()) {
         details: { audio_id: audioId }
       });
     }
+  }
+
+  if (deleted.length > 0) {
+    addAuditLog(db, {
+      meeting_id: "system",
+      event_type: "RETENTION_SWEEP",
+      actor: "system",
+      details: {
+        deleted_count: deleted.length,
+        meeting_ids: Array.from(new Set(deleted.map((entry) => entry.meeting_id)))
+      }
+    });
   }
 
   return { deleted };

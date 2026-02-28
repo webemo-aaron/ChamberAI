@@ -6,6 +6,14 @@ Quickstart (Local)
 - `./scripts/dev_all_firebase.sh` (runs Firebase API + console together)
 - `./scripts/dev_laptop.sh` (runs Firebase emulators + API + worker + console)
 
+Firebase config (local-only)
+- `firebase-config.js` in this folder is a safe placeholder committed to git.
+- Copy `firebase-config.local.example.js` to `firebase-config.local.js` and set real values.
+- `firebase-config.local.js` is gitignored and loaded only when local override is enabled:
+  - In browser devtools console: `localStorage.setItem(\"camLoadLocalFirebaseConfig\", \"true\")`
+  - Reload the page.
+  - Disable override: `localStorage.removeItem(\"camLoadLocalFirebaseConfig\")`
+
 Quickstart (Docker)
 - Build images:
   - `docker build -t chamberofcommerceai-api:local -f services/api-firebase/Dockerfile services/api-firebase`

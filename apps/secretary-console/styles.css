@@ -539,6 +539,56 @@ textarea {
   font-weight: 600;
 }
 
+.geo-status {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e3dacd;
+  background: #f8f2e8;
+}
+
+.geo-status.loading {
+  background: #eef6f4;
+  border-color: #b8d8d1;
+  color: #0f4f46;
+}
+
+.geo-status.error {
+  background: #fff4e3;
+  border-color: #f1c18b;
+  color: #8b3f13;
+}
+
+.geo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.geo-card {
+  border-radius: 12px;
+  border: 1px solid #e3dacd;
+  background: #fbf6ee;
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.geo-card h3 {
+  margin: 0;
+  font-size: 13px;
+  color: #3f4d4a;
+}
+
+.geo-brief-line {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #f4ebde;
+}
+
 .settings-banner {
   margin-top: 10px;
   padding: 8px 10px;

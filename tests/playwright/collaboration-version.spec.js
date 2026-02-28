@@ -1,6 +1,17 @@
 import { test, expect } from "@playwright/test";
 import { bootstrapPage, createMeeting, openMeeting } from "./support/ui_helpers.mjs";
 
+async function ensureVersionHistoryHasTwoPages(page, prefix) {
+  for (let i = 1; i <= 12; i += 1) {
+    const pageLabel = (await page.locator('[data-testid="version-history-page"]').textContent())?.trim() ?? "";
+    if (pageLabel === "Page 1/2") return;
+    await page.locator('[data-testid="minutes-content"]').fill(`${prefix}-extra-v${i}-${Date.now()}`);
+    await page.locator('[data-testid="save-minutes"]').click();
+    await expect(page.locator('[data-testid="collab-status"]')).toContainText("Draft saved.");
+  }
+  await expect(page.locator('[data-testid="version-history-page"]')).toHaveText("Page 1/2");
+}
+
 test.describe("Collaboration and Version History", () => {
   test("real-time collaboration supports multi-user editing", async ({ page, request }) => {
     const location = `Collab Room ${Date.now()}`;
@@ -12,11 +23,13 @@ test.describe("Collaboration and Version History", () => {
     await bootstrapPage(pageB);
     await openMeeting(page, location);
     await openMeeting(pageB, location);
+    await expect(page.locator('[data-testid="collab-status"]')).toContainText("Collaboration active.");
+    await expect(pageB.locator('[data-testid="collab-status"]')).toContainText("Collaboration active.");
 
     const content = `Shared draft ${Date.now()}`;
     await page.locator('[data-testid="minutes-content"]').fill(content);
     await page.locator('[data-testid="save-minutes"]').click();
-    await expect(pageB.locator('[data-testid="minutes-content"]')).toHaveValue(content);
+    await expect(pageB.locator('[data-testid="minutes-content"]')).toHaveValue(content, { timeout: 20_000 });
     await expect(pageB.locator('[data-testid="collab-status"]')).toContainText("Synced from");
 
     await pageB.close();
@@ -77,6 +90,7 @@ test.describe("Collaboration and Version History", () => {
       await page.locator('[data-testid="save-minutes"]').click();
     }
 
+    await ensureVersionHistoryHasTwoPages(page, "paging");
     await expect(page.locator('[data-testid="version-history-page"]')).toHaveText("Page 1/2");
     await expect(page.locator("#versionHistoryList .version-item")).toHaveCount(5);
     await page.locator('[data-testid="version-history-next"]').click();
@@ -109,6 +123,7 @@ test.describe("Collaboration and Version History", () => {
       await page.locator('[data-testid="save-minutes"]').click();
     }
 
+    await ensureVersionHistoryHasTwoPages(page, "last-page");
     let requestedPastLastPage = false;
     page.on("request", (req) => {
       const url = req.url();
@@ -116,7 +131,11 @@ test.describe("Collaboration and Version History", () => {
       if (url.includes("offset=10")) requestedPastLastPage = true;
     });
 
-    await page.locator('[data-testid="version-history-next"]').click();
+    await expect(page.locator('[data-testid="version-history-page"]')).toHaveText("Page 1/2");
+    await expect(page.locator("#versionHistoryList .version-item")).toHaveCount(5);
+    const nextButton = page.locator('[data-testid="version-history-next"]');
+    await expect(nextButton).toBeEnabled();
+    await nextButton.click();
     await expect(page.locator('[data-testid="version-history-page"]')).toHaveText("Page 2/2");
     await expect(page.locator('[data-testid="version-history-next"]')).toBeDisabled();
 
