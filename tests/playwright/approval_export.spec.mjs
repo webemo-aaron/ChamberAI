@@ -4,6 +4,7 @@ import { attachConsoleGuard } from "./support/console_guard.mjs";
 
 test("approval gating and export flow @critical", async ({ browser, request }) => {
   await waitForApi(request);
+  const meetingLocation = `Approval Gate Hall ${Date.now()}`;
   const createRes = await request.post(`${API_BASE}/meetings`, {
     headers: {
       Authorization: "Bearer demo-token",
@@ -13,7 +14,7 @@ test("approval gating and export flow @critical", async ({ browser, request }) =
     data: {
       date: "2026-01-23",
       start_time: "18:00",
-      location: "Approval Gate Hall",
+      location: meetingLocation,
       chair_name: "Alex Chair",
       secretary_name: "Riley Secretary",
       tags: "approval"
@@ -33,30 +34,65 @@ test("approval gating and export flow @critical", async ({ browser, request }) =
   await page.locator("#saveApiBase").click();
 
   await page.locator("#refreshMeetings").click();
-  await page.locator(".meeting-card", { hasText: "Approval Gate Hall" }).first().click();
+  await page.locator(".meeting-card", { hasText: meetingLocation }).first().click();
   await expect(page.locator("#meetingStatus")).toHaveText(/CREATED|UPLOADED|PROCESSING|DRAFT_READY|APPROVED/);
 
   await expect(page.locator("#approveMeeting")).toBeDisabled();
 
   await page.locator("#flagNoMotions").check();
   await page.locator("#flagNoAdjournment").check();
-  await page.locator("#saveMeta").click();
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes("/meetings/") &&
+      response.request().method() === "PUT" &&
+      response.ok()
+    ),
+    page.locator("#saveMeta").click()
+  ]);
 
   await page.locator(".tab", { hasText: "Action Items" }).click();
   await page.locator("#actionDescription").fill("Confirm signage vendor timeline");
   await page.locator("#actionOwner").fill("Taylor Treasurer");
   await page.locator("#actionDue").fill("2026-02-01");
-  await page.locator("#addActionItem").click();
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes("/action-items") &&
+      response.request().method() === "PUT" &&
+      response.ok()
+    ),
+    page.locator("#addActionItem").click()
+  ]);
 
   await expect(page.locator("#approveMeeting")).toBeEnabled();
-  await page.locator("#approveMeeting").click();
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes("/approve") &&
+      response.request().method() === "POST" &&
+      response.ok()
+    ),
+    page.locator("#approveMeeting").click()
+  ]);
   await expect(page.locator("#meetingStatus")).toHaveText("APPROVED");
 
   await page.locator(".tab", { hasText: "Motions" }).click();
-  await page.locator("#exportPdf").click();
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes("/export") &&
+      response.request().method() === "POST" &&
+      response.ok()
+    ),
+    page.locator("#exportPdf").click()
+  ]);
   await expect(page.locator("#exportResults")).toContainText("PDF export ready");
 
-  await page.locator("#exportDocx").click();
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes("/export") &&
+      response.request().method() === "POST" &&
+      response.ok()
+    ),
+    page.locator("#exportDocx").click()
+  ]);
   await expect(page.locator("#exportResults")).toContainText("DOCX export ready");
   await guard.assertNoUnexpected();
 

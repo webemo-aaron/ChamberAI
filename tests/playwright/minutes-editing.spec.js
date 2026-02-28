@@ -92,14 +92,28 @@ test.describe("Minutes Editing and Management", () => {
 
   test("Export minutes in different formats", async ({ page, request }) => {
     const location = `Export Room ${Date.now()}`;
-    await createMeeting(request, location);
+    const meeting = await createMeeting(request, location);
     await openMeeting(page, location);
     await page.locator(".tab", { hasText: "Motions" }).click();
 
-    await page.locator('[data-testid="export-pdf"]').click();
+    await Promise.all([
+      page.waitForResponse((response) =>
+        response.url().includes(`/meetings/${meeting.id}/export`) &&
+        response.request().method() === "POST" &&
+        response.ok()
+      ),
+      page.locator('[data-testid="export-pdf"]').click()
+    ]);
     await expect(page.locator("#exportResults")).toContainText("PDF export ready");
 
-    await page.locator('[data-testid="export-docx"]').click();
+    await Promise.all([
+      page.waitForResponse((response) =>
+        response.url().includes(`/meetings/${meeting.id}/export`) &&
+        response.request().method() === "POST" &&
+        response.ok()
+      ),
+      page.locator('[data-testid="export-docx"]').click()
+    ]);
     await expect(page.locator("#exportResults")).toContainText("DOCX export ready");
   });
 });

@@ -35,8 +35,16 @@ test("action items CSV import/export @critical", async ({ browser, request }) =>
   await page.locator("#apiBase").fill(API_BASE);
   await page.locator("#saveApiBase").click();
 
-  await page.locator("#refreshMeetings").click();
-  await page.locator(".meeting-card", { hasText: location }).first().click();
+  const meetingCard = page.locator(".meeting-card", { hasText: location }).first();
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    await page.locator("#refreshMeetings").click();
+    if (await meetingCard.isVisible().catch(() => false)) {
+      break;
+    }
+    await page.waitForTimeout(250);
+  }
+  await expect(meetingCard).toBeVisible();
+  await meetingCard.click();
   await expect(page.locator("#meetingStatus")).toHaveText(/CREATED|UPLOADED|PROCESSING|DRAFT_READY|APPROVED/);
 
   await page.locator(".tab", { hasText: "Action Items" }).click();

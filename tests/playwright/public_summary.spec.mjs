@@ -79,9 +79,23 @@ test("public summary publish flow @critical", async ({ browser, request }) => {
   await page.locator("#summaryActionsReviewed").check();
   await page.locator("#summaryChairApproved").check();
 
-  await page.locator("#savePublicSummary").click();
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes("/public-summary") &&
+      response.request().method() === "PUT" &&
+      response.ok()
+    ),
+    page.locator("#savePublicSummary").click()
+  ]);
   await expect(page.locator("#publishPublicSummary")).toBeEnabled();
-  await page.locator("#publishPublicSummary").click();
+  await Promise.all([
+    page.waitForResponse((response) =>
+      response.url().includes("/public-summary/publish") &&
+      response.request().method() === "POST" &&
+      response.ok()
+    ),
+    page.locator("#publishPublicSummary").click()
+  ]);
 
   await expect(page.locator("#publicSummaryPublishStatus")).toContainText("Published");
   await guard.assertNoUnexpected();

@@ -40,7 +40,22 @@ export async function createMeeting(request, location, overrides = {}) {
 }
 
 export async function openMeeting(page, location) {
-  await page.locator("#refreshMeetings").click();
-  await page.locator(".meeting-card", { hasText: location }).first().click();
+  const card = page.locator(".meeting-card", { hasText: location }).first();
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    await page.locator("#refreshMeetings").click();
+    if (!(await card.isVisible().catch(() => false))) {
+      await page.waitForTimeout(250);
+      continue;
+    }
+    try {
+      await card.click();
+      await expect(page.locator("#meetingStatus")).toBeVisible({ timeout: 2000 });
+      return;
+    } catch {
+      await page.waitForTimeout(200);
+    }
+  }
+  await expect(card).toBeVisible();
+  await card.click();
   await expect(page.locator("#meetingStatus")).toBeVisible();
 }

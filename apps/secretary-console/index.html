@@ -257,8 +257,8 @@
             </div>
           </details>
           <button id="saveSettings" class="btn ghost" data-testid="save-settings">Save Settings</button>
-          <div id="retentionResult" class="hint"></div>
-          <div id="settingsStatus" class="settings-banner hidden"></div>
+          <div id="retentionResult" class="hint" role="status" aria-live="polite" aria-atomic="true"></div>
+          <div id="settingsStatus" class="settings-banner hidden" role="status" aria-live="polite" aria-atomic="true"></div>
         </div>
 
         <div class="panel form">
@@ -376,18 +376,18 @@
               </div>
             </div>
 
-            <div class="tab-bar">
-              <button class="tab active" data-tab="minutes">Minutes</button>
-              <button class="tab" data-tab="actions">Action Items</button>
-              <button class="tab" data-tab="audit">Audit Log</button>
-              <button class="tab" data-tab="motions">Motions</button>
-              <button class="tab hidden" data-tab="public-summary" id="publicSummaryTab">Public Summary</button>
+            <div class="tab-bar" role="tablist" aria-label="Meeting detail sections">
+              <button id="tabButtonMinutes" class="tab active" data-tab="minutes" role="tab" aria-selected="true" aria-controls="tab-minutes" tabindex="0">Minutes</button>
+              <button id="tabButtonActions" class="tab" data-tab="actions" role="tab" aria-selected="false" aria-controls="tab-actions" tabindex="-1">Action Items</button>
+              <button id="tabButtonAudit" class="tab" data-tab="audit" role="tab" aria-selected="false" aria-controls="tab-audit" tabindex="-1">Audit Log</button>
+              <button id="tabButtonMotions" class="tab" data-tab="motions" role="tab" aria-selected="false" aria-controls="tab-motions" tabindex="-1">Motions</button>
+              <button id="publicSummaryTab" class="tab hidden" data-tab="public-summary" role="tab" aria-selected="false" aria-controls="tab-public-summary" tabindex="-1">Public Summary</button>
             </div>
 
-            <div class="tab-content" id="tab-minutes">
+            <div class="tab-content" id="tab-minutes" role="tabpanel" aria-labelledby="tabButtonMinutes" tabindex="0">
               <div class="minutes-block">
                 <textarea id="minutesContent" rows="12" placeholder="Draft minutes will appear here..." data-testid="minutes-content"></textarea>
-                <div id="collabStatus" class="hint" data-testid="collab-status">Collaboration inactive.</div>
+                <div id="collabStatus" class="hint" data-testid="collab-status" role="status" aria-live="polite" aria-atomic="true">Collaboration inactive.</div>
                 <div class="inline-actions">
                   <button id="saveMinutes" class="btn ghost" data-testid="save-minutes">Save Draft</button>
                 </div>
@@ -403,7 +403,7 @@
               </div>
             </div>
 
-            <div class="tab-content hidden" id="tab-actions">
+            <div class="tab-content hidden" id="tab-actions" role="tabpanel" aria-labelledby="tabButtonActions" tabindex="0">
               <div class="actions-block">
                 <div id="approvalWarnings" class="warnings"></div>
                 <div class="hint" id="actionGate"></div>
@@ -430,11 +430,11 @@
               </div>
             </div>
 
-            <div class="tab-content hidden" id="tab-audit">
+            <div class="tab-content hidden" id="tab-audit" role="tabpanel" aria-labelledby="tabButtonAudit" tabindex="0">
               <div id="auditLog" class="audit-log"></div>
             </div>
 
-            <div class="tab-content hidden" id="tab-motions">
+            <div class="tab-content hidden" id="tab-motions" role="tabpanel" aria-labelledby="tabButtonMotions" tabindex="0">
               <div class="motions-block">
                 <div id="motionWarnings" class="warnings"></div>
                 <div id="motionGate" class="hint"></div>
@@ -489,7 +489,7 @@
               </div>
             </div>
 
-            <div class="tab-content hidden" id="tab-public-summary">
+            <div class="tab-content hidden" id="tab-public-summary" role="tabpanel" aria-labelledby="publicSummaryTab" tabindex="0">
               <div class="minutes-block">
                 <label>
                   Summary Title
@@ -560,7 +560,7 @@
                   Compiled Public Summary
                   <textarea id="publicSummaryContent" rows="8" placeholder="Compiled summary will appear here."></textarea>
                 </label>
-                <div id="publicSummaryPublishStatus" class="hint"></div>
+                <div id="publicSummaryPublishStatus" class="hint" role="status" aria-live="polite" aria-atomic="true"></div>
                 <div class="inline-actions">
                   <button id="savePublicSummary" class="btn ghost" data-testid="save-public-summary">Save Summary</button>
                   <button id="composePublicSummary" class="btn ghost" data-testid="compose-public-summary">Compose Summary</button>
@@ -587,11 +587,11 @@
       <span>CAM-AIMS Mock Console · In-memory API expected</span>
     </footer>
 
-    <div id="toast" class="toast hidden"></div>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 
-    <div id="loginModal" class="modal hidden">
+    <div id="loginModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" aria-hidden="true">
       <div class="modal-card">
-        <h2>Sign In</h2>
+        <h2 id="loginModalTitle">Sign In</h2>
         <p>Use Google sign-in (Firebase) or fallback demo role login.</p>
         <div class="modal-actions">
           <button id="loginGoogle" class="btn" type="button">Continue with Google</button>
@@ -617,9 +617,9 @@
       </div>
     </div>
 
-    <div id="quickModal" class="modal hidden">
+    <div id="quickModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quickModalTitle" aria-hidden="true">
       <div class="modal-card">
-        <h2>Quick Create Meeting</h2>
+        <h2 id="quickModalTitle">Quick Create Meeting</h2>
           <p>Uses today’s date, a 6:00 PM start, and your last used values.</p>
           <div class="grid">
             <label>
@@ -646,9 +646,9 @@
       </div>
     </div>
 
-    <div id="csvPreviewModal" class="modal hidden">
+    <div id="csvPreviewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="csvPreviewModalTitle" aria-hidden="true">
       <div class="modal-card">
-        <h2>Import Action Items</h2>
+        <h2 id="csvPreviewModalTitle">Import Action Items</h2>
         <p>Preview parsed rows before applying.</p>
         <label class="check">
           <input id="csvSkipInvalid" type="checkbox" checked />

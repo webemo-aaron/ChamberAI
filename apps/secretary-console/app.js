@@ -60,13 +60,20 @@ const csvCancel = document.getElementById("csvCancel");
 const csvSkipInvalid = document.getElementById("csvSkipInvalid");
 const csvPreviewNote = document.getElementById("csvPreviewNote");
 
-const tabs = document.querySelectorAll(".tab");
+const tabs = Array.from(document.querySelectorAll(".tab-bar .tab[role='tab']"));
 const tabMinutes = document.getElementById("tab-minutes");
 const tabActions = document.getElementById("tab-actions");
 const tabAudit = document.getElementById("tab-audit");
 const tabMotions = document.getElementById("tab-motions");
 const tabPublicSummary = document.getElementById("tab-public-summary");
 const publicSummaryTab = document.getElementById("publicSummaryTab");
+const tabPanelsByKey = {
+  minutes: tabMinutes,
+  actions: tabActions,
+  audit: tabAudit,
+  motions: tabMotions,
+  "public-summary": tabPublicSummary
+};
 
 const motionText = document.getElementById("motionText");
 const motionMover = document.getElementById("motionMover");
@@ -220,9 +227,114 @@ if (localStorage.getItem("camOnboardingDismissed") === "true") {
 inviteJoinLink.value = window.location.origin;
 updateInviteMotionSource();
 updateAuthCycleStatus();
+activateTabByKey("minutes");
+
+const modalBehavior = new Map([
+  [loginModal, { initialFocus: loginGoogle, closeOnEscape: false, closeOnBackdrop: false }],
+  [quickModal, { initialFocus: quickLocation, closeOnEscape: true, closeOnBackdrop: true }],
+  [csvPreviewModal, { initialFocus: csvSkipInvalid, closeOnEscape: true, closeOnBackdrop: true }]
+]);
+let activeModal = null;
+let modalReturnFocus = null;
+
+function getFocusableElements(container) {
+  return Array.from(
+    container.querySelectorAll(
+      "a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])"
+    )
+  ).filter((element) => !element.hasAttribute("hidden") && !element.closest(".hidden"));
+}
+
+function handleModalKeydown(event) {
+  if (!activeModal) return;
+  const config = modalBehavior.get(activeModal) ?? {};
+  if (event.key === "Escape" && config.closeOnEscape) {
+    event.preventDefault();
+    closeModal(activeModal);
+    return;
+  }
+  if (event.key !== "Tab") return;
+
+  const focusables = getFocusableElements(activeModal);
+  if (focusables.length === 0) {
+    event.preventDefault();
+    return;
+  }
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const current = document.activeElement;
+
+  if (event.shiftKey && current === first) {
+    event.preventDefault();
+    last.focus();
+    return;
+  }
+  if (!event.shiftKey && current === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+document.addEventListener("keydown", handleModalKeydown, true);
+
+function openModal(modal, options = {}) {
+  if (!modal) return;
+  if (activeModal && activeModal !== modal) {
+    closeModal(activeModal, { restoreFocus: false });
+  }
+  const config = modalBehavior.get(modal) ?? {};
+  activeModal = modal;
+  modalReturnFocus = options.returnFocus ?? document.activeElement;
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  const initialTarget = options.initialFocus ?? config.initialFocus;
+  requestAnimationFrame(() => {
+    if (initialTarget && typeof initialTarget.focus === "function") {
+      initialTarget.focus();
+      return;
+    }
+    const focusables = getFocusableElements(modal);
+    if (focusables[0]) focusables[0].focus();
+  });
+}
+
+function closeModal(modal, options = {}) {
+  if (!modal) return;
+  const restoreFocus = options.restoreFocus !== false;
+  modal.classList.add("hidden");
+  modal.setAttribute("aria-hidden", "true");
+  if (activeModal === modal) {
+    activeModal = null;
+  }
+  if (restoreFocus && modalReturnFocus && typeof modalReturnFocus.focus === "function") {
+    modalReturnFocus.focus();
+  }
+  modalReturnFocus = null;
+}
+
+function activateTab(tab, options = {}) {
+  if (!tab || tab.classList.contains("hidden")) return;
+  const shouldFocus = Boolean(options.focus);
+  tabs.forEach((candidate) => {
+    const isActive = candidate === tab;
+    candidate.classList.toggle("active", isActive);
+    candidate.setAttribute("aria-selected", isActive ? "true" : "false");
+    candidate.tabIndex = isActive ? 0 : -1;
+    const target = candidate.dataset.tab;
+    const panel = tabPanelsByKey[target];
+    if (panel) panel.classList.toggle("hidden", !isActive);
+  });
+  if (shouldFocus) tab.focus();
+}
+
+function activateTabByKey(key, options = {}) {
+  const targetTab = tabs.find((candidate) => candidate.dataset.tab === key);
+  if (!targetTab) return;
+  activateTab(targetTab, options);
+}
 
 if (!currentRole) {
-  loginModal.classList.remove("hidden");
+  openModal(loginModal, { returnFocus: loginSubmit });
 } else {
   setRole(
     currentRole,
@@ -248,7 +360,7 @@ loginSubmit.addEventListener("click", () => {
   setRole(role, email, "");
   updateAuthCycleStatus();
   syncSettingsFromApi({ startup: true });
-  loginModal.classList.add("hidden");
+  closeModal(loginModal);
 });
 
 loginGoogle.addEventListener("click", async () => {
@@ -266,7 +378,7 @@ loginGoogle.addEventListener("click", async () => {
     localStorage.setItem("camDisplayName", displayName);
     setRole(role, email, displayName);
     syncSettingsFromApi({ startup: true });
-    loginModal.classList.add("hidden");
+    closeModal(loginModal);
     showToast("Signed in with Google.");
   } catch (error) {
     console.error(error);
@@ -282,7 +394,7 @@ logoutBtn.addEventListener("click", () => {
   currentRole = "";
   roleBadge.textContent = "Role: Guest";
   applyRolePermissions("guest");
-  loginModal.classList.remove("hidden");
+  openModal(loginModal, { returnFocus: logoutBtn });
   if (firebaseAuth && signOutFn) {
     signOutFn(firebaseAuth).catch(() => {});
   }
@@ -295,28 +407,25 @@ dismissBanner.addEventListener("click", () => {
 });
 
 quickModal.addEventListener("click", (event) => {
-  if (event.target === quickModal) {
-    quickModal.classList.add("hidden");
+  if (event.target === quickModal && modalBehavior.get(quickModal)?.closeOnBackdrop) {
+    closeModal(quickModal);
   }
 });
 
 csvPreviewModal.addEventListener("click", (event) => {
-  if (event.target === csvPreviewModal) {
+  if (event.target === csvPreviewModal && modalBehavior.get(csvPreviewModal)?.closeOnBackdrop) {
     pendingCsvItems = [];
-    csvPreviewModal.classList.add("hidden");
+    closeModal(csvPreviewModal);
   }
 });
 
 document.addEventListener("keydown", (event) => {
+  if (activeModal) return;
   if (event.key === "/") {
     event.preventDefault();
     meetingSearch.focus();
   }
   if (event.key === "Escape") {
-    if (!quickModal.classList.contains("hidden")) {
-      quickModal.classList.add("hidden");
-      return;
-    }
     meetingSearch.value = "";
     searchQuery = "";
     meetingSearch.blur();
@@ -613,11 +722,11 @@ quickCreateBtn.addEventListener("click", () => {
   quickChair.value = localStorage.getItem("camLastChair") ?? "";
   quickSecretary.value = localStorage.getItem("camLastSecretary") ?? "";
   quickTags.value = localStorage.getItem("camLastTags") ?? "";
-  quickModal.classList.remove("hidden");
+  openModal(quickModal, { returnFocus: quickCreateBtn });
 });
 
 quickCancel.addEventListener("click", () => {
-  quickModal.classList.add("hidden");
+  closeModal(quickModal);
 });
 
 quickSubmit.addEventListener("click", async () => {
@@ -638,7 +747,7 @@ quickSubmit.addEventListener("click", async () => {
     localStorage.setItem("camLastChair", payload.chair_name);
     localStorage.setItem("camLastSecretary", payload.secretary_name);
     localStorage.setItem("camLastTags", payload.tags);
-    quickModal.classList.add("hidden");
+    closeModal(quickModal);
     await loadMeetings();
     selectMeeting(created.id);
     showToast("Meeting created.");
@@ -718,6 +827,10 @@ approveBtn.addEventListener("click", async () => {
 
 saveMinutesBtn.addEventListener("click", async () => {
   if (!selectedMeetingId) return;
+  if (minutesAutosaveTimer) {
+    clearTimeout(minutesAutosaveTimer);
+    minutesAutosaveTimer = null;
+  }
   await saveMinutesDraft();
 });
 
@@ -726,6 +839,7 @@ minutesContent.addEventListener("input", () => {
   collabStatus.textContent = "Editing draft…";
   if (minutesAutosaveTimer) clearTimeout(minutesAutosaveTimer);
   minutesAutosaveTimer = setTimeout(() => {
+    minutesAutosaveTimer = null;
     saveMinutesDraft({ silent: true });
   }, 800);
 });
@@ -812,14 +926,33 @@ addActionBtn.addEventListener("click", async () => {
 
 tabs.forEach((tab) => {
   tab.addEventListener("click", () => {
-    tabs.forEach((t) => t.classList.remove("active"));
-    tab.classList.add("active");
-    const target = tab.dataset.tab;
-    tabMinutes.classList.toggle("hidden", target !== "minutes");
-    tabActions.classList.toggle("hidden", target !== "actions");
-    tabAudit.classList.toggle("hidden", target !== "audit");
-    tabMotions.classList.toggle("hidden", target !== "motions");
-    tabPublicSummary.classList.toggle("hidden", target !== "public-summary");
+    activateTab(tab);
+  });
+  tab.addEventListener("keydown", (event) => {
+    const visibleTabs = tabs.filter((candidate) => !candidate.classList.contains("hidden"));
+    if (visibleTabs.length === 0) return;
+    const visibleIndex = visibleTabs.indexOf(tab);
+    if (visibleIndex < 0) return;
+
+    let nextTab = null;
+    if (event.key === "ArrowRight") {
+      nextTab = visibleTabs[(visibleIndex + 1) % visibleTabs.length];
+    } else if (event.key === "ArrowLeft") {
+      nextTab = visibleTabs[(visibleIndex - 1 + visibleTabs.length) % visibleTabs.length];
+    } else if (event.key === "Home") {
+      nextTab = visibleTabs[0];
+    } else if (event.key === "End") {
+      nextTab = visibleTabs[visibleTabs.length - 1];
+    } else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      activateTab(tab);
+      return;
+    }
+
+    if (nextTab) {
+      event.preventDefault();
+      activateTab(nextTab, { focus: true });
+    }
   });
 });
 
@@ -912,12 +1045,12 @@ actionCsvInput.addEventListener("change", async () => {
   }
   pendingCsvItems = parsed.items;
   renderCsvPreview(pendingCsvItems);
-  csvPreviewModal.classList.remove("hidden");
+  openModal(csvPreviewModal, { returnFocus: importActionCsv });
 });
 
 csvCancel.addEventListener("click", () => {
   pendingCsvItems = [];
-  csvPreviewModal.classList.add("hidden");
+  closeModal(csvPreviewModal);
   actionCsvInput.value = "";
 });
 
@@ -934,7 +1067,7 @@ csvApply.addEventListener("click", async () => {
   await request(`/meetings/${selectedMeetingId}/action-items`, "PUT", { items: actionItems });
   renderActionItems();
   pendingCsvItems = [];
-  csvPreviewModal.classList.add("hidden");
+  closeModal(csvPreviewModal);
   actionCsvInput.value = "";
   showToast("Action items imported.");
 });
@@ -979,16 +1112,18 @@ function renderMeetings() {
     .slice()
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .forEach((meeting) => {
-      const card = document.createElement("div");
+      const card = document.createElement("button");
+      card.type = "button";
       card.className = "meeting-card" + (meeting.id === selectedMeetingId ? " active" : "");
+      card.setAttribute("aria-pressed", meeting.id === selectedMeetingId ? "true" : "false");
       const tags = meeting.tags ?? [];
       const tagHtml =
         tags.length > 0
           ? `<div class="tag-row">${tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>`
           : "";
       card.innerHTML = `
-        <div><strong>${meeting.date}</strong> · ${meeting.location}</div>
-        <div>Status: <span class="status-pill status-${meeting.status.toLowerCase()}">${meeting.status}</span></div>
+        <span class="meeting-card-line"><strong>${meeting.date}</strong> · ${meeting.location}</span>
+        <span class="meeting-card-line">Status: <span class="status-pill status-${meeting.status.toLowerCase()}">${meeting.status}</span></span>
         ${tagHtml}
       `;
       card.addEventListener("click", () => selectMeeting(meeting.id));
@@ -1675,7 +1810,7 @@ async function initFirebaseAuth() {
       localStorage.setItem("camEmail", email);
       localStorage.setItem("camDisplayName", displayName);
       setRole(role, email, displayName);
-      loginModal.classList.add("hidden");
+      closeModal(loginModal, { restoreFocus: false });
     });
   } catch (error) {
     console.error("Firebase auth init failed", error);
@@ -2106,14 +2241,8 @@ function renderFeatureFlags() {
   publicSummaryTab.classList.toggle("hidden", hidePublicSummary);
   settingsInviteDisclosure.classList.toggle("hidden", hideInviteTools);
   settingsMotionDisclosure.classList.toggle("hidden", hideInviteTools);
-  if (hidePublicSummary && publicSummaryTab.classList.contains("active")) {
-    tabs.forEach((tab) => tab.classList.remove("active"));
-    if (tabs.length > 0) tabs[0].classList.add("active");
-    tabMinutes.classList.remove("hidden");
-    tabActions.classList.add("hidden");
-    tabAudit.classList.add("hidden");
-    tabMotions.classList.add("hidden");
-    tabPublicSummary.classList.add("hidden");
+  if (hidePublicSummary && publicSummaryTab.getAttribute("aria-selected") === "true") {
+    activateTabByKey("minutes");
   }
 }
 
@@ -2138,7 +2267,7 @@ function setRole(role, email, displayName = "") {
   roleBadge.textContent = `Role: ${role} · ${identity}`;
   loginEmail.value = email;
   loginRole.value = role;
-  loginModal.classList.add("hidden");
+  closeModal(loginModal, { restoreFocus: false });
   applyRolePermissions(role);
   loadInviteWorkspace();
   loadMotionConfig();
@@ -2359,9 +2488,18 @@ async function renderVersionHistory(meetingId) {
     undefined,
     { suppressAlert: true }
   );
-  const versions = Array.isArray(response) ? response : response?.items ?? [];
-  versionHistoryHasMore = Boolean(response?.has_more);
-  versionHistoryTotal = Number(response?.total ?? versions.length ?? 0);
+  const rawVersions = Array.isArray(response) ? response : response?.items ?? [];
+  let versions = rawVersions;
+  if (Array.isArray(response)) {
+    versionHistoryTotal = rawVersions.length;
+    const start = versionHistoryOffset;
+    const end = versionHistoryOffset + versionHistoryLimit;
+    versions = rawVersions.slice(start, end);
+    versionHistoryHasMore = end < versionHistoryTotal;
+  } else {
+    versionHistoryHasMore = Boolean(response?.has_more);
+    versionHistoryTotal = Number(response?.total ?? rawVersions.length ?? 0);
+  }
   versionHistoryPrev.disabled = versionHistoryOffset <= 0;
   versionHistoryNext.disabled = !versionHistoryHasMore;
   const totalPages = Math.max(1, Math.ceil(versionHistoryTotal / versionHistoryLimit));
