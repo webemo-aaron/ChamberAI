@@ -1,6 +1,8 @@
 import express from "express";
+import { Document, Packer, Table, TableRow, TableCell, Paragraph, TextRun } from "docx";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
 import { requireRole } from "../middleware/rbac.js";
+import { requireTier } from "../middleware/requireTier.js";
 
 const router = express.Router();
 
@@ -148,6 +150,155 @@ router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (re
   try {
     const db = initFirestore();
     const format = req.body.format ?? "pdf";
+
+    // DOCX export requires Council tier or higher
+    if (format === "docx") {
+      const settingsDoc = await db.collection("settings").doc("system").get();
+      const settings = settingsDoc.exists ? settingsDoc.data() : {};
+      const currentTier = settings.subscription?.tier ?? "free";
+      const tierLevels = { free: 0, pro: 1, council: 2, network: 3 };
+
+      if ((tierLevels[currentTier] ?? 0) < 2) {
+        return res.status(402).json({
+          error: "Payment required",
+          tier_required: "council",
+          current_tier: currentTier,
+          message: "DOCX export requires Council tier or higher"
+        });
+      }
+
+      // Generate DOCX
+      const meeting = await db.collection("meetings").doc(req.params.id).get();
+      const draft = await db.collection("draftMinutes").doc(req.params.id).get();
+      const actions = await db.collection("actionItems").where("meeting_id", "==", req.params.id).get();
+      const motions = await db.collection("motions").where("meeting_id", "==", req.params.id).get();
+
+      const meetingData = meeting.exists ? meeting.data() : {};
+      const draftData = draft.exists ? draft.data() : {};
+      const actionsList = actions.docs.map((doc) => doc.data());
+      const motionsList = motions.docs.map((doc) => doc.data());
+
+      // Build DOCX document
+      const rows = [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph(new TextRun({ text: "Motion", bold: true }))]
+            }),
+            new TableCell({
+              children: [new Paragraph(new TextRun({ text: "Status", bold: true }))]
+            })
+          ]
+        }),
+        ...motionsList.map(
+          (motion) =>
+            new TableRow({
+              children: [
+                new TableCell({
+                  children: [new Paragraph(motion.description ?? "")]
+                }),
+                new TableCell({
+                  children: [new Paragraph(motion.status ?? "PENDING")]
+                })
+              ]
+            })
+        )
+      ];
+
+      const actionRows = [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph(new TextRun({ text: "Action", bold: true }))]
+            }),
+            new TableCell({
+              children: [new Paragraph(new TextRun({ text: "Owner", bold: true }))]
+            }),
+            new TableCell({
+              children: [new Paragraph(new TextRun({ text: "Due", bold: true }))]
+            })
+          ]
+        }),
+        ...actionsList.map(
+          (action) =>
+            new TableRow({
+              children: [
+                new TableCell({
+                  children: [new Paragraph(action.title ?? "")]
+                }),
+                new TableCell({
+                  children: [new Paragraph(action.owner ?? "Unassigned")]
+                }),
+                new TableCell({
+                  children: [new Paragraph(action.due_date ?? "")]
+                })
+              ]
+            })
+        )
+      ];
+
+      const doc = new Document({
+        sections: [
+          {
+            children: [
+              new Paragraph({
+                text: `Meeting Minutes: ${meetingData.date}`,
+                heading: "Heading1"
+              }),
+              new Paragraph(`Location: ${meetingData.location}`),
+              new Paragraph(`Chair: ${meetingData.chair_name || "Not recorded"}`),
+              new Paragraph(""),
+              new Paragraph({
+                text: "Minutes",
+                heading: "Heading2"
+              }),
+              new Paragraph(draftData.content || "(No minutes recorded)"),
+              new Paragraph(""),
+              new Paragraph({
+                text: "Motions",
+                heading: "Heading2"
+              }),
+              new Table({
+                rows
+              }),
+              new Paragraph(""),
+              new Paragraph({
+                text: "Action Items",
+                heading: "Heading2"
+              }),
+              new Table({
+                rows: actionRows
+              }),
+              new Paragraph(""),
+              new Paragraph({
+                text: "Approval",
+                heading: "Heading2"
+              }),
+              new Paragraph(`Approved by: ________________________     Date: ____________`)
+            ]
+          }
+        ]
+      });
+
+      const buffer = await Packer.toBuffer(doc);
+      res.set({
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Disposition": `attachment; filename="meeting-${req.params.id}.docx"`
+      });
+
+      await db.collection("auditLogs").add({
+        meeting_id: req.params.id,
+        event_type: "MINUTES_EXPORT",
+        actor: req.user?.email ?? "user",
+        timestamp: serverTimestamp(),
+        details: { format, tier: currentTier }
+      });
+
+      return res.send(buffer);
+    }
+
+    // Standard export (PDF/Markdown)
     const file_uri = `exports/${req.params.id}/${Date.now()}.${format}`;
     await db.collection("auditLogs").add({
       meeting_id: req.params.id,

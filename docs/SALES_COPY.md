@@ -82,17 +82,17 @@ You shouldn't have to trust your chamber's institutional memory to a vendor. Cha
 ### Card 4: Affordable
 **Icon**: 💰
 
-**Headline**: "Enterprise Features at Startup Prices"
+**Headline**: "Governance Value at Every Price Point"
 
 **Copy**:
-Professional meeting management shouldn't cost $99/month. With ChamberAI, the free tier covers most chambers. And if you need more, it's still way cheaper than other options.
+Professional meeting management and governance compliance shouldn't break the bank. ChamberAI offers transparent pricing that scales with your chamber's needs.
 
-- Free tier: Unlimited meetings, 50+ participants
-- Pro: $29/month for small chambers
-- Business: $79/month for growing chambers
-- Custom: Enterprise pricing available
+- Free tier: Unlimited meetings, 1 team member, community support
+- Pro: $29/month for small chambers, governance reports
+- Council: $149/month for audit-ready boards, DOCX + analytics
+- Network: $399/month for multi-chamber organizations
 
-**Metric**: "70% cheaper than comparable solutions"
+**Metric**: "60% cheaper than ChamberMate, better features"
 
 ---
 
@@ -204,6 +204,57 @@ ROI: Break-even by month 1
 **Feature**: Deploy to your servers, full control
 **Benefit**: No vendor lock-in, full data control
 **Why it matters**: Security, compliance, peace of mind
+
+### "DOCX Export" (Council tier)
+**Feature**: Export minutes as Word documents with tables and signatures
+**Benefit**: Audit-ready records, legal compliance, easy filing
+**Why it matters**: Your auditor demands it; your legal team needs it in Word
+
+### "Governance Compliance Report" (Pro tier)
+**Feature**: Monthly scorecard showing governance health
+**Benefit**: Track motion approval time, action completion, quorum compliance
+**Why it matters**: Board transparency + data for executive director reporting
+
+### "Board Analytics" (Council tier)
+**Feature**: Dashboard showing meeting trends, owner performance, cadence metrics
+**Benefit**: Quantitative evidence of board effectiveness
+**Why it matters**: Executive directors can show board improvement to their board chair
+
+---
+
+## Premium Positioning: For Discerning Chambers
+
+### "Governance Done Right"
+
+**Headline**: "Your Chamber's Governance Just Got Audit-Ready"
+
+**Copy**:
+If your board has an auditor, compliance officer, or legal requirements, ChamberAI's Council tier is built for you.
+
+**What discerning chambers value:**
+- ✅ **DOCX exports** for legal files and auditor review
+- ✅ **Immutable approval records** showing who signed off and when
+- ✅ **Compliance scorecard** proving your governance is sound
+- ✅ **API access** to integrate with your legal/finance systems
+- ✅ **24/7 support** for mission-critical meetings
+
+**ROI for Discerning Chambers:**
+- Secretary time savings: $2,000+/year
+- Audit findings eliminated: ~$1,000 in risk reduction
+- Compliance confidence: Priceless
+- Council tier cost: $1,788/year
+- **Net ROI: $1,200+ in Year 1**
+
+**Who we serve:**
+- Regional & state chambers with governance standards
+- Professional associations requiring audit trails
+- Non-profit boards with regulatory oversight
+- Insurance/finance boards needing DOCX for legal files
+
+**Why Council tier (not cheaper alternatives):**
+You're not shopping for "meeting notes software."
+You're buying governance confidence.
+ChamberAI proves your board runs by the rules—for your auditor, your members, and your insurance company.
 
 ---
 
@@ -364,18 +415,25 @@ Try exporting your meeting 3 ways: [link]
 
 **Email 4 (Day 14): Upgrade Pitch**
 ```
-Subject: Ready to upgrade? Here's why chambers do.
+Subject: Ready to unlock governance features?
 
 Hi [Name],
 
-You've been using our free tier for 2 weeks. Here's what you could unlock with Pro:
+You've been using our free tier for 2 weeks. Here's what you could unlock:
 
-✓ Unlimited users (invite your whole board)
-✓ Priority support
-✓ Advanced AI features (decision highlighting, risk detection)
-✓ Just $29/month
+**Pro ($29/month):**
+✓ 5 team members
+✓ Governance compliance reports (monthly scorecards)
+✓ Priority email support
+✓ Zapier integrations
 
-See what Pro includes: [link]
+**Council ($149/month):** ← For audit-ready chambers
+✓ 25 team members
+✓ DOCX export (for legal files)
+✓ Board effectiveness analytics
+✓ API access + dedicated support
+
+See which tier is right: [link]
 
 First month 30% off: FIRST30
 
@@ -434,28 +492,33 @@ How ChamberAI addressed those pain points...
 
 ---
 
-## Free vs Pro Comparison Table
+## Tier Comparison Table
 
-| Feature | Free | Pro | Business |
-|---------|------|-----|----------|
-| Meetings/month | Unlimited | Unlimited | Unlimited |
-| Participants per meeting | 50+ | Unlimited | Unlimited |
-| Team members | 1 | 5 | Unlimited |
-| AI minutes | ✓ | ✓ Advanced | ✓ Advanced |
-| Real-time collaboration | ✓ | ✓ | ✓ |
-| Motion tracking | ✓ | ✓ | ✓ |
-| Search | ✓ Basic | ✓ Full-text | ✓ Full-text |
-| Exports | PDF, MD | PDF, MD, CSV, Email | All + API |
-| Support | Community | Email | Email + Chat |
-| Integrations | 0 | Zapier | Zapier + Custom |
-| **Price** | **Free** | **$29/mo** | **$79/mo** |
+| Feature | Free | Pro | Council | Network |
+|---------|------|-----|---------|---------|
+| Meetings/month | Unlimited | Unlimited | Unlimited | Unlimited |
+| Participants per meeting | 50+ | Unlimited | Unlimited | Unlimited |
+| Team members | 1 | 5 | 25 | Unlimited |
+| AI minutes | ✓ | ✓ Advanced | ✓ Advanced | ✓ Advanced |
+| Real-time collaboration | ✓ | ✓ | ✓ | ✓ |
+| Motion tracking | ✓ | ✓ | ✓ | ✓ |
+| Governance report | — | ✓ | ✓ | ✓ |
+| DOCX export | — | — | ✓ | ✓ |
+| Board analytics | — | — | ✓ | ✓ |
+| API access | — | — | ✓ | ✓ |
+| Search | ✓ Basic | ✓ Full-text | ✓ Full-text | ✓ Full-text |
+| Exports | PDF, MD | PDF, MD, CSV, Email | All + DOCX | All + DOCX |
+| Support | Community | Email | Email + Chat | Dedicated |
+| Integrations | 0 | Zapier | Zapier + API | Zapier + API |
+| SLA | None | None | 99.9% | 99.99% |
+| **Price** | **Free** | **$29/mo** | **$149/mo** | **$399/mo** |
 
 ---
 
 ## FAQ Copy
 
 **Q: How much does it cost?**
-A: Free forever for 1 user and unlimited meetings. Pro is $29/month for small chambers. Business is $79/month for growing chambers. Nothing for 14 days when you start.
+A: Free forever for 1 user and unlimited meetings. Pro is $29/month (governance reports). Council is $149/month (DOCX + analytics, best for audit-ready chambers). Network is $399/month (multi-chamber, enterprise). All include 14-day free trial.
 
 **Q: Can I self-host?**
 A: Yes! Docker setup takes 15 minutes. Full docs included.
@@ -474,6 +537,15 @@ A: Probably! But it also integrates with it if you want gradual migration.
 
 **Q: What about security?**
 A: Enterprise-grade encryption. Open-source (audit it yourself). Your choice of infrastructure.
+
+**Q: What's the difference between Pro and Council tiers?**
+A: Pro ($29/mo) gives you governance compliance reports to track board health. Council ($149/mo) adds DOCX export (for legal files), board analytics (board performance trends), and API access. Council is designed for chambers with auditors or legal compliance requirements. Most professional boards choose Council.
+
+**Q: Can I export minutes as Word documents?**
+A: Only on Council tier and above. DOCX export lets you create audit-ready documents with tables for motions, action items, and signature lines. Perfect for filing with lawyers or auditors.
+
+**Q: Do you have a governance compliance report?**
+A: Yes. Pro tier and above include a monthly governance scorecard showing compliance metrics (quorum recorded, motions passed, actions completed, etc.). Council tier also includes board effectiveness analytics showing meeting trends and owner performance.
 
 ---
 

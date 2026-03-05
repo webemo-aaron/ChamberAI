@@ -20,6 +20,8 @@ import aiSearch from "./routes/ai_search.js";
 import businessListings from "./routes/business_listings.js";
 import reviewWorkflow from "./routes/review_workflow.js";
 import quotes from "./routes/quotes.js";
+import billing from "./routes/billing.js";
+import analytics from "./routes/analytics.js";
 import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
@@ -72,6 +74,9 @@ app.get("/metrics", (req, res) => {
 // Public AI Search endpoints (before requireAuth)
 app.use(aiSearch);
 
+// Billing webhook (public, before requireAuth)
+app.use(billing);
+
 app.use(requireAuth);
 app.use(meetings);
 app.use(audio);
@@ -91,6 +96,7 @@ app.use(geoIntelligence);
 app.use(businessListings);
 app.use(reviewWorkflow);
 app.use(quotes);
+app.use(analytics);
 
 app.use((err, req, res, next) => {
   metrics.errors_total += 1;
