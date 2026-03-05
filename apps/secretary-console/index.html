@@ -35,7 +35,12 @@
       </div>
     </header>
 
-    <main class="shell">
+    <nav class="view-nav" role="navigation" aria-label="Application views">
+      <button id="viewMeetingsBtn" class="view-tab active" aria-pressed="true">Meetings</button>
+      <button id="viewBusinessHubBtn" class="view-tab" aria-pressed="false">Business Hub</button>
+    </nav>
+
+    <main class="shell" id="meetingsView">
       <section class="left-pane">
         <div class="panel banner" id="onboardingBanner">
           <div>
@@ -583,6 +588,139 @@
       </section>
     </main>
 
+    <!-- Business Hub View -->
+    <main class="shell hidden" id="businessHubView">
+      <section class="left-pane">
+        <!-- Geo Intelligence Panel -->
+        <div class="panel form" id="geoScopePanel">
+          <h2>Geo Intelligence</h2>
+          <div class="grid">
+            <label>Scope Type
+              <select id="geoScopeType">
+                <option value="city">City</option>
+                <option value="zip_code">ZIP Code</option>
+                <option value="town">Town</option>
+              </select>
+            </label>
+            <label>Location
+              <input id="geoScopeId" type="text" placeholder="e.g. Bethel" />
+            </label>
+          </div>
+          <div class="inline-actions">
+            <button id="geoScanBtn" class="btn ghost">Scan Local Data</button>
+            <button id="geoGenerateBriefBtn" class="btn">Generate Brief</button>
+          </div>
+          <div id="geoStatus" class="geo-status hidden"></div>
+        </div>
+
+        <!-- Business Directory List -->
+        <div class="panel list" id="businessDirectoryPanel">
+          <div class="panel-head">
+            <h2>Local Businesses</h2>
+            <span id="businessCount" class="pill">0</span>
+          </div>
+          <label class="filter">
+            <input id="businessSearch" type="search" placeholder="Search businesses..." data-testid="business-search" />
+          </label>
+          <div id="businessList" class="meeting-list" role="list" aria-live="polite" aria-label="Business list"></div>
+          <button id="addBusinessBtn" class="btn" style="margin-top:8px" data-testid="add-business">+ Add Business</button>
+        </div>
+      </section>
+
+      <section class="right-pane">
+        <!-- Empty state -->
+        <div class="panel detail" id="businessEmptyState">
+          <p class="empty">Select a business from the list or add one to get started.</p>
+        </div>
+
+        <!-- Business Detail -->
+        <div class="panel detail hidden" id="businessDetailPanel">
+          <div class="panel-head">
+            <h2 id="bizDetailName">Business Name</h2>
+            <span id="bizDetailCategory" class="pill"></span>
+          </div>
+
+          <!-- Tab bar -->
+          <div class="tab-bar" id="bizTabBar" role="tablist" aria-label="Business detail sections">
+            <button id="bizTabProfile"  class="tab active" data-biz-tab="biz-profile"  role="tab" aria-selected="true"  aria-controls="biz-tab-profile"  tabindex="0">Profile</button>
+            <button id="bizTabGeo"     class="tab"         data-biz-tab="biz-geo"      role="tab" aria-selected="false" aria-controls="biz-tab-geo"      tabindex="-1">Geo Intel</button>
+            <button id="bizTabReviews" class="tab"         data-biz-tab="biz-reviews"  role="tab" aria-selected="false" aria-controls="biz-tab-reviews"  tabindex="-1">Reviews</button>
+            <button id="bizTabQuotes"  class="tab"         data-biz-tab="biz-quotes"   role="tab" aria-selected="false" aria-controls="biz-tab-quotes"   tabindex="-1">Quotes</button>
+            <button id="bizTabAiSearch" class="tab"        data-biz-tab="biz-ai-search" role="tab" aria-selected="false" aria-controls="biz-tab-ai-search" tabindex="-1">AI Search</button>
+          </div>
+
+          <!-- Profile Tab -->
+          <div class="tab-content" id="biz-tab-profile" role="tabpanel" aria-labelledby="bizTabProfile" tabindex="0">
+            <div class="meta-form">
+              <label>Business Name<input id="bizName" type="text" data-testid="biz-name" /></label>
+              <label>Category<input id="bizCategory" type="text" data-testid="biz-category" /></label>
+              <label>Address<input id="bizAddress" type="text" /></label>
+              <div class="grid">
+                <label>City<input id="bizCity" type="text" /></label>
+                <label>State<input id="bizState" type="text" maxlength="2" /></label>
+                <label>ZIP<input id="bizZip" type="text" /></label>
+              </div>
+              <label>Phone<input id="bizPhone" type="tel" /></label>
+              <label>Email<input id="bizEmail" type="email" /></label>
+              <label>Website<input id="bizWebsite" type="url" /></label>
+              <label>Description<textarea id="bizDescription" rows="3"></textarea></label>
+              <label>Tags (comma separated)<input id="bizTags" type="text" /></label>
+              <div class="grid">
+                <label>Geo Scope Type
+                  <select id="bizGeoScopeType">
+                    <option value="city">City</option>
+                    <option value="zip_code">ZIP</option>
+                    <option value="town">Town</option>
+                  </select>
+                </label>
+                <label>Geo Scope ID<input id="bizGeoScopeId" type="text" /></label>
+              </div>
+              <label class="check">
+                <input id="bizAiSearchEnabled" type="checkbox" />
+                Enable AI Search indexing
+              </label>
+            </div>
+            <div class="inline-actions">
+              <button id="saveBizBtn" class="btn" data-testid="save-business">Save</button>
+              <button id="deleteBizBtn" class="btn ghost">Delete</button>
+            </div>
+            <div id="bizSaveStatus" class="hint hidden"></div>
+          </div>
+
+          <!-- Geo Intelligence Tab -->
+          <div class="tab-content hidden" id="biz-tab-geo" role="tabpanel" aria-labelledby="bizTabGeo" tabindex="0">
+            <div id="bizGeoContent">
+              <p class="empty">No geo profile linked. Set the Geo Scope on the Profile tab and scan.</p>
+            </div>
+          </div>
+
+          <!-- Reviews Tab -->
+          <div class="tab-content hidden" id="biz-tab-reviews" role="tabpanel" aria-labelledby="bizTabReviews" tabindex="0">
+            <div class="inline-actions" style="margin-bottom:12px">
+              <button id="addReviewBtn" class="btn ghost">+ Log Review</button>
+            </div>
+            <div id="reviewList" class="meeting-list" aria-live="polite"></div>
+          </div>
+
+          <!-- Quotes Tab -->
+          <div class="tab-content hidden" id="biz-tab-quotes" role="tabpanel" aria-labelledby="bizTabQuotes" tabindex="0">
+            <div class="inline-actions" style="margin-bottom:12px">
+              <button id="addQuoteBtn" class="btn ghost">+ New Quote</button>
+            </div>
+            <div id="quoteList" class="meeting-list" aria-live="polite"></div>
+          </div>
+
+          <!-- AI Search Tab -->
+          <div class="tab-content hidden" id="biz-tab-ai-search" role="tabpanel" aria-labelledby="bizTabAiSearch" tabindex="0">
+            <div id="aiSearchContent">
+              <p class="empty">Loading AI Search readiness...</p>
+            </div>
+          </div>
+
+        </div><!-- /businessDetailPanel -->
+      </section><!-- /right-pane -->
+    </main><!-- /businessHubView -->
+
     <footer class="footer">
       <span>CAM-AIMS Mock Console · In-memory API expected</span>
     </footer>
@@ -659,6 +797,78 @@
         <div class="modal-actions">
           <button id="csvApply" class="btn" data-testid="csv-apply">Apply Import</button>
           <button id="csvCancel" class="btn ghost" data-testid="csv-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business Hub Modals -->
+    <div id="bizModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bizModalTitle" aria-hidden="true">
+      <div class="modal-card">
+        <h2 id="bizModalTitle">Add Business</h2>
+        <div class="grid">
+          <label>Name<input id="bizModalName" type="text" data-testid="biz-modal-name" /></label>
+          <label>Category<input id="bizModalCategory" type="text" /></label>
+        </div>
+        <label>Address<input id="bizModalAddress" type="text" /></label>
+        <div class="grid">
+          <label>City<input id="bizModalCity" type="text" /></label>
+          <label>State<input id="bizModalState" type="text" maxlength="2" /></label>
+          <label>ZIP<input id="bizModalZip" type="text" /></label>
+        </div>
+        <div class="grid">
+          <label>Phone<input id="bizModalPhone" type="tel" /></label>
+          <label>Email<input id="bizModalEmail" type="email" /></label>
+        </div>
+        <div class="grid">
+          <label>Geo Scope
+            <select id="bizModalGeoType"><option value="city">City</option><option value="zip_code">ZIP</option><option value="town">Town</option></select>
+          </label>
+          <label>Scope ID<input id="bizModalGeoId" type="text" /></label>
+        </div>
+        <div id="bizModalError" class="hint error hidden"></div>
+        <div class="modal-actions">
+          <button id="saveBizModalBtn" class="btn" data-testid="save-biz-modal">Save</button>
+          <button id="cancelBizModalBtn" class="btn ghost">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="reviewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle" aria-hidden="true">
+      <div class="modal-card">
+        <h2 id="reviewModalTitle">Log Review</h2>
+        <div class="grid">
+          <label>Platform<select id="reviewPlatform"><option>Google</option><option>Yelp</option><option>Facebook</option><option>Other</option></select></label>
+          <label>Rating (1-5)<input id="reviewRating" type="number" min="1" max="5" value="5" /></label>
+        </div>
+        <label>Reviewer Name<input id="reviewerName" type="text" /></label>
+        <label>Review Text<textarea id="reviewText" rows="4"></textarea></label>
+        <div class="modal-actions">
+          <button id="saveReviewBtn" class="btn">Save Review</button>
+          <button id="cancelReviewBtn" class="btn ghost">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="quoteModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle" aria-hidden="true">
+      <div class="modal-card">
+        <h2 id="quoteModalTitle">New Quote</h2>
+        <label>Title<input id="quoteTitle" type="text" /></label>
+        <label>Description<textarea id="quoteDescription" rows="3"></textarea></label>
+        <div class="grid">
+          <label>Service Class
+            <select id="quoteServiceClass">
+              <option value="quick_win_automation">Quick Win Automation</option>
+              <option value="workflow_redesign">Workflow Redesign</option>
+              <option value="strategy_transformation">Strategy Transformation</option>
+            </select>
+          </label>
+          <label>Total (USD)<input id="quoteTotal" type="number" min="0" placeholder="0" /></label>
+        </div>
+        <label>Contact Name<input id="quoteContactName" type="text" /></label>
+        <label>Contact Email<input id="quoteContactEmail" type="email" /></label>
+        <div class="modal-actions">
+          <button id="saveQuoteBtn" class="btn">Save Quote</button>
+          <button id="cancelQuoteBtn" class="btn ghost">Cancel</button>
         </div>
       </div>
     </div>

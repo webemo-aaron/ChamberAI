@@ -2649,3 +2649,762 @@ function fileValidationMessage(file) {
 function hasFileErrors(file) {
   return Boolean(fileValidationMessage(file));
 }
+
+// ============================================================================
+// BUSINESS HUB: View Switching
+// ============================================================================
+
+const viewMeetingsBtn = document.getElementById("viewMeetingsBtn");
+const viewBusinessHubBtn = document.getElementById("viewBusinessHubBtn");
+const meetingsView = document.getElementById("meetingsView");
+const businessHubView = document.getElementById("businessHubView");
+
+function switchView(view) {
+  const isBiz = view === "business";
+  meetingsView.classList.toggle("hidden", isBiz);
+  businessHubView.classList.toggle("hidden", !isBiz);
+  viewMeetingsBtn.classList.toggle("active", !isBiz);
+  viewMeetingsBtn.setAttribute("aria-pressed", isBiz ? "false" : "true");
+  viewBusinessHubBtn.classList.toggle("active", isBiz);
+  viewBusinessHubBtn.setAttribute("aria-pressed", isBiz ? "true" : "false");
+}
+
+viewMeetingsBtn.addEventListener("click", () => switchView("meetings"));
+viewBusinessHubBtn.addEventListener("click", () => switchView("business"));
+
+// ============================================================================
+// BUSINESS HUB: Tab System
+// ============================================================================
+
+const bizTabs = Array.from(document.querySelectorAll("#bizTabBar .tab[role='tab']"));
+const bizTabPanelsByKey = {
+  "biz-profile": document.getElementById("biz-tab-profile"),
+  "biz-geo": document.getElementById("biz-tab-geo"),
+  "biz-reviews": document.getElementById("biz-tab-reviews"),
+  "biz-quotes": document.getElementById("biz-tab-quotes"),
+  "biz-ai-search": document.getElementById("biz-tab-ai-search")
+};
+
+function activateBizTab(tab) {
+  bizTabs.forEach((t) => {
+    const isActive = t === tab;
+    t.classList.toggle("active", isActive);
+    t.setAttribute("aria-selected", isActive ? "true" : "false");
+    t.tabIndex = isActive ? 0 : -1;
+    const panel = bizTabPanelsByKey[t.dataset.bizTab];
+    if (panel) panel.classList.toggle("hidden", !isActive);
+  });
+}
+
+bizTabs.forEach((tab) => tab.addEventListener("click", () => activateBizTab(tab)));
+
+// ============================================================================
+// BUSINESS HUB: State and CRUD
+// ============================================================================
+
+let selectedBizId = null;
+let businesses = [];
+
+async function loadBusinesses() {
+  try {
+    const response = await fetch(`${apiBase()}/business-listings`, { headers: apiAuthHeaders() });
+    if (!response.ok) throw new Error(`Failed to load businesses: ${response.statusText}`);
+    businesses = await response.json();
+    renderBusinesses();
+  } catch (error) {
+    console.error("loadBusinesses:", error);
+    toast(`Error loading businesses: ${error.message}`);
+  }
+}
+
+function renderBusinesses() {
+  const list = document.getElementById("businessList");
+  list.innerHTML = "";
+  businesses.forEach((biz) => {
+    const card = document.createElement("div");
+    card.className = `business-card ${selectedBizId === biz.id ? "active" : ""}`;
+    card.setAttribute("role", "listitem");
+    card.innerHTML = `
+      <div style="font-weight: 600">${biz.name}</div>
+      <div style="font-size: 12px; color: var(--muted)">${biz.city}, ${biz.state}</div>
+      ${biz.category ? `<span class="biz-category-pill">${biz.category}</span>` : ""}
+    `;
+    card.addEventListener("click", () => selectBusiness(biz.id));
+    list.appendChild(card);
+  });
+  document.getElementById("businessCount").textContent = businesses.length;
+}
+
+async function selectBusiness(id) {
+  selectedBizId = id;
+  renderBusinesses();
+  document.getElementById("businessEmptyState").classList.add("hidden");
+  document.getElementById("businessDetailPanel").classList.remove("hidden");
+  activateBizTab(bizTabs[0]); // Reset to profile tab
+  await loadBusinessDetail(id);
+}
+
+async function loadBusinessDetail(id) {
+  try {
+    const response = await fetch(`${apiBase()}/business-listings/${id}`, { headers: apiAuthHeaders() });
+    if (!response.ok) throw new Error(`Failed to load business: ${response.statusText}`);
+    const biz = await response.json();
+
+    // Populate form fields
+    document.getElementById("bizName").value = biz.name;
+    document.getElementById("bizCategory").value = biz.category || "";
+    document.getElementById("bizAddress").value = biz.address;
+    document.getElementById("bizCity").value = biz.city;
+    document.getElementById("bizState").value = biz.state;
+    document.getElementById("bizZip").value = biz.zip_code;
+    document.getElementById("bizPhone").value = biz.phone;
+    document.getElementById("bizEmail").value = biz.email;
+    document.getElementById("bizWebsite").value = biz.website || "";
+    document.getElementById("bizDescription").value = biz.description || "";
+    document.getElementById("bizTags").value = (biz.tags || []).join(", ");
+    document.getElementById("bizGeoScopeType").value = biz.geo_scope_type;
+    document.getElementById("bizGeoScopeId").value = biz.geo_scope_id || "";
+    document.getElementById("bizAiSearchEnabled").checked = biz.ai_search_enabled || false;
+
+    // Update detail panel header
+    document.getElementById("bizDetailName").textContent = biz.name;
+    document.getElementById("bizDetailCategory").textContent = biz.category || "Unknown";
+
+    // Load related data
+    await loadReviews(id);
+    await loadQuotes(id);
+    await renderBizGeoTab(id);
+    await renderAiSearchTab(biz);
+  } catch (error) {
+    console.error("loadBusinessDetail:", error);
+    toast(`Error loading business details: ${error.message}`);
+  }
+}
+
+async function saveBizProfile() {
+  try {
+    if (!selectedBizId) throw new Error("No business selected");
+
+    const tags = document.getElementById("bizTags").value.split(",").map((t) => t.trim()).filter(Boolean);
+    const update = {
+      name: document.getElementById("bizName").value,
+      category: document.getElementById("bizCategory").value,
+      address: document.getElementById("bizAddress").value,
+      city: document.getElementById("bizCity").value,
+      state: document.getElementById("bizState").value,
+      zip_code: document.getElementById("bizZip").value,
+      phone: document.getElementById("bizPhone").value,
+      email: document.getElementById("bizEmail").value,
+      website: document.getElementById("bizWebsite").value,
+      description: document.getElementById("bizDescription").value,
+      tags,
+      geo_scope_type: document.getElementById("bizGeoScopeType").value,
+      geo_scope_id: document.getElementById("bizGeoScopeId").value,
+      ai_search_enabled: document.getElementById("bizAiSearchEnabled").checked
+    };
+
+    const response = await fetch(`${apiBase()}/business-listings/${selectedBizId}`, {
+      method: "PUT",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify(update)
+    });
+
+    if (!response.ok) throw new Error(`Failed to save business: ${response.statusText}`);
+    toast("Business saved successfully");
+    await loadBusinesses();
+  } catch (error) {
+    console.error("saveBizProfile:", error);
+    document.getElementById("bizSaveStatus").classList.remove("hidden");
+    document.getElementById("bizSaveStatus").textContent = `Error: ${error.message}`;
+  }
+}
+
+async function deleteBusiness() {
+  try {
+    if (!selectedBizId) throw new Error("No business selected");
+    if (!confirm("Are you sure you want to delete this business?")) return;
+
+    const response = await fetch(`${apiBase()}/business-listings/${selectedBizId}`, {
+      method: "DELETE",
+      headers: apiAuthHeaders()
+    });
+
+    if (!response.ok) throw new Error(`Failed to delete business: ${response.statusText}`);
+    toast("Business deleted successfully");
+    selectedBizId = null;
+    document.getElementById("businessEmptyState").classList.remove("hidden");
+    document.getElementById("businessDetailPanel").classList.add("hidden");
+    await loadBusinesses();
+  } catch (error) {
+    console.error("deleteBusiness:", error);
+    toast(`Error deleting business: ${error.message}`);
+  }
+}
+
+// ============================================================================
+// BUSINESS HUB: Business Modal
+// ============================================================================
+
+const bizModal = document.getElementById("bizModal");
+const bizModalName = document.getElementById("bizModalName");
+const bizModalCategory = document.getElementById("bizModalCategory");
+const bizModalAddress = document.getElementById("bizModalAddress");
+const bizModalCity = document.getElementById("bizModalCity");
+const bizModalState = document.getElementById("bizModalState");
+const bizModalZip = document.getElementById("bizModalZip");
+const bizModalPhone = document.getElementById("bizModalPhone");
+const bizModalEmail = document.getElementById("bizModalEmail");
+const bizModalGeoType = document.getElementById("bizModalGeoType");
+const bizModalGeoId = document.getElementById("bizModalGeoId");
+const bizModalError = document.getElementById("bizModalError");
+const saveBizModalBtn = document.getElementById("saveBizModalBtn");
+const cancelBizModalBtn = document.getElementById("cancelBizModalBtn");
+const addBusinessBtn = document.getElementById("addBusinessBtn");
+
+addBusinessBtn.addEventListener("click", () => {
+  bizModalName.value = "";
+  bizModalCategory.value = "";
+  bizModalAddress.value = "";
+  bizModalCity.value = "";
+  bizModalState.value = "";
+  bizModalZip.value = "";
+  bizModalPhone.value = "";
+  bizModalEmail.value = "";
+  bizModalGeoType.value = "city";
+  bizModalGeoId.value = "";
+  bizModalError.classList.add("hidden");
+  bizModal.classList.remove("hidden");
+  bizModal.setAttribute("aria-hidden", "false");
+  bizModalName.focus();
+});
+
+saveBizModalBtn.addEventListener("click", saveBizModalHandler);
+cancelBizModalBtn.addEventListener("click", () => {
+  bizModal.classList.add("hidden");
+  bizModal.setAttribute("aria-hidden", "true");
+});
+
+async function saveBizModalHandler() {
+  try {
+    const name = bizModalName.value.trim();
+    const address = bizModalAddress.value.trim();
+    const city = bizModalCity.value.trim();
+    const state = bizModalState.value.trim();
+    const zip = bizModalZip.value.trim();
+    const phone = bizModalPhone.value.trim();
+    const email = bizModalEmail.value.trim();
+
+    if (!name || !address || !city || !state || !zip || !phone || !email) {
+      bizModalError.classList.remove("hidden");
+      bizModalError.textContent = "All required fields must be filled";
+      return;
+    }
+
+    const data = {
+      name,
+      category: bizModalCategory.value.trim(),
+      address,
+      city,
+      state,
+      zip_code: zip,
+      phone,
+      email,
+      geo_scope_type: bizModalGeoType.value,
+      geo_scope_id: bizModalGeoId.value,
+      ai_search_enabled: false
+    };
+
+    const response = await fetch(`${apiBase()}/business-listings`, {
+      method: "POST",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) throw new Error(`Failed to create business: ${response.statusText}`);
+    toast("Business created successfully");
+    bizModal.classList.add("hidden");
+    bizModal.setAttribute("aria-hidden", "true");
+    await loadBusinesses();
+  } catch (error) {
+    console.error("saveBizModalHandler:", error);
+    bizModalError.classList.remove("hidden");
+    bizModalError.textContent = error.message;
+  }
+}
+
+// ============================================================================
+// BUSINESS HUB: Geo Intelligence
+// ============================================================================
+
+const bizGeoScanBtn = document.getElementById("geoScanBtn");
+const bizGeoGenerateBriefBtn = document.getElementById("geoGenerateBriefBtn");
+const bizGeoStatus = document.getElementById("geoStatus");
+
+if (bizGeoScanBtn) bizGeoScanBtn.addEventListener("click", runGeoScan);
+if (bizGeoGenerateBriefBtn) bizGeoGenerateBriefBtn.addEventListener("click", generateGeoBrief);
+
+async function runGeoScan() {
+  try {
+    const scopeType = document.getElementById("geoScopeType").value;
+    const scopeId = document.getElementById("geoScopeId").value.trim();
+
+    if (!scopeId) throw new Error("Please enter a location");
+
+    bizGeoStatus.classList.remove("hidden");
+    bizGeoStatus.textContent = "Scanning...";
+
+    const response = await fetch(`${apiBase()}/geo-profiles/scan`, {
+      method: "POST",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify({ scopeType, scopeId })
+    });
+
+    if (!response.ok) throw new Error(`Scan failed: ${response.statusText}`);
+    const profile = await response.json();
+    bizGeoStatus.textContent = "✓ Scan complete";
+    toast("Geo profile updated");
+    
+    // Reload current business if viewing one
+    if (selectedBizId) await renderBizGeoTab(selectedBizId);
+  } catch (error) {
+    console.error("runGeoScan:", error);
+    bizGeoStatus.textContent = `Error: ${error.message}`;
+  }
+}
+
+async function generateGeoBrief() {
+  try {
+    const scopeType = document.getElementById("geoScopeType").value;
+    const scopeId = document.getElementById("geoScopeId").value.trim();
+
+    if (!scopeId) throw new Error("Please enter a location");
+
+    bizGeoStatus.classList.remove("hidden");
+    bizGeoStatus.textContent = "Generating brief...";
+
+    const response = await fetch(`${apiBase()}/geo-content-briefs/generate`, {
+      method: "POST",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify({ scopeType, scopeId })
+    });
+
+    if (!response.ok) throw new Error(`Generation failed: ${response.statusText}`);
+    const brief = await response.json();
+    bizGeoStatus.textContent = "✓ Brief generated";
+    toast("Geo brief created");
+  } catch (error) {
+    console.error("generateGeoBrief:", error);
+    bizGeoStatus.textContent = `Error: ${error.message}`;
+  }
+}
+
+async function renderBizGeoTab(bizId) {
+  try {
+    const response = await fetch(`${apiBase()}/business-listings/${bizId}`, { headers: apiAuthHeaders() });
+    if (!response.ok) throw new Error("Failed to load business");
+    const biz = await response.json();
+
+    const geoContent = document.getElementById("bizGeoContent");
+    
+    if (!biz.geo_scope_id) {
+      geoContent.innerHTML = "<p class=\"empty\">No geo scope set. Update the business profile to set a geo scope.</p>";
+      return;
+    }
+
+    // Try to fetch geo profile for this business's scope
+    const geoResponse = await fetch(
+      `${apiBase()}/geo-profiles?scopeType=${biz.geo_scope_type}&scopeId=${biz.geo_scope_id}`,
+      { headers: apiAuthHeaders() }
+    );
+
+    let profileHtml = "<p class=\"empty\">No geo profile data yet. Run a geo scan.</p>";
+    if (geoResponse.ok) {
+      const data = await geoResponse.json();
+      if (data.items && data.items.length > 0) {
+        const profile = data.items[0];
+        profileHtml = `
+          <div class="biz-score-row">
+            <div class="biz-score-block">
+              <div class="biz-score-value">${profile.opportunity_count || 0}</div>
+              <div class="biz-score-label">Opportunities</div>
+            </div>
+            <div class="biz-score-block">
+              <div class="biz-score-value">${profile.meeting_count || 0}</div>
+              <div class="biz-score-label">Meetings</div>
+            </div>
+          </div>
+          <p style="font-size: 12px; margin: 10px 0">Scope: ${profile.scope_id} (${profile.scope_type})</p>
+          <p style="font-size: 12px; color: var(--muted)">Updated: ${new Date(profile.updated_at).toLocaleDateString()}</p>
+        `;
+      }
+    }
+
+    geoContent.innerHTML = profileHtml;
+  } catch (error) {
+    console.error("renderBizGeoTab:", error);
+    document.getElementById("bizGeoContent").innerHTML = `<p class="empty">Error loading geo data: ${error.message}</p>`;
+  }
+}
+
+// ============================================================================
+// BUSINESS HUB: Reviews
+// ============================================================================
+
+const reviewModal = document.getElementById("reviewModal");
+const reviewPlatform = document.getElementById("reviewPlatform");
+const reviewRating = document.getElementById("reviewRating");
+const reviewerName = document.getElementById("reviewerName");
+const reviewText = document.getElementById("reviewText");
+const saveReviewBtn = document.getElementById("saveReviewBtn");
+const cancelReviewBtn = document.getElementById("cancelReviewBtn");
+const addReviewBtn = document.getElementById("addReviewBtn");
+const reviewList = document.getElementById("reviewList");
+
+addReviewBtn.addEventListener("click", () => {
+  reviewPlatform.value = "Google";
+  reviewRating.value = "5";
+  reviewerName.value = "";
+  reviewText.value = "";
+  reviewModal.classList.remove("hidden");
+  reviewModal.setAttribute("aria-hidden", "false");
+  reviewerName.focus();
+});
+
+saveReviewBtn.addEventListener("click", () => saveReviewHandler());
+cancelReviewBtn.addEventListener("click", () => {
+  reviewModal.classList.add("hidden");
+  reviewModal.setAttribute("aria-hidden", "true");
+});
+
+async function loadReviews(bizId) {
+  try {
+    const response = await fetch(`${apiBase()}/business-listings/${bizId}/reviews`, { headers: apiAuthHeaders() });
+    if (!response.ok) throw new Error("Failed to load reviews");
+    const reviews = await response.json();
+    renderReviews(reviews);
+  } catch (error) {
+    console.error("loadReviews:", error);
+    reviewList.innerHTML = `<p class="empty">Error loading reviews</p>`;
+  }
+}
+
+function renderReviews(reviews) {
+  reviewList.innerHTML = "";
+  if (reviews.length === 0) {
+    reviewList.innerHTML = "<p class=\"empty\">No reviews yet.</p>";
+    return;
+  }
+
+  reviews.forEach((review) => {
+    const card = document.createElement("div");
+    card.className = "review-card";
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <div style="font-weight: 600">${review.platform} Review</div>
+        <div class="review-rating">★ ${review.rating}/5</div>
+      </div>
+      <div style="font-size: 12px; color: var(--muted)">${review.reviewer_name}</div>
+      <div style="font-size: 13px; margin: 6px 0">${review.review_text}</div>
+      ${review.response_draft ? `<div class="review-response-draft">Draft: ${review.response_draft}</div>` : ""}
+      <div class="inline-actions" style="margin-top: 8px">
+        ${!review.response_draft ? `<button class="btn ghost" onclick="draftReviewResponse('${selectedBizId}', '${review.id}')">Draft Response</button>` : ""}
+        ${review.response_draft && review.response_status === "draft" ? `<button class="btn ghost" onclick="markResponseSent('${selectedBizId}', '${review.id}')">Mark Sent</button>` : ""}
+      </div>
+    `;
+    reviewList.appendChild(card);
+  });
+}
+
+async function saveReviewHandler() {
+  try {
+    if (!selectedBizId) throw new Error("No business selected");
+
+    const data = {
+      platform: reviewPlatform.value,
+      rating: parseInt(reviewRating.value, 10),
+      reviewer_name: reviewerName.value.trim(),
+      review_text: reviewText.value.trim()
+    };
+
+    if (!data.reviewer_name || !data.review_text) {
+      throw new Error("Reviewer name and review text are required");
+    }
+
+    const response = await fetch(`${apiBase()}/business-listings/${selectedBizId}/reviews`, {
+      method: "POST",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) throw new Error(`Failed to save review: ${response.statusText}`);
+    toast("Review saved");
+    reviewModal.classList.add("hidden");
+    reviewModal.setAttribute("aria-hidden", "true");
+    await loadReviews(selectedBizId);
+  } catch (error) {
+    console.error("saveReviewHandler:", error);
+    toast(`Error: ${error.message}`);
+  }
+}
+
+async function draftReviewResponse(bizId, reviewId) {
+  try {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = "Drafting...";
+
+    const response = await fetch(`${apiBase()}/business-listings/${bizId}/reviews/${reviewId}/draft-response`, {
+      method: "POST",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify({})
+    });
+
+    if (!response.ok) throw new Error(`Failed to draft response: ${response.statusText}`);
+    toast("Response draft created");
+    await loadReviews(bizId);
+  } catch (error) {
+    console.error("draftReviewResponse:", error);
+    toast(`Error: ${error.message}`);
+    event.target.disabled = false;
+    event.target.textContent = "Draft Response";
+  }
+}
+
+async function markResponseSent(bizId, reviewId) {
+  try {
+    const response = await fetch(`${apiBase()}/business-listings/${bizId}/reviews/${reviewId}`, {
+      method: "PUT",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify({ response_status: "sent" })
+    });
+
+    if (!response.ok) throw new Error(`Failed to update review: ${response.statusText}`);
+    toast("Response marked as sent");
+    await loadReviews(bizId);
+  } catch (error) {
+    console.error("markResponseSent:", error);
+    toast(`Error: ${error.message}`);
+  }
+}
+
+// ============================================================================
+// BUSINESS HUB: Quotes
+// ============================================================================
+
+const quoteModal = document.getElementById("quoteModal");
+const quoteTitle = document.getElementById("quoteTitle");
+const quoteDescription = document.getElementById("quoteDescription");
+const quoteServiceClass = document.getElementById("quoteServiceClass");
+const quoteTotal = document.getElementById("quoteTotal");
+const quoteContactName = document.getElementById("quoteContactName");
+const quoteContactEmail = document.getElementById("quoteContactEmail");
+const saveQuoteBtn = document.getElementById("saveQuoteBtn");
+const cancelQuoteBtn = document.getElementById("cancelQuoteBtn");
+const addQuoteBtn = document.getElementById("addQuoteBtn");
+const quoteList = document.getElementById("quoteList");
+
+addQuoteBtn.addEventListener("click", () => {
+  quoteTitle.value = "";
+  quoteDescription.value = "";
+  quoteServiceClass.value = "quick_win_automation";
+  quoteTotal.value = "";
+  quoteContactName.value = "";
+  quoteContactEmail.value = "";
+  quoteModal.classList.remove("hidden");
+  quoteModal.setAttribute("aria-hidden", "false");
+  quoteTitle.focus();
+});
+
+saveQuoteBtn.addEventListener("click", saveQuoteHandler);
+cancelQuoteBtn.addEventListener("click", () => {
+  quoteModal.classList.add("hidden");
+  quoteModal.setAttribute("aria-hidden", "true");
+});
+
+async function loadQuotes(bizId) {
+  try {
+    const response = await fetch(`${apiBase()}/business-listings/${bizId}/quotes`, { headers: apiAuthHeaders() });
+    if (!response.ok) throw new Error("Failed to load quotes");
+    const quotes = await response.json();
+    renderQuotes(quotes);
+  } catch (error) {
+    console.error("loadQuotes:", error);
+    quoteList.innerHTML = `<p class="empty">Error loading quotes</p>`;
+  }
+}
+
+function renderQuotes(quotes) {
+  quoteList.innerHTML = "";
+  if (quotes.length === 0) {
+    quoteList.innerHTML = "<p class=\"empty\">No quotes yet.</p>";
+    return;
+  }
+
+  quotes.forEach((quote) => {
+    const card = document.createElement("div");
+    card.className = "quote-card";
+    const statusClass = quote.status.toLowerCase();
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <div style="font-weight: 600">${quote.title}</div>
+        <span class="quote-status-pill ${statusClass}">${quote.status}</span>
+      </div>
+      <div style="font-size: 12px; color: var(--muted)">${quote.description}</div>
+      <div class="quote-total">$${quote.total_usd.toFixed(2)}</div>
+      <div style="font-size: 12px">Contact: ${quote.contact_name}</div>
+      <div class="inline-actions" style="margin-top: 8px">
+        ${quote.status === "draft" ? `<button class="btn ghost" onclick="sendQuote('${selectedBizId}', '${quote.id}')">Send</button>` : ""}
+        ${quote.status === "sent" ? `<button class="btn ghost" onclick="updateQuoteStatus('${selectedBizId}', '${quote.id}', 'accepted')">Mark Accepted</button>` : ""}
+      </div>
+    `;
+    quoteList.appendChild(card);
+  });
+}
+
+async function saveQuoteHandler() {
+  try {
+    if (!selectedBizId) throw new Error("No business selected");
+
+    const data = {
+      title: quoteTitle.value.trim(),
+      description: quoteDescription.value.trim(),
+      service_class: quoteServiceClass.value,
+      total_usd: parseFloat(quoteTotal.value),
+      contact_name: quoteContactName.value.trim(),
+      contact_email: quoteContactEmail.value.trim()
+    };
+
+    if (!data.title || !data.total_usd || !data.contact_name || !data.contact_email) {
+      throw new Error("All required fields must be filled");
+    }
+
+    const response = await fetch(`${apiBase()}/business-listings/${selectedBizId}/quotes`, {
+      method: "POST",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) throw new Error(`Failed to save quote: ${response.statusText}`);
+    toast("Quote created");
+    quoteModal.classList.add("hidden");
+    quoteModal.setAttribute("aria-hidden", "true");
+    await loadQuotes(selectedBizId);
+  } catch (error) {
+    console.error("saveQuoteHandler:", error);
+    toast(`Error: ${error.message}`);
+  }
+}
+
+async function sendQuote(bizId, quoteId) {
+  try {
+    await updateQuoteStatus(bizId, quoteId, "sent");
+  } catch (error) {
+    console.error("sendQuote:", error);
+  }
+}
+
+async function updateQuoteStatus(bizId, quoteId, status) {
+  try {
+    const response = await fetch(`${apiBase()}/business-listings/${bizId}/quotes/${quoteId}`, {
+      method: "PUT",
+      headers: apiAuthHeaders(),
+      body: JSON.stringify({ status })
+    });
+
+    if (!response.ok) throw new Error(`Failed to update quote: ${response.statusText}`);
+    toast(`Quote status updated to ${status}`);
+    await loadQuotes(bizId);
+  } catch (error) {
+    console.error("updateQuoteStatus:", error);
+    toast(`Error: ${error.message}`);
+  }
+}
+
+// ============================================================================
+// BUSINESS HUB: AI Search
+// ============================================================================
+
+async function renderAiSearchTab(biz) {
+  try {
+    const aiSearchContent = document.getElementById("aiSearchContent");
+
+    // Fetch AI search profiles
+    const response = await fetch(`${apiBase()}/ai-search/business-profiles`, { headers: apiAuthHeaders() });
+    if (!response.ok) throw new Error("Failed to load AI search data");
+
+    const profiles = await response.json();
+    const profile = profiles.find((p) => p.id === biz.id);
+
+    if (!profile) {
+      aiSearchContent.innerHTML = `<p class="empty">This business is not enabled for AI Search.</p>`;
+      return;
+    }
+
+    // Build JSON-LD preview
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: profile.name,
+      description: profile.description,
+      url: profile.website,
+      telephone: profile.phone,
+      email: profile.email,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: profile.address,
+        addressLocality: profile.city,
+        addressRegion: profile.state,
+        postalCode: profile.zip_code
+      }
+    };
+
+    const html = `
+      <div class="ai-search-block">
+        <div>
+          <h3>AI Search Status</h3>
+          <p style="font-size: 12px; color: var(--muted)">
+            ${biz.ai_search_enabled ? "✓ Enabled for AI Search" : "✗ Not enabled"}
+          </p>
+        </div>
+        <div>
+          <h3>JSON-LD Preview</h3>
+          <pre class="json-ld-preview">${JSON.stringify(jsonLd, null, 2)}</pre>
+        </div>
+        <div style="font-size: 12px">
+          <p><strong>Fields indexed:</strong></p>
+          <ul style="margin: 4px 0; padding-left: 20px">
+            <li>Name: ${profile.name}</li>
+            <li>Category: ${profile.category || "Not set"}</li>
+            <li>City: ${profile.city}</li>
+            <li>Tags: ${(profile.tags || []).join(", ") || "None"}</li>
+          </ul>
+        </div>
+      </div>
+    `;
+
+    aiSearchContent.innerHTML = html;
+  } catch (error) {
+    console.error("renderAiSearchTab:", error);
+    document.getElementById("aiSearchContent").innerHTML = `<p class="empty">Error loading AI Search data: ${error.message}</p>`;
+  }
+}
+
+// ============================================================================
+// BUSINESS HUB: Search & Filters
+// ============================================================================
+
+const businessSearch = document.getElementById("businessSearch");
+businessSearch.addEventListener("input", (e) => {
+  const search = e.target.value.toLowerCase();
+  document.querySelectorAll(".business-card").forEach((card) => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(search) ? "" : "none";
+  });
+});
+
+// ============================================================================
+// Initialize Business Hub
+// ============================================================================
+
+loadBusinesses();
+

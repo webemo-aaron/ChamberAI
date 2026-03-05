@@ -15,7 +15,12 @@ router.get("/settings", async (req, res, next) => {
             retentionDays: 60,
             maxFileSizeMb: 500,
             maxDurationSeconds: 14400,
-            featureFlags: {}
+            featureFlags: {
+              business_directory: true,
+              review_workflow: true,
+              quote_automation: true,
+              ai_search: true
+            }
           }
     );
   } catch (error) {

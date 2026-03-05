@@ -1002,6 +1002,210 @@ textarea {
   }
 }
 
+/* Business Hub View Navigation */
+.view-nav {
+  display: flex;
+  gap: 8px;
+  padding: 12px 40px 0;
+  background: transparent;
+}
+
+.view-tab {
+  background: #efe7dc;
+  border: 1px solid #d8cfc4;
+  border-radius: 14px;
+  padding: 8px 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-tab:hover {
+  background: #e6dccf;
+}
+
+.view-tab.active {
+  background: var(--accent);
+  color: #f8f3eb;
+  border-color: var(--accent);
+}
+
+/* Business Cards */
+.business-card {
+  background: var(--panel);
+  border: 1px solid #e6dbcd;
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.business-card:hover {
+  box-shadow: 0 8px 20px rgba(10, 93, 82, 0.1);
+}
+
+.business-card.active {
+  background: #e6f0eb;
+  border-color: var(--accent);
+}
+
+.biz-category-pill {
+  display: inline-block;
+  background: #e4f0ed;
+  color: #0f4f46;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+/* Geo Scores */
+.biz-score-row {
+  display: flex;
+  gap: 16px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.biz-score-block {
+  text-align: center;
+}
+
+.biz-score-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.biz-score-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.biz-use-cases {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.biz-use-case {
+  background: #e4f0ed;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #0f4f46;
+}
+
+/* Review Cards */
+.review-card {
+  background: #fbf6ee;
+  border: 1px solid #e6dbcd;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.review-rating {
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.review-response-draft {
+  background: #e4f0ed;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+  font-style: italic;
+  color: #0f4f46;
+}
+
+/* Quote Cards */
+.quote-card {
+  background: #fbf6ee;
+  border: 1px solid #e6dbcd;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.quote-total {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.quote-status-pill {
+  display: inline-block;
+  background: #e4e4e4;
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.quote-status-pill.draft {
+  background: #e4f0ed;
+  color: #0f4f46;
+}
+
+.quote-status-pill.sent {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.quote-status-pill.accepted {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.quote-status-pill.rejected {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* AI Search Panel */
+.ai-search-block {
+  background: #f0f7f5;
+  border: 1px solid #b8d8d3;
+  border-radius: 12px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.ai-search-score {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.json-ld-preview {
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  background: #1a1a1a;
+  color: #b5e8d0;
+  border-radius: 8px;
+  padding: 10px;
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.error {
+  color: #c62828;
+}
+
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: 1fr;

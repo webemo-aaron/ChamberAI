@@ -16,6 +16,10 @@ import search from "./routes/search.js";
 import invitations from "./routes/invitations.js";
 import integrations from "./routes/integrations.js";
 import geoIntelligence from "./routes/geo_intelligence.js";
+import aiSearch from "./routes/ai_search.js";
+import businessListings from "./routes/business_listings.js";
+import reviewWorkflow from "./routes/review_workflow.js";
+import quotes from "./routes/quotes.js";
 import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
@@ -65,6 +69,9 @@ app.get("/metrics", (req, res) => {
   });
 });
 
+// Public AI Search endpoints (before requireAuth)
+app.use(aiSearch);
+
 app.use(requireAuth);
 app.use(meetings);
 app.use(audio);
@@ -81,6 +88,9 @@ app.use(search);
 app.use(invitations);
 app.use(integrations);
 app.use(geoIntelligence);
+app.use(businessListings);
+app.use(reviewWorkflow);
+app.use(quotes);
 
 app.use((err, req, res, next) => {
   metrics.errors_total += 1;
