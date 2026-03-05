@@ -7,7 +7,7 @@ import { requireTier } from "../middleware/requireTier.js";
 
 const router = express.Router();
 
-router.post("/meetings", requireRole("admin", "secretary"), async (req, res, next) => {
+router.post("/meetings", requireRole("admin", "secretary"), requireTier("pro"), async (req, res, next) => {
   try {
     requireFields(req.body, ["date", "start_time", "location"]);
     const db = initFirestore();

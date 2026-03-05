@@ -40,12 +40,12 @@ This document outlines the 4-tier pricing model, ideal customer profile, market 
 
 ## 4-Tier Model
 
-| Feature | Free | Pro ($29/mo) | Council ($149/mo) | Network ($399/mo) |
-|---------|------|-------------|------------------|------------------|
-| **Meetings** | Unlimited | Unlimited | Unlimited | Unlimited |
+| Feature | Free | Pro ($9/mo) | Council ($149/mo) | Network ($399/mo) |
+|---------|------|-----------|------------------|------------------|
+| **Meetings (real)** | Demo only | Unlimited | Unlimited | Unlimited |
+| **AI minutes draft** | — | ✓ | ✓ Advanced | ✓ Advanced |
 | **Team members** | 1 | 5 | 25 | Unlimited |
-| **AI minutes draft** | ✓ | ✓ Advanced | ✓ Advanced | ✓ Advanced |
-| **PDF/Markdown export** | ✓ | ✓ | ✓ | ✓ |
+| **PDF/Markdown export** | — | ✓ | ✓ | ✓ |
 | **DOCX export** | — | — | ✓ | ✓ |
 | **Governance compliance report** | — | ✓ | ✓ | ✓ |
 | **Board effectiveness analytics** | — | — | ✓ | ✓ |
@@ -53,7 +53,7 @@ This document outlines the 4-tier pricing model, ideal customer profile, market 
 | **API access** | — | — | ✓ | ✓ |
 | **Self-hosting** | ✓ | ✓ | ✓ | ✓ |
 | **SLA** | None | None | 99.9% | 99.99% |
-| **Support** | Community | Email | Email + chat | Dedicated |
+| **Support** | Community | Email | Email + Chat | Dedicated |
 | **Onboarding** | Self-serve | Self-serve | 1:1 call | Concierge |
 | **Multi-chamber** | — | — | — | ✓ |
 
@@ -62,19 +62,20 @@ This document outlines the 4-tier pricing model, ideal customer profile, market 
 ### Tier Definitions
 
 #### Free
-- **Use case**: Individual board secretaries, volunteer-run associations
-- **Positioning**: "Start governing better immediately"
-- **Conversion path**: 3-5% of free users convert to Pro within 6 months
-- **LTV**: $0 (churn rate too high)
+- **Use case**: Demo/evaluation only, storage of existing meetings
+- **Positioning**: "Try ChamberAI with sample data (no recording access)"
+- **Conversion path**: Most free users convert to Pro within 2 weeks of trying to record
+- **LTV**: $0 (demo tier, full conversion funnel at Pro)
 
-#### Pro ($29/month)
-- **Use case**: Small chambers, startup boards, early adopters
-- **Sweet spot**: 5-10 team members
-- **Key wins**: Governance report shows boards where they stand; Zapier enables workflow automation
-- **ROI talk**: "Saves 5 hours/month on minutes → $120 ROI at $30 cost"
-- **Contracts**: 70% monthly, 30% annual
-- **LTV**: ~$870 (30-month retention)
-- **CAC**: $15-30 (organic + landing page)
+#### Pro ($9/month) ← VOLUME ENGINE
+- **Use case**: All chambers with real meetings (default paid tier)
+- **Sweet spot**: 5-20 team members, 1-4 meetings/month
+- **Key wins**: Unlimited meeting recording + AI minutes, governance reports, Zapier
+- **ROI talk**: "Saves 5 hours/month on minutes → ROI in first week at $9/mo cost"
+- **Contracts**: 85% monthly, 15% annual
+- **LTV**: ~$216 (24-month retention, high churn as expected for commodity tier)
+- **CAC**: $5-15 (viral/organic, very low friction)
+- **Gross margin**: ~70% after compute/storage
 
 #### Council ($149/month) ← **PROFITABILITY ENGINE**
 - **Use case**: Regional chambers, professional boards, audit-ready orgs
@@ -98,6 +99,33 @@ This document outlines the 4-tier pricing model, ideal customer profile, market 
 
 ---
 
+## Unit Economics: Pro Tier (Volume Engine)
+
+```
+Revenue per customer/month:              $9.00
+Infrastructure cost (transcription):     ~$2.50 (per meeting, high variance)
+Infrastructure cost (storage):           ~$0.50
+Payment processing (2.9% + $0.30):       ~$0.56
+Support overhead (minimal, self-serve):  ~$0.50
+Gross margin:                            ~$4.94 (55%)
+
+---
+
+Profitable at scale (high volume):
+- Transcription cost decreases w/ volume ($2.50 → $1.50 at 1000s meetings/mo)
+- Gross margin improves to ~70% at volume
+- Pro tier funds infrastructure for entire platform
+- Council tier (premium) = pure margin
+
+Year 1 Pro tier projection:
+  Month 1-3:   200 customers    → $1,800/month revenue
+  Month 4-6:   500 customers    → $4,500/month revenue
+  Month 7-12:  1,200 customers  → $10,800/month revenue
+  Year 1 ARR:  ~$60,000 (Pro tier alone)
+```
+
+---
+
 ## Unit Economics: Council Tier (The Profit Engine)
 
 ```
@@ -105,49 +133,63 @@ Revenue per customer/month:              $149.00
 Infrastructure cost (compute+storage):   ~$8.00
 Payment processing (2.9% + $0.30):       ~$4.62
 Support hours (3/month @ $15/hr):        ~$45.00
-Gross margin:                            ~$91.38 (61%)
+Gross margin:                            ~$91.38 (61%) ← PURE MARGIN (Pro covers infra)
 
 ---
 
-Fixed costs (hosting + tooling):         ~$500/month
-Customers needed to break even:          5.5 Council chambers
+Fixed costs (hosting + tooling):         ~$800/month (including Pro infra)
+Customers needed to break even:          8.8 Council chambers
 Profit at 25 customers:                  $2,284/month
 Profit at 100 customers:                 $9,238/month
 
 Year 1 projection:
-  Month 1-3:   5 customers      → break even
-  Month 4-6:   15 customers     → $1,320/month profit
-  Month 7-12:  35 customers     → $2,850/month profit
-  Year 1 ARR:  ~$62,000
+  Month 1-3:   8 customers      → break even
+  Month 4-6:   20 customers     → $1,600/month profit
+  Month 7-12:  50 customers     → $3,700/month profit
+  Year 1 ARR:  ~$74,000 (Council tier, profit-pure)
 ```
 
 ---
 
 ## LTV:CAC and Payback Period
 
-### Council Tier
+### Pro Tier (Volume Acquisition Engine)
+```
+Annual Contract Value (ACV):             $108 ($9/mo × 12)
+Expected retention:                      18 months (low-friction SaaS)
+Lifetime Value (LTV):                    $162
+
+Customer Acquisition Cost (CAC):         $3-8 (organic, very low friction)
+LTV:CAC ratio:                           20:1 (excellent for volume)
+
+CAC payback period:                      1-2 weeks
+Conversion to Council:                   10-15% of Pro customers → $162 → $3,576 LTV upgrade
+```
+
+### Council Tier (Profitability & Expansion)
 ```
 Annual Contract Value (ACV):             $1,788
 Expected retention:                      24 months (governance SaaS benchmark)
 Lifetime Value (LTV):                    $3,576
 
-Customer Acquisition Cost (CAC):         $300-500
+Customer Acquisition Cost (CAC):         $300-500 (sales-assisted)
 LTV:CAC ratio:                           7.1:1 (excellent, target >3:1)
 
 CAC payback period:                      2-3 months
+Expansion from Pro:                      $500 → $3,576 net new LTV
 ```
 
-### Comparison: Pro vs Council
-| Metric | Pro | Council |
-|--------|-----|---------|
-| ACV | $348 | $1,788 |
-| LTV | $870 | $3,576 |
-| CAC | $30 | $400 |
-| LTV:CAC | 29:1 | 9:1 |
-| **Payback** | 1 month | 3 months |
-| **Focus** | Self-serve, PLG | Sales-assisted |
+### Portfolio Strategy
+| Tier | ACV | LTV | CAC | Payback | Purpose |
+|------|-----|-----|-----|---------|---------|
+| **Pro** | $108 | $162 | $5 | 2 weeks | Volume funnel, infrastructure funding |
+| **Council** | $1,788 | $3,576 | $400 | 3 months | Profit engine, expansion from Pro |
+| **Network** | $4,788 | $11,424 | $1,500 | 4 months | Enterprise, highest LTV |
 
-**Strategy**: Invest heavily in Council tier sales (payback in 3 months). Use Pro for expansion revenue (land-and-expand).
+**Strategy**:
+1. Acquire customers at Pro tier (low CAC, weak LTV but funds platform)
+2. Expand 10-15% to Council tier (huge LTV upgrade, covers CAC cost)
+3. Land-and-expand to Network tier (enterprise wedge)
 
 ---
 
@@ -205,34 +247,41 @@ CAC payback period:                      2-3 months
 ## Go-To-Market Strategy
 
 ### Phase 1: Launch (Months 1-2)
-1. **Free tier** available on public web
+1. **Free demo** available on public web (no recording access)
 2. **Blog post**: "Governance Checklist: Why ChamberAI"
-3. **Outbound email**: To 100 chambers (executive directors) — "$0 to try, $149 if you scale"
-4. **Landing page**: chambers.chamberai.com (high-intent copywriting)
+3. **Outbound email**: To 500 chambers — "$9/month to record real meetings"
+4. **Landing page**: chambers.chamberai.com (focus: try free, upgrade to Pro for real meetings)
 5. **Demo recordings**: 3 videos (board secretary, exec director, CFO POV)
 
-### Phase 2: Sales Assist (Months 3-6)
-1. **Inbound SDR**: Respond to landing page inquiries within 4 hours
-2. **Cold email sequence**: 5-email campaign to 500 chambers
-3. **Case study**: "How Mayor's Chamber cut audit findings by 40%"
-4. **Pricing page**: Emphasize Council tier as "standard"; Free/Pro as "starter"
-5. **Pilot program**: $49/month for 3 months → Council tier (convert 20% by month 6)
+### Phase 2: Pro Tier Acquisition (Months 2-6)
+1. **Free → Pro conversion funnel**: First meeting triggers upgrade to $9/mo
+2. **Email activation sequence**: "Try recording your first meeting" (automated)
+3. **Inbound SDR**: Respond to landing page inquiries within 4 hours
+4. **Cold email sequence**: 5-email campaign to 1000 chambers — low friction at $9/mo
+5. **Goal**: 500 Pro tier customers by Month 6 ($4.5k MRR)
 
-### Phase 3: Scale (Months 7-12)
-1. **Annual contracts**: 80% of new Council customers sign annual deals
-2. **Partner integrations**: Zapier, Salesforce, Microsoft 365
-3. **Vertical marketing**: Ads to "trade associations" and "non-profit boards"
+### Phase 3: Council Tier Expansion (Months 6-12)
+1. **Upsell triggered at**: "You have 8 team members" / "You want governance reports" / "You need DOCX exports"
+2. **Council pilot program**: $49/month for 3 weeks → Council tier (target 15-20% conversion)
+3. **Sales-assisted**: Dedicated SDR for prospects asking about DOCX or analytics
+4. **Annual discounts**: 20% off annual Council contracts (lock in LTV)
+5. **Goal**: 50 Council customers by Month 12 ($7.5k MRR from Council)
+
+### Phase 4: Platform Scale (Months 9-12)
+1. **Multi-chamber expansion**: Network tier for organizations with 2+ chambers
+2. **Partner integrations**: Zapier, Salesforce, Microsoft 365 (Council+ tier feature)
+3. **Vertical marketing**: Ads to "non-profit boards" (high Council conversion)
 4. **Events**: Booth at chamber conferences (ACCE, state association execs)
-5. **Referral program**: $100 credit per referred chamber that converts
+5. **Referral program**: Pro customers who refer → $20 credit; Council customers → $100 credit
 
 ### Sales Channels
-| Channel | Type | CAC | LTV |
-|---------|------|-----|-----|
-| Organic/SEO | Self-serve (Pro) | $20 | $870 |
-| Landing page | High-intent (Council) | $80 | $3,576 |
-| Cold email | Outbound SDR (Council) | $150 | $3,576 |
-| Events | Relationship (Council) | $300 | $3,576 |
-| Referral | Existing customers (Council) | $50 | $3,576 |
+| Channel | Volume | Type | CAC | LTV | Focus |
+|---------|--------|------|-----|-----|-------|
+| Organic/SEO | High | Self-serve (Pro) | $3 | $162 | Awareness, funnel volume |
+| Landing page | Medium | Low-friction (Pro→Council) | $8 | $162→$3,576 | Conversion |
+| Cold email | High | Volume (Pro) | $5 | $162 | Funnel filling |
+| Sales call | Low | High-intent (Council) | $400 | $3,576 | Enterprise, high-value |
+| Referral | Low | Community (Council) | $50 | $3,576 | Viral, highest quality |
 
 ---
 
@@ -280,28 +329,44 @@ CAC payback period:                      2-3 months
 ## Financial Projections: Year 1
 
 ```
-Month 1:     5 Council customers   → $745 MRR
-Month 3:     15 Council (5 annual) → $2,235 MRR
-Month 6:     35 Council (20 annual) → $3,920 MRR
-Month 9:     60 Council (40 annual) → $5,940 MRR
-Month 12:    100 Council (70 annual) → $8,540 MRR + 50 Pro → $9,040 MRR
+PRO TIER (Volume):
+Month 1:     50 customers    → $450 MRR
+Month 3:     200 customers   → $1,800 MRR
+Month 6:     500 customers   → $4,500 MRR
+Month 9:     800 customers   → $7,200 MRR
+Month 12:    1,200 customers → $10,800 MRR
+Year 1 Pro ARR: ~$60,000
 
-Year 1 ARR:  ~$95,000 (Council) + $18,000 (Pro) = $113,000
-Year 1 Gross Profit: $113,000 × 0.60 = $67,800
-Year 1 Expenses: $15,000 (hosting) + $36,000 (salary, part-time) = $51,000
-Year 1 Net:   $16,800 (breakeven + margin)
+COUNCIL TIER (Premium/Expansion):
+Month 3:     5 customers     → $745 MRR
+Month 6:     15 customers    → $2,235 MRR
+Month 9:     30 customers    → $4,470 MRR
+Month 12:    50 customers    → $7,450 MRR
+Year 1 Council ARR: ~$37,000
+
+TOTAL YEAR 1:
+MRR Month 12: $10,800 (Pro) + $7,450 (Council) = $18,250/month
+Year 1 Total ARR: ~$97,000 (60% Pro, 40% Council)
+Year 1 Gross Profit: ~$68,000 (after compute/support)
+Year 1 Expenses: ~$45,000 (hosting, 2 FTE)
+Year 1 Net: ~$23,000 (profitable + growth phase)
 ```
 
-**Key assumption**: Organic growth + 3 FTE (CEO, CSM, Sales) by month 12.
+**Key assumptions**:
+- Pro tier: High volume, 18-month retention, low support
+- Council tier: Expansion from Pro, 24-month retention, higher support
+- Infrastructure costs decrease with scale (AI transcription gets cheaper at 1000s meetings/month)
+- Year 2 scales to $400k+ ARR (Pro continues growing, Council becomes dominant revenue)
 
 ---
 
 ## Risk Mitigation
 
-### Risk: Low conversion from Free to Pro
-- **Mitigation**: Free tier has 5-meeting limit (force trial endpoint)
-- **Mitigation**: Free tier excludes governance report (Pro feature)
-- **Mitigation**: Email sequence: "3 governance best practices" → link to governance report
+### Risk: Low conversion from Free (demo) to Pro
+- **Mitigation**: Free tier blocks meeting recording → forced upgrade to Pro to record
+- **Mitigation**: Free tier shows sample data only (no real meetings)
+- **Mitigation**: Email activation: "Ready to record your first real meeting? → Try Pro" (automatic at Day 2)
+- **Expected conversion**: 70-80% of free users convert within 2 weeks
 
 ### Risk: Churn from Council tier
 - **Mitigation**: Monthly governance report reinforces value

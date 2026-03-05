@@ -2,9 +2,22 @@
 
 ## Summary
 
-The complete premium billing system and 4-tier pricing model has been implemented and committed to the main branch (commit c1067ca).
+The complete premium billing system and **monetized 4-tier pricing model** has been implemented (commits c1067ca + a82144a + updated for Pro at $9/mo).
+
+**Key change**: Meetings and AI minutes now require **Pro tier ($9/mo minimum)** to ensure infrastructure costs are covered.
 
 **Status**: ✅ Code-ready. Requires Stripe account setup and environment configuration before deployment.
+
+---
+
+## Tier Pricing (New)
+
+| Tier | Price | Meetings | AI Minutes | Key Feature | Target |
+|------|-------|----------|-----------|-------------|--------|
+| Free | $0 | Demo only | — | Evaluation only | Trial users |
+| **Pro** | **$9/mo** | **Unlimited** | **✓** | Volume engine | All real users |
+| Council | $149/mo | Unlimited | ✓ Advanced | DOCX + analytics | Premium buyers |
+| Network | $399/mo | Unlimited | ✓ Advanced | Multi-chamber | Enterprise |
 
 ---
 
@@ -20,8 +33,15 @@ The complete premium billing system and 4-tier pricing model has been implemente
 - **requireTier(tier)** - Express middleware that gates features by subscription level
 - Returns 402 (Payment Required) if user doesn't have required tier
 - Compares tier levels (free < pro < council < network)
+- Applied to: POST /meetings (requires Pro), export (requires Council), analytics (requires Council)
 
-### 3. Premium Features (Code-Ready) ✅
+### 3. Meeting Recording Gate (NEW) ✅
+- **`POST /meetings`** now requires `requireTier("pro")`
+- Free tier users cannot create real meetings (returns 402)
+- Free tier is evaluation-only (demo data provided)
+- Automatic conversion trigger: "You've tried the demo. Create your first real meeting → $9/mo"
+
+### 4. Premium Features (Code-Ready) ✅
 
 #### DOCX Export (Council+ tier)
 - **Route**: `POST /meetings/:id/export?format=docx`

@@ -9,6 +9,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 /**
  * POST /billing/checkout
  * Creates a Stripe Checkout session for the specified tier
+ * Pricing:
+ *   pro: $9/month (unlimited meetings + AI minutes)
+ *   council: $149/month (DOCX + analytics + API)
+ *   network: $399/month (multi-chamber + enterprise)
  * @body {tier: 'pro'|'council'|'network'} - Subscription tier
  * @returns {url: string} - Stripe Checkout URL
  */
@@ -22,6 +26,10 @@ router.post("/billing/checkout", requireRole("admin"), async (req, res, next) =>
     }
 
     // Map tiers to Stripe price IDs from environment
+    // Set these in .env after creating products/prices in Stripe:
+    // STRIPE_PRICE_PRO=price_... (for $9/month)
+    // STRIPE_PRICE_COUNCIL=price_... (for $149/month)
+    // STRIPE_PRICE_NETWORK=price_... (for $399/month)
     const priceMap = {
       pro: process.env.STRIPE_PRICE_PRO,
       council: process.env.STRIPE_PRICE_COUNCIL,
