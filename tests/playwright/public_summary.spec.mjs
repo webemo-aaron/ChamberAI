@@ -47,7 +47,7 @@ test("public summary publish flow @critical", async ({ browser, request }) => {
   const publicFlag = page.locator("#featureFlags input[data-flag='public_summary']");
   await publicFlag.check();
   await page.locator("#saveSettings").click();
-
+  await page.locator("#publicSummaryTab").waitFor({ state: "visible" });
   await page.locator("#publicSummaryTab").click();
   await page.locator("#tab-public-summary").waitFor({ state: "visible" });
   const summarySections = page.locator("#tab-public-summary details.disclosure").first();

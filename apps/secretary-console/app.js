@@ -1064,7 +1064,7 @@ csvApply.addEventListener("click", async () => {
   actionItems = csvSkipInvalid.checked
     ? pendingCsvItems.filter((item) => item.owner_name && item.due_date)
     : pendingCsvItems;
-  await request(`/meetings/${selectedMeetingId}/action-items`, "PUT", { items: actionItems });
+  actionItems = await request(`/meetings/${selectedMeetingId}/action-items`, "PUT", { items: actionItems }) ?? actionItems;
   renderActionItems();
   pendingCsvItems = [];
   closeModal(csvPreviewModal);
