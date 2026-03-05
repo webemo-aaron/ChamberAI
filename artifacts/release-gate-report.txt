@@ -1,0 +1,325 @@
+== Stack Verification ==
+== Verify Local Stack ==
+[1/4] Compose status
+NAME                             IMAGE                              COMMAND                  SERVICE              CREATED          STATUS                    PORTS
+chamberai-api-1                  chamberofcommerceai-api:local      "docker-entrypoint.s…"   api                  15 minutes ago   Up 15 minutes (healthy)   0.0.0.0:4001->8080/tcp, [::]:4001->8080/tcp
+chamberai-console-1              chamberai-console                  "docker-entrypoint.s…"   console              4 days ago       Up 15 minutes (healthy)   0.0.0.0:5173->5173/tcp, [::]:5173->5173/tcp
+chamberai-firebase-emulators-1   chamberai-firebase-emulators       "/__cacert_entrypoin…"   firebase-emulators   4 days ago       Up 15 minutes (healthy)   0.0.0.0:4000->4000/tcp, [::]:4000->4000/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp, 0.0.0.0:9099->9099/tcp, [::]:9099->9099/tcp, 0.0.0.0:9199->9199/tcp, [::]:9199->9199/tcp
+chamberai-worker-1               chamberofcommerceai-worker:local   "docker-entrypoint.s…"   worker               15 minutes ago   Up 14 minutes (healthy)   0.0.0.0:4002->8080/tcp, [::]:4002->8080/tcp
+[2/4] Console health (in-container)
+200
+[3/4] API health (in-container)
+200
+[4/4] Worker health (in-container)
+200
+Stack verification complete.
+RESULT: PASS
+
+== Metrics Thresholds ==
+api metrics OK: total=1191 errors=0 error_rate=0.0000
+worker metrics OK: total=98 errors=0 error_rate=0.0000
+RESULT: PASS
+
+== Test Quality ==
+
+> test:quality
+> bash ./scripts/check_test_quality.sh
+
+Running Playwright quality checks...
+Playwright quality checks passed.
+RESULT: PASS
+
+== Unit Tests ==
+
+> test:unit
+> node --test tests/unit/*.test.js
+
+TAP version 13
+# Subtest: Meeting created successfully with minimal fields
+ok 1 - Meeting created successfully with minimal fields
+  ---
+  duration_ms: 12.818073
+  ...
+# Subtest: Audio source at maximum allowed duration
+ok 2 - Audio source at maximum allowed duration
+  ---
+  duration_ms: 0.892162
+  ...
+# Subtest: Special characters in location and names handled correctly
+ok 3 - Special characters in location and names handled correctly
+  ---
+  duration_ms: 0.199872
+  ...
+# Subtest: Meeting status changes are persisted correctly
+ok 4 - Meeting status changes are persisted correctly
+  ---
+  duration_ms: 0.282523
+  ...
+# Subtest: Multiple audio sources can be registered for single meeting
+ok 5 - Multiple audio sources can be registered for single meeting
+  ---
+  duration_ms: 0.630951
+  ...
+# Subtest: Meeting tags are normalized and preserved
+ok 6 - Meeting tags are normalized and preserved
+  ---
+  duration_ms: 0.926798
+  ...
+# Subtest: Configuration limits can be adjusted and applied
+ok 7 - Configuration limits can be adjusted and applied
+  ---
+  duration_ms: 0.256291
+  ...
+# Subtest: Geo intelligence supports zip/city/town scopes and generates localized brief
+ok 8 - Geo intelligence supports zip/city/town scopes and generates localized brief
+  ---
+  duration_ms: 1.08438
+  ...
+# Subtest: API returns 400 for missing required meeting fields
+ok 9 - API returns 400 for missing required meeting fields
+  ---
+  duration_ms: 5.71074
+  ...
+# Subtest: API accepts meetings and validates on later operations
+ok 10 - API accepts meetings and validates on later operations
+  ---
+  duration_ms: 4.083412
+  ...
+# Subtest: API returns 404 for non-existent meeting ID
+ok 11 - API returns 404 for non-existent meeting ID
+  ---
+  duration_ms: 0.562033
+  ...
+# Subtest: API returns 422 for invalid meeting status transition
+ok 12 - API returns 422 for invalid meeting status transition
+  ---
+  duration_ms: 1.728447
+  ...
+# Subtest: API returns 400 for malformed JSON in request body
+ok 13 - API returns 400 for malformed JSON in request body
+  ---
+  duration_ms: 0.692689
+  ...
+# Subtest: Database validation: missing required action item fields blocks approval
+ok 14 - Database validation: missing required action item fields blocks approval
+  ---
+  duration_ms: 0.719985
+  ...
+# Subtest: API returns 401 when authorization header is missing (if implemented)
+ok 15 - API returns 401 when authorization header is missing (if implemented)
+  ---
+  duration_ms: 0.476774
+  ...
+# Subtest: Concurrent meeting creation and update handles conflicts gracefully
+ok 16 - Concurrent meeting creation and update handles conflicts gracefully
+  ---
+  duration_ms: 0.352922
+  ...
+# Subtest: normalizeScopeType accepts zip_code/city/town and rejects others
+ok 17 - normalizeScopeType accepts zip_code/city/town and rejects others
+  ---
+  duration_ms: 2.028745
+  ...
+# Subtest: makeGeoDocId creates deterministic firestore-safe key
+ok 18 - makeGeoDocId creates deterministic firestore-safe key
+  ---
+  duration_ms: 0.364945
+  ...
+# Subtest: findMeetingsForScope matches location and tags
+ok 19 - findMeetingsForScope matches location and tags
+  ---
+  duration_ms: 0.350929
+  ...
+# Subtest: buildGeoProfile computes scores and inferred tags
+ok 20 - buildGeoProfile computes scores and inferred tags
+  ---
+  duration_ms: 1.920383
+  ...
+# Subtest: buildGeoContentBrief returns localized summary and use cases
+ok 21 - buildGeoContentBrief returns localized summary and use cases
+  ---
+  duration_ms: 0.386504
+  ...
+# Subtest: invite email sender allowlist merge normalizes and deduplicates emails
+ok 22 - invite email sender allowlist merge normalizes and deduplicates emails
+  ---
+  duration_ms: 1.998606
+  ...
+# Subtest: invite sender authorization checks both env and settings entries
+ok 23 - invite sender authorization checks both env and settings entries
+  ---
+  duration_ms: 0.347583
+  ...
+# Subtest: invite email template includes Motion link when provided
+ok 24 - invite email template includes Motion link when provided
+  ---
+  duration_ms: 0.272678
+  ...
+# Subtest: email validation accepts basic real emails and rejects malformed addresses
+ok 25 - email validation accepts basic real emails and rejects malformed addresses
+  ---
+  duration_ms: 0.246653
+  ...
+# Subtest: Create motion with title and description
+ok 26 - Create motion with title and description
+  ---
+  duration_ms: 2.316331
+  ...
+# Subtest: Record vote (yes/no/abstain) on motion
+ok 27 - Record vote (yes/no/abstain) on motion
+  ---
+  duration_ms: 1.445881
+  ...
+# Subtest: Tally votes and determine result
+ok 28 - Tally votes and determine result
+  ---
+  duration_ms: 0.387294
+  ...
+# Subtest: Handle tie-breaking procedure when votes are tied
+ok 29 - Handle tie-breaking procedure when votes are tied
+  ---
+  duration_ms: 0.3541
+  ...
+# Subtest: Cannot vote twice on same motion
+ok 30 - Cannot vote twice on same motion
+  ---
+  duration_ms: 0.621176
+  ...
+# Subtest: Motion status transitions correctly (pending → voting → resolved)
+ok 31 - Motion status transitions correctly (pending → voting → resolved)
+  ---
+  duration_ms: 0.298564
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 324.020014
+RESULT: PASS
+
+== API Contract Tests ==
+
+> test:contracts
+> node --test tests/contracts/*.test.mjs
+
+TAP version 13
+# Subtest: API contracts: meeting/audio/action/motion/settings/export
+ok 1 - API contracts: meeting/audio/action/motion/settings/export
+  ---
+  duration_ms: 218.812549
+  ...
+# Subtest: API contracts: error response shape
+ok 2 - API contracts: error response shape
+  ---
+  duration_ms: 10.727574
+  ...
+# Subtest: API contracts: draft minutes versioning and rollback
+ok 3 - API contracts: draft minutes versioning and rollback
+  ---
+  duration_ms: 153.7247
+  ...
+# Subtest: API contracts: draft minutes write endpoints enforce RBAC
+ok 4 - API contracts: draft minutes write endpoints enforce RBAC
+  ---
+  duration_ms: 14.094789
+  ...
+# Subtest: API contracts: retention sweep deletes aged fixture audio and writes audit event
+ok 5 - API contracts: retention sweep deletes aged fixture audio and writes audit event
+  ---
+  duration_ms: 6745.070722
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7236.160157
+RESULT: PASS
+
+== E2E Critical ==
+
+> test:e2e:critical
+> playwright test --grep @critical
+
+
+Running 5 tests using 1 worker
+
+  ✓  1 tests/playwright/action_items_csv.spec.mjs:5:1 › action items CSV import/export @critical (1.8s)
+  ✓  2 tests/playwright/approval_export.spec.mjs:5:1 › approval gating and export flow @critical (2.7s)
+  ✓  3 tests/playwright/meeting-creation.spec.js:10:3 › Meeting Creation › Create new meeting with all required fields @critical (1.2s)
+  ✓  4 tests/playwright/meeting-workflow.spec.js:16:3 › Meeting Workflow › Complete meeting workflow: create -> upload -> process -> approve @critical (2.8s)
+state: {"role":"admin","email":"admin@acme.com","apiBase":"http://127.0.0.1:4001"}
+  ✓  5 tests/playwright/public_summary.spec.mjs:5:1 › public summary publish flow @critical (2.6s)
+
+  5 passed (13.2s)
+RESULT: PASS
+
+== E2E Full ==
+
+> test:e2e
+> playwright test
+
+
+Running 49 tests using 1 worker
+
+  ✓   1 tests/playwright/accessibility.spec.js:9:3 › Accessibility and WCAG Compliance › live regions expose status semantics (658ms)
+  ✓   2 tests/playwright/accessibility.spec.js:26:3 › Accessibility and WCAG Compliance › tabs expose ARIA roles and support keyboard navigation (503ms)
+  ✓   3 tests/playwright/accessibility.spec.js:54:3 › Accessibility and WCAG Compliance › modal dialogs trap focus and restore trigger focus on close (528ms)
+  ✓   4 tests/playwright/accessibility.spec.js:80:3 › Accessibility and WCAG Compliance › meeting cards are keyboard operable (1.3s)
+  ✓   5 tests/playwright/action_items_csv.spec.mjs:5:1 › action items CSV import/export @critical (1.8s)
+  ✓   6 tests/playwright/advanced-search.spec.js:5:3 › Advanced Search › advanced search returns full-text results (1.6s)
+  ✓   7 tests/playwright/approval_export.spec.mjs:5:1 › approval gating and export flow @critical (2.7s)
+  ✓   8 tests/playwright/approval_negative.spec.mjs:4:1 › approval remains blocked without required fields (2.4s)
+  ✓   9 tests/playwright/audio_process.spec.mjs:4:1 › audio upload + process flow (1.9s)
+  ✓  10 tests/playwright/collaboration-version.spec.js:16:3 › Collaboration and Version History › real-time collaboration supports multi-user editing (3.9s)
+  ✓  11 tests/playwright/collaboration-version.spec.js:38:3 › Collaboration and Version History › conflict resolution reloads latest server draft (2.2s)
+  ✓  12 tests/playwright/collaboration-version.spec.js:60:3 › Collaboration and Version History › version history supports rollback (4.3s)
+  ✓  13 tests/playwright/collaboration-version.spec.js:82:3 › Collaboration and Version History › version history pagination supports next and previous (3.8s)
+  ✓  14 tests/playwright/collaboration-version.spec.js:103:3 › Collaboration and Version History › version history empty state keeps page controls consistent (1.5s)
+  ✓  15 tests/playwright/collaboration-version.spec.js:115:3 › Collaboration and Version History › version history last page disables next and avoids extra fetch (3.3s)
+  ✓  16 tests/playwright/error-handling.spec.js:5:3 › UI Error Handling › non-JSON API response does not crash the UI (1.2s)
+  ✓  17 tests/playwright/error-handling.spec.js:14:3 › UI Error Handling › network failure shows user-facing alert (981ms)
+  ✓  18 tests/playwright/export-features.spec.js:12:3 › Export Features › Export minutes as PDF (2.1s)
+  ✓  19 tests/playwright/export-features.spec.js:17:3 › Export Features › Export minutes as DOCX (1.6s)
+  ✓  20 tests/playwright/export-features.spec.js:22:3 › Export Features › Export action items as CSV (2.1s)
+  ✓  21 tests/playwright/export-features.spec.js:30:3 › Export Features › Export history shows previous exports (2.6s)
+  ✓  22 tests/playwright/export-features.spec.js:39:3 › Export Features › Multiple export format support (1.6s)
+  ✓  23 tests/playwright/feature-flags.spec.js:9:3 › Feature Flags › feature flags render in settings (395ms)
+  ✓  24 tests/playwright/feature-flags.spec.js:16:3 › Feature Flags › public summary tab visibility toggles with feature flag (1.1s)
+  ✓  25 tests/playwright/feature-flags.spec.js:35:3 › Feature Flags › retention sweep button appears in settings (977ms)
+  ✓  26 tests/playwright/integrations-email-motion.spec.js:76:3 › Email + Motion Integration UI › shows auth cycle status and integration sections (976ms)
+  ✓  27 tests/playwright/integrations-email-motion.spec.js:82:3 › Email + Motion Integration UI › motion template is used when invite motion link is empty (1.4s)
+  ✓  28 tests/playwright/meeting-creation.spec.js:10:3 › Meeting Creation › Create new meeting with all required fields @critical (1.2s)
+  ✓  29 tests/playwright/meeting-creation.spec.js:31:3 › Meeting Creation › Create meeting with minimal required fields (997ms)
+  ✓  30 tests/playwright/meeting-creation.spec.js:42:3 › Meeting Creation › Display validation error for missing required fields (1.3s)
+  ✓  31 tests/playwright/meeting-creation.spec.js:50:3 › Meeting Creation › Quick create meeting uses default values (1.8s)
+  ✓  32 tests/playwright/meeting-workflow.spec.js:16:3 › Meeting Workflow › Complete meeting workflow: create -> upload -> process -> approve @critical (2.9s)
+  ✓  33 tests/playwright/meeting-workflow.spec.js:51:3 › Meeting Workflow › Upload audio file to meeting (2.5s)
+  ✓  34 tests/playwright/meeting-workflow.spec.js:65:3 › Meeting Workflow › Edit meeting details after creation (2.0s)
+  ✓  35 tests/playwright/meeting-workflow.spec.js:86:3 › Meeting Workflow › Cannot approve meeting without processing (1.8s)
+  ✓  36 tests/playwright/meeting-workflow.spec.js:93:3 › Meeting Workflow › Meeting status updates through workflow stages (2.7s)
+  ✓  37 tests/playwright/minutes-editing.spec.js:9:3 › Minutes Editing and Management › Edit draft minutes after generation (12.5s)
+  ✓  38 tests/playwright/minutes-editing.spec.js:59:3 › Minutes Editing and Management › Add action items to meeting (1.8s)
+  ✓  39 tests/playwright/minutes-editing.spec.js:76:3 › Minutes Editing and Management › Create and edit motions during meeting (1.5s)
+  ✓  40 tests/playwright/minutes-editing.spec.js:93:3 › Minutes Editing and Management › Export minutes in different formats (1.8s)
+  ✓  41 tests/playwright/minutes-rbac.spec.js:5:3 › Minutes RBAC › guest cannot update or rollback draft minutes (46ms)
+state: {"role":"admin","email":"admin@acme.com","apiBase":"http://127.0.0.1:4001"}
+  ✓  42 tests/playwright/public_summary.spec.mjs:5:1 › public summary publish flow @critical (3.0s)
+  ✓  43 tests/playwright/public_summary.spec.mjs:105:1 › public summary async refresh does not overwrite in-progress edits (2.2s)
+  ✓  44 tests/playwright/retention_sweep.spec.mjs:4:1 › retention sweep runs from settings (1.2s)
+  ✓  45 tests/playwright/settings-ui.spec.js:16:3 › Settings and Features UI › Feature flags render in settings section (510ms)
+  ✓  46 tests/playwright/settings-ui.spec.js:22:3 › Settings and Features UI › Toggle public summary feature flag (1.0s)
+  ✓  47 tests/playwright/settings-ui.spec.js:35:3 › Settings and Features UI › Run retention sweep from settings (1.5s)
+  ✓  48 tests/playwright/settings-ui.spec.js:42:3 › Settings and Features UI › Settings changes persist across page reload (2.4s)
+  ✓  49 tests/playwright/settings-ui.spec.js:55:3 › Settings and Features UI › Settings displays retention sweep option (1.0s)
+
+  49 passed (1.7m)
+RESULT: PASS
+

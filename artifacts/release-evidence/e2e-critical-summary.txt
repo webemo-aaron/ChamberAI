@@ -1,0 +1,19 @@
+== E2E Critical ==
+
+> test:e2e:critical
+> playwright test --grep @critical
+
+
+Running 5 tests using 1 worker
+
+  ✓  1 tests/playwright/action_items_csv.spec.mjs:5:1 › action items CSV import/export @critical (1.8s)
+  ✓  2 tests/playwright/approval_export.spec.mjs:5:1 › approval gating and export flow @critical (2.7s)
+  ✓  3 tests/playwright/meeting-creation.spec.js:10:3 › Meeting Creation › Create new meeting with all required fields @critical (1.2s)
+  ✓  4 tests/playwright/meeting-workflow.spec.js:16:3 › Meeting Workflow › Complete meeting workflow: create -> upload -> process -> approve @critical (2.8s)
+state: {"role":"admin","email":"admin@acme.com","apiBase":"http://127.0.0.1:4001"}
+  ✓  5 tests/playwright/public_summary.spec.mjs:5:1 › public summary publish flow @critical (2.6s)
+
+  5 passed (13.2s)
+RESULT: PASS
+
+== E2E Full ==
