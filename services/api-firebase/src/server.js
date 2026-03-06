@@ -40,7 +40,6 @@ const metrics = {
 };
 
 app.use(cors({ origin: process.env.CORS_ORIGIN ?? "*" }));
-app.use(express.json({ limit: "5mb" }));
 app.locals.metrics = metrics;
 
 app.use((req, res, next) => {
@@ -75,8 +74,11 @@ app.get("/metrics", (req, res) => {
 // Public AI Search endpoints (before requireAuth)
 app.use(aiSearch);
 
-// Billing webhook (public, before requireAuth)
+// Billing webhook (public, before requireAuth, MUST be before JSON parsing)
 app.use(billing);
+
+// JSON parsing AFTER webhook (webhook needs raw body for signature verification)
+app.use(express.json({ limit: "5mb" }));
 
 // Organizations management (POST is public for signup, GET/PATCH require auth)
 app.use(organizations);
