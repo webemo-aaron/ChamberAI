@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { makeId } from "../utils/ids.js";
 import { requireFields } from "../utils/validation.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -9,8 +10,7 @@ const router = express.Router();
 router.get("/business-listings/:id/quotes", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db
-      .collection("businessListings")
+    const snapshot = await orgCollection(db, req.orgId, "businessListings")
       .doc(req.params.id)
       .collection("quotes")
       .get();
@@ -42,8 +42,7 @@ router.post("/business-listings/:id/quotes", requireRole("admin", "secretary"), 
       sent_at: null
     };
 
-    await db
-      .collection("businessListings")
+    await orgCollection(db, req.orgId, "businessListings")
       .doc(req.params.id)
       .collection("quotes")
       .doc(quoteId)
@@ -63,14 +62,12 @@ router.put("/business-listings/:id/quotes/:quoteId", requireRole("admin", "secre
       sent_at: req.body.status === "sent" ? serverTimestamp() : undefined,
       updated_at: serverTimestamp()
     };
-    await db
-      .collection("businessListings")
+    await orgCollection(db, req.orgId, "businessListings")
       .doc(req.params.id)
       .collection("quotes")
       .doc(req.params.quoteId)
       .set(update, { merge: true });
-    const doc = await db
-      .collection("businessListings")
+    const doc = await orgCollection(db, req.orgId, "businessListings")
       .doc(req.params.id)
       .collection("quotes")
       .doc(req.params.quoteId)

@@ -1,10 +1,37 @@
 import express from "express";
 import Stripe from "stripe";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection, orgRef } from "../db/orgFirestore.js";
+import { requireAuth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+
+/**
+ * Resolve orgId from Stripe customer ID (used in webhook handlers)
+ */
+async function orgIdFromCustomer(db, customerId) {
+  const snap = await db
+    .collection("organizations")
+    .where("stripeCustomerId", "==", customerId)
+    .limit(1)
+    .get();
+  return snap.empty ? null : snap.docs[0].id;
+}
+
+/**
+ * Extract tier from Stripe subscription based on price ID
+ * Maps price IDs (from env) to tier names
+ */
+function tierFromSubscription(sub) {
+  const priceId = sub.items?.data?.[0]?.price?.id;
+  return {
+    [process.env.STRIPE_PRICE_PRO]: "pro",
+    [process.env.STRIPE_PRICE_COUNCIL]: "council",
+    [process.env.STRIPE_PRICE_NETWORK]: "network"
+  }[priceId] ?? "free";
+}
 
 /**
  * POST /billing/checkout
@@ -42,16 +69,32 @@ router.post("/billing/checkout", requireRole("admin"), async (req, res, next) =>
     }
 
     const appBaseUrl = process.env.APP_BASE_URL || "http://localhost:5173";
+    const db = initFirestore();
+    const orgId = req.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
+
+    // Get or create Stripe customer for this org
+    const orgData = (await orgRef(db, orgId).get()).data() || {};
+    let customerId = orgData.stripeCustomerId;
+
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: req.user?.email || "admin@chamber.local",
+        metadata: { orgId }
+      });
+      customerId = customer.id;
+      await orgRef(db, orgId).set({ stripeCustomerId: customerId }, { merge: true });
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
+      customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appBaseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appBaseUrl}/billing/cancel`,
       metadata: {
-        tier,
-        chamber_email: req.user?.email || "unknown"
+        orgId,
+        tier
       }
     });
 
@@ -63,19 +106,19 @@ router.post("/billing/checkout", requireRole("admin"), async (req, res, next) =>
 
 /**
  * GET /billing/status
- * Returns current subscription status and tier
- * @returns {tier, validUntil, stripeCustomerId, status}
+ * Returns current subscription status and tier (requires auth)
+ * @returns {tier, validUntil, status}
  */
-router.get("/billing/status", async (req, res, next) => {
+router.get("/billing/status", requireAuth, async (req, res, next) => {
   try {
     const db = initFirestore();
-    const settingsDoc = await db.collection("settings").doc("system").get();
+    const orgId = req.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
+    const settingsDoc = await orgCollection(db, orgId, "settings").doc("system").get();
     const settings = settingsDoc.exists ? settingsDoc.data() : {};
     const subscription = settings.subscription ?? {};
 
     res.json({
       tier: subscription.tier || "free",
-      stripeCustomerId: subscription.stripeCustomerId || null,
       validUntil: subscription.validUntil || null,
       status: subscription.status || "active"
     });
@@ -92,9 +135,9 @@ router.get("/billing/status", async (req, res, next) => {
 router.post("/billing/portal", requireRole("admin"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const settingsDoc = await db.collection("settings").doc("system").get();
-    const settings = settingsDoc.exists ? settingsDoc.data() : {};
-    const customerId = settings.subscription?.stripeCustomerId;
+    const orgId = req.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
+    const orgData = (await orgRef(db, orgId).get()).data() || {};
+    const customerId = orgData.stripeCustomerId;
 
     if (!customerId) {
       return res.status(400).json({ error: "No active Stripe subscription found" });
@@ -139,17 +182,25 @@ router.post(
       switch (event.type) {
         case "checkout.session.completed": {
           const session = event.data.object;
-          const tier = session.metadata?.tier || "free";
-          const email = session.metadata?.chamber_email || "unknown";
+          const customerId = session.customer;
+          const orgId = session.metadata?.orgId;
 
-          // Update subscription in settings
-          await db.collection("settings").doc("system").set(
+          // Resolve orgId if not in metadata (fallback lookup)
+          const resolvedOrgId = orgId || (await orgIdFromCustomer(db, customerId)) || "default";
+
+          // Fetch full subscription to get real period end
+          const stripeSubscription = await stripe.subscriptions.retrieve(session.subscription);
+          const tier = tierFromSubscription(stripeSubscription);
+          const validUntil = new Date(stripeSubscription.current_period_end * 1000).toISOString();
+
+          // Update subscription in org settings
+          await orgCollection(db, resolvedOrgId, "settings").doc("system").set(
             {
               subscription: {
                 tier,
-                stripeCustomerId: session.customer,
+                stripeCustomerId: customerId,
                 stripeSubscriptionId: session.subscription,
-                validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+                validUntil,
                 status: "active",
                 updated_at: serverTimestamp()
               }
@@ -157,28 +208,38 @@ router.post(
             { merge: true }
           );
 
-          // Log to audit
-          await db.collection("auditLogs").add({
+          // Log to org audit
+          await orgCollection(db, resolvedOrgId, "auditLogs").add({
             event_type: "BILLING_SUBSCRIPTION_CREATED",
-            actor: email,
+            actor: "stripe",
             timestamp: serverTimestamp(),
-            details: { tier, sessionId: session.id }
+            details: { tier, sessionId: session.id, stripeSubscriptionId: session.subscription }
           });
 
-          console.log(`Subscription created: tier=${tier}, customer=${session.customer}`);
+          console.log(`Subscription created: tier=${tier}, customer=${customerId}, org=${resolvedOrgId}`);
           break;
         }
 
         case "customer.subscription.updated": {
           const subscription = event.data.object;
-          const tier = subscription.metadata?.tier || "free";
+          const customerId = subscription.customer;
+          const orgId = await orgIdFromCustomer(db, customerId);
 
-          await db.collection("settings").doc("system").set(
+          if (!orgId) {
+            console.log(`Subscription update: No org found for customer ${customerId}`);
+            break;
+          }
+
+          const tier = tierFromSubscription(subscription);
+          const validUntil = new Date(subscription.current_period_end * 1000).toISOString();
+
+          await orgCollection(db, orgId, "settings").doc("system").set(
             {
               subscription: {
                 tier,
-                stripeCustomerId: subscription.customer,
+                stripeCustomerId: customerId,
                 stripeSubscriptionId: subscription.id,
+                validUntil,
                 status: subscription.status,
                 updated_at: serverTimestamp()
               }
@@ -186,14 +247,21 @@ router.post(
             { merge: true }
           );
 
-          console.log(`Subscription updated: id=${subscription.id}, status=${subscription.status}`);
+          console.log(`Subscription updated: id=${subscription.id}, tier=${tier}, status=${subscription.status}, org=${orgId}`);
           break;
         }
 
         case "customer.subscription.deleted": {
           const subscription = event.data.object;
+          const customerId = subscription.customer;
+          const orgId = await orgIdFromCustomer(db, customerId);
 
-          await db.collection("settings").doc("system").set(
+          if (!orgId) {
+            console.log(`Subscription deletion: No org found for customer ${customerId}`);
+            break;
+          }
+
+          await orgCollection(db, orgId, "settings").doc("system").set(
             {
               subscription: {
                 tier: "free",
@@ -204,7 +272,36 @@ router.post(
             { merge: true }
           );
 
-          console.log(`Subscription canceled: id=${subscription.id}`);
+          console.log(`Subscription canceled: id=${subscription.id}, org=${orgId}`);
+          break;
+        }
+
+        case "invoice.payment_failed": {
+          const invoice = event.data.object;
+          const customerId = invoice.customer;
+          const orgId = await orgIdFromCustomer(db, customerId);
+
+          if (orgId) {
+            await orgCollection(db, orgId, "settings").doc("system").set(
+              {
+                subscription: {
+                  status: "past_due",
+                  updated_at: serverTimestamp()
+                }
+              },
+              { merge: true }
+            );
+
+            // Log payment failure
+            await orgCollection(db, orgId, "auditLogs").add({
+              event_type: "BILLING_PAYMENT_FAILED",
+              actor: "stripe",
+              timestamp: serverTimestamp(),
+              details: { invoiceId: invoice.id, amount: invoice.amount_due }
+            });
+
+            console.log(`Payment failed: invoice=${invoice.id}, org=${orgId}`);
+          }
           break;
         }
 

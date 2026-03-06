@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 
 const router = express.Router();
 
@@ -12,10 +13,10 @@ router.get("/search/meetings", async (req, res, next) => {
 
     const db = initFirestore();
     const [meetingsSnap, draftSnap, actionSnap, motionSnap] = await Promise.all([
-      db.collection("meetings").get(),
-      db.collection("draftMinutes").get(),
-      db.collection("actionItems").get(),
-      db.collection("motions").get()
+      orgCollection(db, req.orgId, "meetings").get(),
+      orgCollection(db, req.orgId, "draftMinutes").get(),
+      orgCollection(db, req.orgId, "actionItems").get(),
+      orgCollection(db, req.orgId, "motions").get()
     ]);
 
     const draftsByMeeting = new Map();

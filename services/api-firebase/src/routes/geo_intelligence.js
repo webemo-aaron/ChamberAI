@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 import {
   normalizeScopeType,
@@ -18,7 +19,7 @@ router.get("/geo-profiles", async (req, res, next) => {
     const scopeId = normalizeScopeId(req.query.scopeId);
     const { limit, offset } = parsePagination(req.query);
     const db = initFirestore();
-    const snapshot = await db.collection("geoProfiles").get();
+    const snapshot = await orgCollection(db, req.orgId, "geoProfiles").get();
     let profiles = snapshot.docs.map((doc) => doc.data()).filter(Boolean);
 
     if (scopeType) {
@@ -54,8 +55,8 @@ router.post("/geo-profiles/scan", requireRole("admin", "secretary"), async (req,
 
     const db = initFirestore();
     const [meetingsSnap, existingProfileDoc] = await Promise.all([
-      db.collection("meetings").get(),
-      db.collection("geoProfiles").doc(makeGeoDocId(scopeType, scopeId)).get()
+      orgCollection(db, req.orgId, "meetings").get(),
+      orgCollection(db, req.orgId, "geoProfiles").doc(makeGeoDocId(scopeType, scopeId)).get()
     ]);
     const meetings = meetingsSnap.docs.map((doc) => doc.data()).filter(Boolean);
 
@@ -70,8 +71,8 @@ router.post("/geo-profiles/scan", requireRole("admin", "secretary"), async (req,
     });
 
     const docId = makeGeoDocId(scopeType, scopeId);
-    await db.collection("geoProfiles").doc(docId).set(profile, { merge: true });
-    await db.collection("auditLogs").add({
+    await orgCollection(db, req.orgId, "geoProfiles").doc(docId).set(profile, { merge: true });
+    await orgCollection(db, req.orgId, "auditLogs").add({
       meeting_id: "system",
       event_type: "GEO_PROFILE_REFRESHED",
       details: {
@@ -96,7 +97,7 @@ router.get("/geo-content-briefs", async (req, res, next) => {
     const scopeId = normalizeScopeId(req.query.scopeId);
     const { limit, offset } = parsePagination(req.query);
     const db = initFirestore();
-    const snapshot = await db.collection("geoContentBriefs").get();
+    const snapshot = await orgCollection(db, req.orgId, "geoContentBriefs").get();
     let briefs = snapshot.docs.map((doc) => doc.data()).filter(Boolean);
 
     if (scopeType) {
@@ -132,10 +133,10 @@ router.post("/geo-content-briefs/generate", requireRole("admin", "secretary"), a
 
     const db = initFirestore();
     const profileDocId = makeGeoDocId(scopeType, scopeId);
-    let profileDoc = await db.collection("geoProfiles").doc(profileDocId).get();
+    let profileDoc = await orgCollection(db, req.orgId, "geoProfiles").doc(profileDocId).get();
 
     if (!profileDoc.exists) {
-      const meetingsSnap = await db.collection("meetings").get();
+      const meetingsSnap = await orgCollection(db, req.orgId, "meetings").get();
       const meetings = meetingsSnap.docs.map((doc) => doc.data()).filter(Boolean);
       const profile = buildGeoProfile({
         scopeType,
@@ -145,8 +146,8 @@ router.post("/geo-content-briefs/generate", requireRole("admin", "secretary"), a
         meetings,
         nowIso: new Date().toISOString()
       });
-      await db.collection("geoProfiles").doc(profileDocId).set(profile, { merge: true });
-      profileDoc = await db.collection("geoProfiles").doc(profileDocId).get();
+      await orgCollection(db, req.orgId, "geoProfiles").doc(profileDocId).set(profile, { merge: true });
+      profileDoc = await orgCollection(db, req.orgId, "geoProfiles").doc(profileDocId).get();
     }
 
     const profile = profileDoc.data();
@@ -168,8 +169,8 @@ router.post("/geo-content-briefs/generate", requireRole("admin", "secretary"), a
       generation_meta: meta
     };
 
-    await db.collection("geoContentBriefs").doc(brief.id).set(brief);
-    await db.collection("auditLogs").add({
+    await orgCollection(db, req.orgId, "geoContentBriefs").doc(brief.id).set(brief);
+    await orgCollection(db, req.orgId, "auditLogs").add({
       meeting_id: "system",
       event_type: "GEO_CONTENT_GENERATED",
       details: {

@@ -1,4 +1,5 @@
 import { initFirestore } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 
 /**
  * Middleware factory that enforces minimum subscription tier
@@ -16,7 +17,8 @@ export function requireTier(requiredTier) {
   return async (req, res, next) => {
     try {
       const db = initFirestore();
-      const settingsDoc = await db.collection("settings").doc("system").get();
+      const orgId = req.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
+      const settingsDoc = await orgCollection(db, orgId, "settings").doc("system").get();
       const settings = settingsDoc.exists ? settingsDoc.data() : {};
       const currentTier = settings.subscription?.tier ?? "free";
 

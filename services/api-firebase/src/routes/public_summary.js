@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 import { maybeEnhancePublicSummary } from "../services/ai_generation.js";
 
@@ -8,7 +9,7 @@ const router = express.Router();
 router.get("/meetings/:id/public-summary", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const doc = await db.collection("publicSummaries").doc(req.params.id).get();
+    const doc = await orgCollection(db, req.orgId, "publicSummaries").doc(req.params.id).get();
     if (!doc.exists) return res.json(null);
     res.json(normalizeSummary(doc.data()));
   } catch (error) {
@@ -26,7 +27,7 @@ router.put("/meetings/:id/public-summary", requireRole("admin", "secretary"), as
       checklist: req.body.checklist ?? {},
       updated_at: serverTimestamp()
     };
-    await db.collection("publicSummaries").doc(req.params.id).set(summary, { merge: true });
+    await orgCollection(db, req.orgId, "publicSummaries").doc(req.params.id).set(summary, { merge: true });
     res.json(normalizeSummary(summary));
   } catch (error) {
     next(error);
@@ -39,13 +40,13 @@ router.post(
   async (req, res, next) => {
     try {
       const db = initFirestore();
-      const meetingSnap = await db.collection("meetings").doc(req.params.id).get();
+      const meetingSnap = await orgCollection(db, req.orgId, "meetings").doc(req.params.id).get();
       if (!meetingSnap.exists) {
         return res.status(404).json({ error: "Meeting not found" });
       }
       const meeting = meetingSnap.data();
-      const motionsSnap = await db.collection("motions").where("meeting_id", "==", req.params.id).get();
-      const actionSnap = await db.collection("actionItems").where("meeting_id", "==", req.params.id).get();
+      const motionsSnap = await orgCollection(db, req.orgId, "motions").where("meeting_id", "==", req.params.id).get();
+      const actionSnap = await orgCollection(db, req.orgId, "actionItems").where("meeting_id", "==", req.params.id).get();
       const motionsCount = motionsSnap.size;
       const actionCount = actionSnap.size;
       const location = meeting.location ?? "the meeting location";
@@ -102,7 +103,7 @@ router.post(
         generation_meta: meta,
         updated_at: serverTimestamp()
       };
-      await db.collection("publicSummaries").doc(req.params.id).set(summary, { merge: true });
+      await orgCollection(db, req.orgId, "publicSummaries").doc(req.params.id).set(summary, { merge: true });
       res.json(normalizeSummary(summary));
     } catch (error) {
       next(error);
@@ -113,7 +114,7 @@ router.post(
 router.post("/meetings/:id/public-summary/publish", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const docRef = db.collection("publicSummaries").doc(req.params.id);
+    const docRef = orgCollection(db, req.orgId, "publicSummaries").doc(req.params.id);
     const doc = await docRef.get();
     if (!doc.exists) {
       return res.status(404).json({ error: "Public summary not found" });

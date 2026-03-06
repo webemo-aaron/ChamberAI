@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { makeId } from "../utils/ids.js";
 import { requireRole } from "../middleware/rbac.js";
 
@@ -8,7 +9,7 @@ const router = express.Router();
 router.get("/meetings/:id/action-items", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("actionItems").where("meeting_id", "==", req.params.id).get();
+    const snapshot = await orgCollection(db, req.orgId, "actionItems").where("meeting_id", "==", req.params.id).get();
     const items = snapshot.docs.map((doc) => doc.data());
     res.json(items);
   } catch (error) {
@@ -31,7 +32,7 @@ router.put("/meetings/:id/action-items", requireRole("admin", "secretary"), asyn
 
     const batch = db.batch();
     items.forEach((item) => {
-      batch.set(db.collection("actionItems").doc(item.id), item, { merge: true });
+      batch.set(orgCollection(db, req.orgId, "actionItems").doc(item.id), item, { merge: true });
     });
     await batch.commit();
     res.json(items);
@@ -43,7 +44,7 @@ router.put("/meetings/:id/action-items", requireRole("admin", "secretary"), asyn
 router.get("/meetings/:id/action-items/export/csv", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("actionItems").where("meeting_id", "==", req.params.id).get();
+    const snapshot = await orgCollection(db, req.orgId, "actionItems").where("meeting_id", "==", req.params.id).get();
     const items = snapshot.docs.map((doc) => doc.data());
     const header = ["description", "owner_name", "due_date", "status"];
     const lines = [header.join(",")];

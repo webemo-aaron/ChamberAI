@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { getBucket } from "../db/storage.js";
 import { makeId } from "../utils/ids.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -19,8 +20,8 @@ router.post("/meetings/:id/audio-sources", requireRole("admin", "secretary"), as
       duration_seconds: req.body.duration_seconds ?? null,
       created_at: serverTimestamp()
     };
-    await db.collection("audioSources").doc(id).set(source);
-    await db.collection("meetings").doc(req.params.id).set({
+    await orgCollection(db, req.orgId, "audioSources").doc(id).set(source);
+    await orgCollection(db, req.orgId, "meetings").doc(req.params.id).set({
       status: "UPLOADED",
       updated_at: serverTimestamp()
     }, { merge: true });
@@ -33,7 +34,7 @@ router.post("/meetings/:id/audio-sources", requireRole("admin", "secretary"), as
 router.get("/meetings/:id/audio-sources", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("audioSources").where("meeting_id", "==", req.params.id).get();
+    const snapshot = await orgCollection(db, req.orgId, "audioSources").where("meeting_id", "==", req.params.id).get();
     const sources = snapshot.docs.map((doc) => doc.data());
     res.json(sources);
   } catch (error) {
@@ -63,7 +64,7 @@ router.post("/meetings/:id/audio-sources/upload-url", requireRole("admin", "secr
 router.get("/audio-sources/:id/download-url", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const doc = await db.collection("audioSources").doc(req.params.id).get();
+    const doc = await orgCollection(db, req.orgId, "audioSources").doc(req.params.id).get();
     if (!doc.exists) return res.status(404).json({ error: "Audio source not found" });
     const source = doc.data();
     const fileUri = source.file_uri;

@@ -11,9 +11,6 @@ services:
       - "4000:4000"  # Emulator Suite UI
     volumes:
       - firebase-data:/root/.config/firebase
-      - ./firebase.json:/app/firebase.json:ro
-      - ./firestore.rules:/app/firestore.rules:ro
-      - ./storage.rules:/app/storage.rules:ro
     environment:
       - FIRESTORE_EMULATOR_HOST=0.0.0.0:8080
       - FIREBASE_AUTH_EMULATOR_HOST=0.0.0.0:9099
@@ -38,7 +35,7 @@ services:
       - PORT=${API_PORT:-8080}
       - NODE_ENV=${API_NODE_ENV:-development}
       - GCP_PROJECT_ID=${GCP_PROJECT_ID:-chamberofcommerceai-local}
-      - FIREBASE_AUTH_ENABLED=${FIREBASE_AUTH_ENABLED:-false}
+      - FIREBASE_AUTH_ENABLED=${FIREBASE_AUTH_ENABLED:-true}
       - FIREBASE_USE_EMULATOR=${FIREBASE_USE_EMULATOR:-true}
       - FIRESTORE_EMULATOR_HOST=${FIRESTORE_EMULATOR_HOST:-firebase-emulators:8080}
       - FIREBASE_AUTH_EMULATOR_HOST=${FIREBASE_AUTH_EMULATOR_HOST:-firebase-emulators:9099}
@@ -46,6 +43,16 @@ services:
       - GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-chamberofcommerceai-local-audio}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://127.0.0.1:5173}
       - WORKER_ENDPOINT=${WORKER_ENDPOINT:-http://worker:8080/tasks/process}
+      # Stripe billing configuration
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_PRICE_PRO=${STRIPE_PRICE_PRO:-}
+      - STRIPE_PRICE_COUNCIL=${STRIPE_PRICE_COUNCIL:-}
+      - STRIPE_PRICE_NETWORK=${STRIPE_PRICE_NETWORK:-}
+      - APP_BASE_URL=${APP_BASE_URL:-http://localhost:5173}
+      # Multi-tenancy
+      - DEFAULT_ORG_ID=${DEFAULT_ORG_ID:-default}
+      - FIREBASE_AUTH_MOCK_TOKENS=${FIREBASE_AUTH_MOCK_TOKENS:-}
     depends_on:
       firebase-emulators:
         condition: service_healthy
@@ -65,6 +72,18 @@ services:
     volumes:
       # Mount emulator config for Firebase Admin SDK
       - firebase-data:/root/.config/firebase
+      # Mount Firebase service account (if available)
+      - ${FIREBASE_SERVICE_ACCOUNT_PATH:-/dev/null}:/run/secrets/firebase-sa.json:ro
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ChamberOfCommerceAI Worker Service
   worker:
@@ -82,6 +101,8 @@ services:
       - FIRESTORE_EMULATOR_HOST=${FIRESTORE_EMULATOR_HOST:-firebase-emulators:8080}
       - FIREBASE_AUTH_EMULATOR_HOST=${FIREBASE_AUTH_EMULATOR_HOST:-firebase-emulators:9099}
       - FIREBASE_STORAGE_EMULATOR_HOST=${FIREBASE_STORAGE_EMULATOR_HOST:-firebase-emulators:9199}
+      # Multi-tenancy
+      - DEFAULT_ORG_ID=${DEFAULT_ORG_ID:-default}
     depends_on:
       firebase-emulators:
         condition: service_healthy
@@ -91,6 +112,18 @@ services:
       - chamberofcommerceai-network
     volumes:
       - firebase-data:/root/.config/firebase
+      # Mount Firebase service account (if available)
+      - ${FIREBASE_SERVICE_ACCOUNT_PATH:-/dev/null}:/run/secrets/firebase-sa.json:ro
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test:
         [
@@ -115,7 +148,6 @@ services:
       - CONSOLE_PORT=5173
       - CONSOLE_STRICT_PORT=true
     volumes:
-      - ./scripts/serve_console.js:/app/scripts/serve_console.js:ro
       - ./apps/secretary-console:/app/apps/secretary-console:ro
     networks:
       - chamberofcommerceai-network

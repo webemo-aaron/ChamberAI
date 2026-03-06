@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { makeId } from "../utils/ids.js";
 import { normalizeTags, requireFields } from "../utils/validation.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -29,7 +30,7 @@ router.post("/meetings", requireRole("admin", "secretary"), requireTier("pro"), 
       updated_at: serverTimestamp()
     };
 
-    await db.collection("meetings").doc(id).set(meeting);
+    await orgCollection(db, req.orgId, "meetings").doc(id).set(meeting);
     res.status(201).json(meeting);
   } catch (error) {
     next(error);
@@ -39,7 +40,7 @@ router.post("/meetings", requireRole("admin", "secretary"), requireTier("pro"), 
 router.get("/meetings", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("meetings").get();
+    const snapshot = await orgCollection(db, req.orgId, "meetings").get();
     const meetings = snapshot.docs.map((doc) => doc.data());
     res.json(meetings);
   } catch (error) {
@@ -50,7 +51,7 @@ router.get("/meetings", async (req, res, next) => {
 router.get("/meetings/:id", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const doc = await db.collection("meetings").doc(req.params.id).get();
+    const doc = await orgCollection(db, req.orgId, "meetings").doc(req.params.id).get();
     if (!doc.exists) {
       return res.status(404).json({ error: "Meeting not found" });
     }
@@ -68,8 +69,8 @@ router.put("/meetings/:id", requireRole("admin", "secretary"), async (req, res, 
       tags: req.body.tags ? normalizeTags(req.body.tags) : undefined,
       updated_at: serverTimestamp()
     };
-    await db.collection("meetings").doc(req.params.id).set(update, { merge: true });
-    const doc = await db.collection("meetings").doc(req.params.id).get();
+    await orgCollection(db, req.orgId, "meetings").doc(req.params.id).set(update, { merge: true });
+    const doc = await orgCollection(db, req.orgId, "meetings").doc(req.params.id).get();
     res.json(doc.data());
   } catch (error) {
     next(error);
@@ -85,16 +86,16 @@ router.get("/meetings/:id/governance-report", requireTier("pro"), async (req, re
   try {
     const db = initFirestore();
 
-    const meeting = await db.collection("meetings").doc(req.params.id).get();
+    const meeting = await orgCollection(db, req.orgId, "meetings").doc(req.params.id).get();
     if (!meeting.exists) {
       return res.status(404).json({ error: "Meeting not found" });
     }
 
     const meetingData = meeting.data();
-    const draft = await db.collection("draftMinutes").doc(req.params.id).get();
+    const draft = await orgCollection(db, req.orgId, "draftMinutes").doc(req.params.id).get();
     const draftData = draft.exists ? draft.data() : null;
-    const motions = await db.collection("motions").where("meeting_id", "==", req.params.id).get();
-    const actions = await db.collection("actionItems").where("meeting_id", "==", req.params.id).get();
+    const motions = await orgCollection(db, req.orgId, "motions").where("meeting_id", "==", req.params.id).get();
+    const actions = await orgCollection(db, req.orgId, "actionItems").where("meeting_id", "==", req.params.id).get();
 
     const motionsList = motions.docs.map((doc) => doc.data());
     const actionsList = actions.docs.map((doc) => doc.data());

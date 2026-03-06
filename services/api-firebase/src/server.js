@@ -22,6 +22,7 @@ import reviewWorkflow from "./routes/review_workflow.js";
 import quotes from "./routes/quotes.js";
 import billing from "./routes/billing.js";
 import analytics from "./routes/analytics.js";
+import organizations from "./routes/organizations.js";
 import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
@@ -76,6 +77,9 @@ app.use(aiSearch);
 
 // Billing webhook (public, before requireAuth)
 app.use(billing);
+
+// Organizations management (POST is public for signup, GET/PATCH require auth)
+app.use(organizations);
 
 app.use(requireAuth);
 app.use(meetings);

@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 
 const router = express.Router();
 
@@ -8,7 +9,8 @@ const router = express.Router();
 router.get("/ai-search/business-profiles", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("businessListings").get();
+    const orgId = String(req.query.orgId ?? "default");
+    const snapshot = await orgCollection(db, orgId, "businessListings").get();
     const businesses = snapshot.docs.map((doc) => doc.data()).filter(Boolean);
 
     // Filter only AI-search-enabled businesses
@@ -43,9 +45,10 @@ router.get("/ai-search/local-intelligence", async (req, res, next) => {
   try {
     const scopeType = String(req.query.scopeType ?? "").trim();
     const scopeId = String(req.query.scopeId ?? "").trim().toLowerCase();
+    const orgId = String(req.query.orgId ?? "default");
 
     const db = initFirestore();
-    const snapshot = await db.collection("geoContentBriefs").get();
+    const snapshot = await orgCollection(db, orgId, "geoContentBriefs").get();
     let briefs = snapshot.docs.map((doc) => doc.data()).filter(Boolean);
 
     // Filter by scope if provided
@@ -67,7 +70,8 @@ router.get("/ai-search/local-intelligence", async (req, res, next) => {
 router.get("/ai-search/schema.json", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("businessListings").get();
+    const orgId = String(req.query.orgId ?? "default");
+    const snapshot = await orgCollection(db, orgId, "businessListings").get();
     const businesses = snapshot.docs.map((doc) => doc.data()).filter(Boolean);
 
     // Filter AI-search-enabled and build JSON-LD

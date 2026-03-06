@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { makeId } from "../utils/ids.js";
 import { normalizeTags, requireFields } from "../utils/validation.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -31,7 +32,7 @@ router.post("/business-listings", requireRole("admin", "secretary"), async (req,
       updated_at: serverTimestamp()
     };
 
-    await db.collection("businessListings").doc(id).set(business);
+    await orgCollection(db, req.orgId, "businessListings").doc(id).set(business);
     res.status(201).json(business);
   } catch (error) {
     next(error);
@@ -41,7 +42,7 @@ router.post("/business-listings", requireRole("admin", "secretary"), async (req,
 router.get("/business-listings", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("businessListings").get();
+    const snapshot = await orgCollection(db, req.orgId, "businessListings").get();
     let businesses = snapshot.docs.map((doc) => doc.data()).filter(Boolean);
 
     // Filter by geo_scope_type if provided
@@ -82,7 +83,7 @@ router.get("/business-listings", async (req, res, next) => {
 router.get("/business-listings/:id", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const doc = await db.collection("businessListings").doc(req.params.id).get();
+    const doc = await orgCollection(db, req.orgId, "businessListings").doc(req.params.id).get();
     if (!doc.exists) {
       return res.status(404).json({ error: "Business not found" });
     }
@@ -100,8 +101,8 @@ router.put("/business-listings/:id", requireRole("admin", "secretary"), async (r
       tags: req.body.tags ? normalizeTags(req.body.tags) : undefined,
       updated_at: serverTimestamp()
     };
-    await db.collection("businessListings").doc(req.params.id).set(update, { merge: true });
-    const doc = await db.collection("businessListings").doc(req.params.id).get();
+    await orgCollection(db, req.orgId, "businessListings").doc(req.params.id).set(update, { merge: true });
+    const doc = await orgCollection(db, req.orgId, "businessListings").doc(req.params.id).get();
     res.json(doc.data());
   } catch (error) {
     next(error);
@@ -111,7 +112,7 @@ router.put("/business-listings/:id", requireRole("admin", "secretary"), async (r
 router.delete("/business-listings/:id", requireRole("admin"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    await db.collection("businessListings").doc(req.params.id).delete();
+    await orgCollection(db, req.orgId, "businessListings").doc(req.params.id).delete();
     res.status(204).send();
   } catch (error) {
     next(error);

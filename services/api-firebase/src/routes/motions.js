@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { makeId } from "../utils/ids.js";
 import { requireRole } from "../middleware/rbac.js";
 
@@ -8,7 +9,7 @@ const router = express.Router();
 router.get("/meetings/:id/motions", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("motions").where("meeting_id", "==", req.params.id).get();
+    const snapshot = await orgCollection(db, req.orgId, "motions").where("meeting_id", "==", req.params.id).get();
     const motions = snapshot.docs.map((doc) => doc.data());
     res.json(motions);
   } catch (error) {
@@ -32,7 +33,7 @@ router.put("/meetings/:id/motions", requireRole("admin", "secretary"), async (re
 
     const batch = db.batch();
     motions.forEach((motion) => {
-      batch.set(db.collection("motions").doc(motion.id), motion, { merge: true });
+      batch.set(orgCollection(db, req.orgId, "motions").doc(motion.id), motion, { merge: true });
     });
     await batch.commit();
     res.json(motions);

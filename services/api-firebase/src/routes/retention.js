@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
@@ -7,19 +8,19 @@ const router = express.Router();
 router.post("/retention/sweep", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const settingsDoc = await db.collection("settings").doc("system").get();
+    const settingsDoc = await orgCollection(db, req.orgId, "settings").doc("system").get();
     const settings = settingsDoc.exists
       ? settingsDoc.data()
       : { retentionDays: 60 };
     const retentionDays = Number(settings.retentionDays ?? 60);
     const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
 
-    const approvedSnapshot = await db.collection("meetings").where("status", "==", "APPROVED").get();
+    const approvedSnapshot = await orgCollection(db, req.orgId, "meetings").where("status", "==", "APPROVED").get();
     const deleted = [];
 
     for (const meetingDoc of approvedSnapshot.docs) {
       const meetingId = meetingDoc.id;
-      const audioSnapshot = await db.collection("audioSources").where("meeting_id", "==", meetingId).get();
+      const audioSnapshot = await orgCollection(db, req.orgId, "audioSources").where("meeting_id", "==", meetingId).get();
       for (const audioDoc of audioSnapshot.docs) {
         const audio = audioDoc.data();
         const createdAt = toDate(audio.created_at);
@@ -32,7 +33,7 @@ router.post("/retention/sweep", requireRole("admin", "secretary"), async (req, r
     }
 
     if (deleted.length > 0) {
-      await db.collection("auditLogs").add({
+      await orgCollection(db, req.orgId, "auditLogs").add({
         meeting_id: "system",
         event_type: "RETENTION_SWEEP",
         actor: req.user?.email ?? "user",

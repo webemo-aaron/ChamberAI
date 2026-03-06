@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { makeId } from "../utils/ids.js";
 import { requireFields } from "../utils/validation.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -10,8 +11,7 @@ const router = express.Router();
 router.get("/business-listings/:id/reviews", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db
-      .collection("businessListings")
+    const snapshot = await orgCollection(db, req.orgId, "businessListings")
       .doc(req.params.id)
       .collection("reviews")
       .get();
@@ -42,8 +42,7 @@ router.post("/business-listings/:id/reviews", requireRole("admin", "secretary"),
       created_at: serverTimestamp()
     };
 
-    await db
-      .collection("businessListings")
+    await orgCollection(db, req.orgId, "businessListings")
       .doc(req.params.id)
       .collection("reviews")
       .doc(reviewId)
@@ -61,14 +60,12 @@ router.put("/business-listings/:id/reviews/:reviewId", requireRole("admin", "sec
       ...req.body,
       updated_at: serverTimestamp()
     };
-    await db
-      .collection("businessListings")
+    await orgCollection(db, req.orgId, "businessListings")
       .doc(req.params.id)
       .collection("reviews")
       .doc(req.params.reviewId)
       .set(update, { merge: true });
-    const doc = await db
-      .collection("businessListings")
+    const doc = await orgCollection(db, req.orgId, "businessListings")
       .doc(req.params.id)
       .collection("reviews")
       .doc(req.params.reviewId)
@@ -89,8 +86,7 @@ router.post(
       const reviewId = req.params.reviewId;
 
       // Fetch the review to get context
-      const reviewDoc = await db
-        .collection("businessListings")
+      const reviewDoc = await orgCollection(db, req.orgId, "businessListings")
         .doc(bizId)
         .collection("reviews")
         .doc(reviewId)
@@ -101,7 +97,7 @@ router.post(
       }
 
       const review = reviewDoc.data();
-      const businessDoc = await db.collection("businessListings").doc(bizId).get();
+      const businessDoc = await orgCollection(db, req.orgId, "businessListings").doc(bizId).get();
       const business = businessDoc.data();
 
       // Use maybeEnhanceGeoBrief pattern for AI generation
@@ -129,15 +125,13 @@ router.post(
         response_status: "draft"
       };
 
-      await db
-        .collection("businessListings")
+      await orgCollection(db, req.orgId, "businessListings")
         .doc(bizId)
         .collection("reviews")
         .doc(reviewId)
         .set(update, { merge: true });
 
-      const updatedDoc = await db
-        .collection("businessListings")
+      const updatedDoc = await orgCollection(db, req.orgId, "businessListings")
         .doc(bizId)
         .collection("reviews")
         .doc(reviewId)

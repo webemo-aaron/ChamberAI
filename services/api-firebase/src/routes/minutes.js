@@ -1,6 +1,7 @@
 import express from "express";
 import { Document, Packer, Table, TableRow, TableCell, Paragraph, TextRun } from "docx";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 import { requireTier } from "../middleware/requireTier.js";
 
@@ -9,7 +10,7 @@ const router = express.Router();
 router.get("/meetings/:id/draft-minutes", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const doc = await db.collection("draftMinutes").doc(req.params.id).get();
+    const doc = await orgCollection(db, req.orgId, "draftMinutes").doc(req.params.id).get();
     if (!doc.exists) return res.json(null);
     res.json(doc.data());
   } catch (error) {
@@ -20,7 +21,7 @@ router.get("/meetings/:id/draft-minutes", async (req, res, next) => {
 router.put("/meetings/:id/draft-minutes", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const ref = db.collection("draftMinutes").doc(req.params.id);
+    const ref = orgCollection(db, req.orgId, "draftMinutes").doc(req.params.id);
     const snapshot = await ref.get();
     const existing = snapshot.exists ? snapshot.data() : null;
     const currentVersion = Number(existing?.minutes_version ?? 0);
@@ -43,14 +44,14 @@ router.put("/meetings/:id/draft-minutes", requireRole("admin", "secretary"), asy
       updated_at: serverTimestamp()
     };
     await ref.set(draft, { merge: true });
-    await db.collection("draftMinuteVersions").add({
+    await orgCollection(db, req.orgId, "draftMinuteVersions").add({
       meeting_id: req.params.id,
       version: nextVersion,
       content: draft.content,
       actor: req.user?.email ?? "user",
       created_at: serverTimestamp()
     });
-    await db.collection("auditLogs").add({
+    await orgCollection(db, req.orgId, "auditLogs").add({
       meeting_id: req.params.id,
       event_type: "MINUTES_VERSION_SAVED",
       actor: req.user?.email ?? "user",
@@ -78,7 +79,7 @@ router.get("/meetings/:id/draft-minutes/versions", async (req, res, next) => {
     }
     const limit = Number.isNaN(limitParam) ? 50 : Math.min(Math.max(limitParam, 1), 100);
     const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0);
-    const snapshot = await db.collection("draftMinuteVersions").where("meeting_id", "==", req.params.id).get();
+    const snapshot = await orgCollection(db, req.orgId, "draftMinuteVersions").where("meeting_id", "==", req.params.id).get();
     const allVersions = snapshot.docs
       .map((doc) => doc.data())
       .sort((a, b) => Number(b.version ?? 0) - Number(a.version ?? 0));
@@ -106,13 +107,13 @@ router.post("/meetings/:id/draft-minutes/rollback", requireRole("admin", "secret
       return res.status(400).json({ error: "version required" });
     }
 
-    const versionsSnap = await db.collection("draftMinuteVersions").where("meeting_id", "==", req.params.id).get();
+    const versionsSnap = await orgCollection(db, req.orgId, "draftMinuteVersions").where("meeting_id", "==", req.params.id).get();
     const target = versionsSnap.docs.map((doc) => doc.data()).find((entry) => Number(entry.version) === targetVersion);
     if (!target) {
       return res.status(404).json({ error: "Version not found" });
     }
 
-    const draftRef = db.collection("draftMinutes").doc(req.params.id);
+    const draftRef = orgCollection(db, req.orgId, "draftMinutes").doc(req.params.id);
     const current = await draftRef.get();
     const currentVersion = Number(current.data()?.minutes_version ?? 0);
     const nextVersion = currentVersion + 1;
@@ -125,7 +126,7 @@ router.post("/meetings/:id/draft-minutes/rollback", requireRole("admin", "secret
       updated_at: serverTimestamp()
     };
     await draftRef.set(draft, { merge: true });
-    await db.collection("draftMinuteVersions").add({
+    await orgCollection(db, req.orgId, "draftMinuteVersions").add({
       meeting_id: req.params.id,
       version: nextVersion,
       content: draft.content,
@@ -133,7 +134,7 @@ router.post("/meetings/:id/draft-minutes/rollback", requireRole("admin", "secret
       rollback_from_version: targetVersion,
       created_at: serverTimestamp()
     });
-    await db.collection("auditLogs").add({
+    await orgCollection(db, req.orgId, "auditLogs").add({
       meeting_id: req.params.id,
       event_type: "MINUTES_ROLLBACK",
       actor: req.user?.email ?? "user",
@@ -153,7 +154,7 @@ router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (re
 
     // DOCX export requires Council tier or higher
     if (format === "docx") {
-      const settingsDoc = await db.collection("settings").doc("system").get();
+      const settingsDoc = await orgCollection(db, req.orgId, "settings").doc("system").get();
       const settings = settingsDoc.exists ? settingsDoc.data() : {};
       const currentTier = settings.subscription?.tier ?? "free";
       const tierLevels = { free: 0, pro: 1, council: 2, network: 3 };
@@ -168,10 +169,10 @@ router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (re
       }
 
       // Generate DOCX
-      const meeting = await db.collection("meetings").doc(req.params.id).get();
-      const draft = await db.collection("draftMinutes").doc(req.params.id).get();
-      const actions = await db.collection("actionItems").where("meeting_id", "==", req.params.id).get();
-      const motions = await db.collection("motions").where("meeting_id", "==", req.params.id).get();
+      const meeting = await orgCollection(db, req.orgId, "meetings").doc(req.params.id).get();
+      const draft = await orgCollection(db, req.orgId, "draftMinutes").doc(req.params.id).get();
+      const actions = await orgCollection(db, req.orgId, "actionItems").where("meeting_id", "==", req.params.id).get();
+      const motions = await orgCollection(db, req.orgId, "motions").where("meeting_id", "==", req.params.id).get();
 
       const meetingData = meeting.exists ? meeting.data() : {};
       const draftData = draft.exists ? draft.data() : {};
@@ -287,7 +288,7 @@ router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (re
         "Content-Disposition": `attachment; filename="meeting-${req.params.id}.docx"`
       });
 
-      await db.collection("auditLogs").add({
+      await orgCollection(db, req.orgId, "auditLogs").add({
         meeting_id: req.params.id,
         event_type: "MINUTES_EXPORT",
         actor: req.user?.email ?? "user",
@@ -300,7 +301,7 @@ router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (re
 
     // Standard export (PDF/Markdown)
     const file_uri = `exports/${req.params.id}/${Date.now()}.${format}`;
-    await db.collection("auditLogs").add({
+    await orgCollection(db, req.orgId, "auditLogs").add({
       meeting_id: req.params.id,
       event_type: "MINUTES_EXPORT",
       actor: req.user?.email ?? "user",

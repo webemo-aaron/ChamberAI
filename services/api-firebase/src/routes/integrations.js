@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
@@ -11,8 +12,8 @@ function sanitizeText(value, max = 300) {
   return text.slice(0, max);
 }
 
-async function getMotionConfig(db) {
-  const doc = await db.collection("settings").doc("integrations").get();
+async function getMotionConfig(db, orgId) {
+  const doc = await orgCollection(db, orgId, "settings").doc("integrations").get();
   const data = doc.exists ? doc.data() : {};
   return data.motion ?? {};
 }
@@ -32,7 +33,7 @@ function publicMotionConfig(config) {
 router.get("/integrations/motion/config", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const config = await getMotionConfig(db);
+    const config = await getMotionConfig(db, req.orgId);
     res.json(publicMotionConfig(config));
   } catch (error) {
     next(error);
@@ -42,7 +43,7 @@ router.get("/integrations/motion/config", requireRole("admin", "secretary"), asy
 router.put("/integrations/motion/config", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const current = await getMotionConfig(db);
+    const current = await getMotionConfig(db, req.orgId);
 
     const next = {
       ...current,
@@ -59,7 +60,7 @@ router.put("/integrations/motion/config", requireRole("admin", "secretary"), asy
       next.apiKey = raw;
     }
 
-    await db.collection("settings").doc("integrations").set(
+    await orgCollection(db, req.orgId, "settings").doc("integrations").set(
       {
         motion: next
       },
@@ -75,7 +76,7 @@ router.put("/integrations/motion/config", requireRole("admin", "secretary"), asy
 router.post("/integrations/motion/test", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const config = await getMotionConfig(db);
+    const config = await getMotionConfig(db, req.orgId);
     if (!config.apiKey) {
       return res.status(400).json({ error: "Motion API key is not configured." });
     }

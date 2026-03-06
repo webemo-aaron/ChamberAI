@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 import {
   buildInviteEmail,
@@ -20,13 +21,13 @@ function getResendConfig() {
   };
 }
 
-async function getSystemSettings(db) {
-  const doc = await db.collection("settings").doc("system").get();
+async function getSystemSettings(db, orgId) {
+  const doc = await orgCollection(db, orgId, "settings").doc("system").get();
   return doc.exists ? doc.data() : {};
 }
 
-async function getMotionConfig(db) {
-  const doc = await db.collection("settings").doc("integrations").get();
+async function getMotionConfig(db, orgId) {
+  const doc = await orgCollection(db, orgId, "settings").doc("integrations").get();
   if (!doc.exists) return {};
   return doc.data()?.motion ?? {};
 }
@@ -41,8 +42,8 @@ function buildMotionLinkFromTemplate(template, meetingTitle) {
 router.get("/invites/authorized-senders", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const settings = await getSystemSettings(db);
-    const motionConfig = await getMotionConfig(db);
+    const settings = await getSystemSettings(db, req.orgId);
+    const motionConfig = await getMotionConfig(db, req.orgId);
     const envAllowed = parseEnvInviteAllowedSenders(process.env.INVITE_ALLOWED_SENDERS);
     const settingsAllowed = Array.isArray(settings.emailInviteAuthorizedSenders) ? settings.emailInviteAuthorizedSenders : [];
     res.json({ authorizedSenders: mergeAuthorizedSenders(envAllowed, settingsAllowed) });
@@ -59,11 +60,11 @@ router.post("/invites/authorized-senders", requireRole("admin"), async (req, res
     }
 
     const db = initFirestore();
-    const settings = await getSystemSettings(db);
+    const settings = await getSystemSettings(db, req.orgId);
     const current = Array.isArray(settings.emailInviteAuthorizedSenders) ? settings.emailInviteAuthorizedSenders : [];
     const nextList = mergeAuthorizedSenders(current, [email]);
 
-    await db.collection("settings").doc("system").set(
+    await orgCollection(db, req.orgId, "settings").doc("system").set(
       {
         emailInviteAuthorizedSenders: nextList,
         updated_at: serverTimestamp()
@@ -91,7 +92,8 @@ router.post("/invites/send", requireRole("admin", "secretary"), async (req, res,
     }
 
     const db = initFirestore();
-    const settings = await getSystemSettings(db);
+    const settings = await getSystemSettings(db, req.orgId);
+    const motionConfig = await getMotionConfig(db, req.orgId);
     const envAllowed = parseEnvInviteAllowedSenders(process.env.INVITE_ALLOWED_SENDERS);
     const settingsAllowed = Array.isArray(settings.emailInviteAuthorizedSenders) ? settings.emailInviteAuthorizedSenders : [];
 
@@ -137,7 +139,7 @@ router.post("/invites/send", requireRole("admin", "secretary"), async (req, res,
       });
     }
 
-    const inviteDoc = await db.collection("invites").add({
+    const inviteDoc = await orgCollection(db, req.orgId, "invites").add({
       to: recipientEmail,
       from: config.fromEmail,
       sender_email: senderEmail,
@@ -152,8 +154,7 @@ router.post("/invites/send", requireRole("admin", "secretary"), async (req, res,
       updated_at: serverTimestamp()
     });
 
-    await db
-      .collection("memberships")
+    await orgCollection(db, req.orgId, "memberships")
       .doc(recipientEmail)
       .set(
         {
@@ -177,7 +178,7 @@ router.post("/invites/send", requireRole("admin", "secretary"), async (req, res,
 router.get("/invites", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("invites").orderBy("created_at", "desc").limit(100).get();
+    const snapshot = await orgCollection(db, req.orgId, "invites").orderBy("created_at", "desc").limit(100).get();
     const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     res.json(list);
   } catch (error) {
@@ -188,7 +189,7 @@ router.get("/invites", requireRole("admin", "secretary"), async (req, res, next)
 router.get("/memberships", requireRole("admin"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await db.collection("memberships").limit(200).get();
+    const snapshot = await orgCollection(db, req.orgId, "memberships").limit(200).get();
     const list = snapshot.docs
       .map((doc) => doc.data())
       .sort((a, b) => String(a.email ?? "").localeCompare(String(b.email ?? "")));
@@ -222,8 +223,8 @@ router.patch("/memberships/:email", requireRole("admin"), async (req, res, next)
     }
 
     const db = initFirestore();
-    await db.collection("memberships").doc(email).set(patch, { merge: true });
-    const doc = await db.collection("memberships").doc(email).get();
+    await orgCollection(db, req.orgId, "memberships").doc(email).set(patch, { merge: true });
+    const doc = await orgCollection(db, req.orgId, "memberships").doc(email).get();
     return res.json(doc.data());
   } catch (error) {
     next(error);
@@ -237,7 +238,7 @@ router.get("/memberships/me", requireRole("admin", "secretary", "viewer"), async
       return res.status(400).json({ error: "Authenticated email is invalid." });
     }
     const db = initFirestore();
-    const doc = await db.collection("memberships").doc(email).get();
+    const doc = await orgCollection(db, req.orgId, "memberships").doc(email).get();
     if (!doc.exists) {
       return res.status(404).json({ error: "Membership not found." });
     }

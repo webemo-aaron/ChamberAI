@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
@@ -7,7 +8,7 @@ const router = express.Router();
 router.get("/settings", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const doc = await db.collection("settings").doc("system").get();
+    const doc = await orgCollection(db, req.orgId, "settings").doc("system").get();
     res.json(
       doc.exists
         ? doc.data()
@@ -38,7 +39,7 @@ router.put("/settings", requireRole("admin", "secretary"), async (req, res, next
       featureFlags: req.body.featureFlags ?? {},
       updated_at: serverTimestamp()
     };
-    await db.collection("settings").doc("system").set(patch, { merge: true });
+    await orgCollection(db, req.orgId, "settings").doc("system").set(patch, { merge: true });
     res.json(patch);
   } catch (error) {
     next(error);

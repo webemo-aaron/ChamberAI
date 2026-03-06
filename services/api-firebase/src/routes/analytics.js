@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireTier } from "../middleware/requireTier.js";
 
 const router = express.Router();
@@ -15,7 +16,7 @@ router.get("/analytics/board", requireTier("council"), async (req, res, next) =>
     const db = initFirestore();
 
     // Fetch all meetings
-    const meetingsSnap = await db.collection("meetings").get();
+    const meetingsSnap = await orgCollection(db, req.orgId, "meetings").get();
     const meetings = meetingsSnap.docs.map((doc) => doc.data());
 
     if (meetings.length === 0) {
@@ -32,9 +33,9 @@ router.get("/analytics/board", requireTier("council"), async (req, res, next) =>
     }
 
     // Fetch related action items and motions
-    const actionItemsSnap = await db.collection("actionItems").get();
-    const motionsSnap = await db.collection("motions").get();
-    const draftMinutesSnap = await db.collection("draftMinutes").get();
+    const actionItemsSnap = await orgCollection(db, req.orgId, "actionItems").get();
+    const motionsSnap = await orgCollection(db, req.orgId, "motions").get();
+    const draftMinutesSnap = await orgCollection(db, req.orgId, "draftMinutes").get();
 
     const actionItems = actionItemsSnap.docs.map((doc) => doc.data());
     const motions = motionsSnap.docs.map((doc) => doc.data());

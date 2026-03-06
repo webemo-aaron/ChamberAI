@@ -1,5 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
+import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
@@ -7,13 +8,13 @@ const router = express.Router();
 router.get("/meetings/:id/approval-status", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const meetingSnap = await db.collection("meetings").doc(req.params.id).get();
+    const meetingSnap = await orgCollection(db, req.orgId, "meetings").doc(req.params.id).get();
     if (!meetingSnap.exists) {
       return res.status(404).json({ error: "Meeting not found" });
     }
     const meeting = meetingSnap.data();
-    const motionsSnap = await db.collection("motions").where("meeting_id", "==", req.params.id).get();
-    const actionSnap = await db.collection("actionItems").where("meeting_id", "==", req.params.id).get();
+    const motionsSnap = await orgCollection(db, req.orgId, "motions").where("meeting_id", "==", req.params.id).get();
+    const actionSnap = await orgCollection(db, req.orgId, "actionItems").where("meeting_id", "==", req.params.id).get();
     const motions = motionsSnap.docs.map((doc) => doc.data());
     const actionItems = actionSnap.docs.map((doc) => doc.data());
 
@@ -44,13 +45,13 @@ router.get("/meetings/:id/approval-status", async (req, res, next) => {
 router.post("/meetings/:id/approve", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
     const db = initFirestore();
-    const meetingRef = db.collection("meetings").doc(req.params.id);
+    const meetingRef = orgCollection(db, req.orgId, "meetings").doc(req.params.id);
     const meetingSnap = await meetingRef.get();
     if (!meetingSnap.exists) {
       return res.status(404).json({ error: "Meeting not found" });
     }
 
-    const approval = await getApprovalStatus(db, req.params.id);
+    const approval = await getApprovalStatus(db, req.orgId, req.params.id);
     if (!approval.ok) {
       return res.status(400).json({ error: "Approval blocked by validation rules", details: approval });
     }
@@ -63,7 +64,7 @@ router.post("/meetings/:id/approve", requireRole("admin", "secretary"), async (r
       },
       { merge: true }
     );
-    await db.collection("auditLogs").add({
+    await orgCollection(db, req.orgId, "auditLogs").add({
       meeting_id: req.params.id,
       event_type: "MINUTES_APPROVED",
       actor: req.user?.email ?? "user",
@@ -77,14 +78,14 @@ router.post("/meetings/:id/approve", requireRole("admin", "secretary"), async (r
   }
 });
 
-async function getApprovalStatus(db, meetingId) {
-  const meetingSnap = await db.collection("meetings").doc(meetingId).get();
+async function getApprovalStatus(db, orgId, meetingId) {
+  const meetingSnap = await orgCollection(db, orgId, "meetings").doc(meetingId).get();
   if (!meetingSnap.exists) {
     return { ok: false, error: "Meeting not found" };
   }
   const meeting = meetingSnap.data();
-  const motionsSnap = await db.collection("motions").where("meeting_id", "==", meetingId).get();
-  const actionSnap = await db.collection("actionItems").where("meeting_id", "==", meetingId).get();
+  const motionsSnap = await orgCollection(db, orgId, "motions").where("meeting_id", "==", meetingId).get();
+  const actionSnap = await orgCollection(db, orgId, "actionItems").where("meeting_id", "==", meetingId).get();
   const motions = motionsSnap.docs.map((doc) => doc.data());
   const actionItems = actionSnap.docs.map((doc) => doc.data());
 

@@ -1,6 +1,7 @@
 import admin from "firebase-admin";
 import { initFirebaseAdminApp, initFirestore } from "../db/firestore.js";
 import { normalizeEmail, parseEnvInviteAllowedSenders } from "../services/invite_email.js";
+import { orgCollection } from "../db/orgFirestore.js";
 
 export async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization || "";
@@ -22,6 +23,7 @@ export async function requireAuth(req, res, next) {
         email: mocked.email ?? demoEmail,
         role: mocked.role ?? "secretary"
       };
+      req.orgId = mocked.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
       return next();
     }
     let decoded;
@@ -36,6 +38,8 @@ export async function requireAuth(req, res, next) {
       return res.status(401).json({ error: "Invalid auth token", code: error?.code ?? undefined });
     }
 
+    // Extract orgId from custom claims, fallback to DEFAULT_ORG_ID env var
+    const orgId = decoded.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
     const email = normalizeEmail(decoded.email ?? demoEmail);
     const roleFromToken = decoded.role ?? "secretary";
     const enforceMembership = process.env.FIREBASE_REQUIRE_MEMBERSHIP !== "false";
@@ -44,7 +48,7 @@ export async function requireAuth(req, res, next) {
     if (enforceMembership) {
       try {
         const db = initFirestore();
-        const membershipDoc = await db.collection("memberships").doc(email).get();
+        const membershipDoc = await orgCollection(db, orgId, "memberships").doc(email).get();
         if (membershipDoc.exists) {
           const membership = membershipDoc.data() ?? {};
           const status = String(membership.status ?? "active");
@@ -56,6 +60,7 @@ export async function requireAuth(req, res, next) {
             email,
             role: membership.role ?? roleFromToken
           };
+          req.orgId = orgId;
           return next();
         }
       } catch (error) {
@@ -72,6 +77,7 @@ export async function requireAuth(req, res, next) {
           email,
           role: "admin"
         };
+        req.orgId = orgId;
         return next();
       }
       return res.status(403).json({ error: "User is not authorized for this chamber." });
@@ -81,10 +87,13 @@ export async function requireAuth(req, res, next) {
       email,
       role: roleFromToken
     };
+    req.orgId = orgId;
     return next();
   }
 
+  // Dev fallback: no Firebase auth enabled
   req.user = { role: "secretary", email: demoEmail };
+  req.orgId = process.env.DEFAULT_ORG_ID ?? "default";
   return next();
 }
 
