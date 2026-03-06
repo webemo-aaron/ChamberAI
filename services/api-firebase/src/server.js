@@ -21,6 +21,7 @@ import businessListings from "./routes/business_listings.js";
 import reviewWorkflow from "./routes/review_workflow.js";
 import quotes from "./routes/quotes.js";
 import billing from "./routes/billing.js";
+import billingStatus from "./routes/billing-status.js";
 import analytics from "./routes/analytics.js";
 import organizations from "./routes/organizations.js";
 import { requireAuth } from "./middleware/auth.js";
@@ -76,6 +77,9 @@ app.use(aiSearch);
 
 // Billing webhook (public, before requireAuth, MUST be before JSON parsing)
 app.use(billing);
+
+// Billing status endpoints (public validation/proof endpoints)
+app.use(billingStatus);
 
 // JSON parsing AFTER webhook (webhook needs raw body for signature verification)
 app.use(express.json({ limit: "5mb" }));
