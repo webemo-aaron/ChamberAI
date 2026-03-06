@@ -24,6 +24,7 @@ import billing from "./routes/billing.js";
 import billingStatus from "./routes/billing-status.js";
 import analytics from "./routes/analytics.js";
 import organizations from "./routes/organizations.js";
+import products from "./routes/products.js";
 import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
@@ -107,6 +108,7 @@ app.use(businessListings);
 app.use(reviewWorkflow);
 app.use(quotes);
 app.use(analytics);
+app.use(products);
 
 app.use((err, req, res, next) => {
   metrics.errors_total += 1;
