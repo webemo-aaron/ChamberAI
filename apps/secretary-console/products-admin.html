@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Management - ChamberAI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+        Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .connection-bar {
+      background: white;
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      font-size: 13px;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connected {
+      background: #10b981;
+    }
+
+    .status-dot.unconfigured {
+      background: #f59e0b;
+    }
+
+    .status-dot.error {
+      background: #ef4444;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .connection-info {
+      display: flex;
+      gap: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .connection-info span {
+      font-family: monospace;
+      color: #333;
+    }
+
+    .connection-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111;
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-icon {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .header {
+      background: white;
+      border-radius: 12px;
+      padding: 25px 30px;
+      margin-bottom: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 26px;
+      color: #111;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .auth-config {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+
+    .auth-config.open {
+      display: block;
+    }
+
+    .auth-config h3 {
+      font-size: 14px;
+      margin-bottom: 15px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .auth-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    .form-group input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .auth-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .tab-section {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #eee;
+      background: #fafafa;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 15px 20px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #999;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: #667eea;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 25px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #eee;
+      margin-bottom: 15px;
+    }
+
+    .card h3 {
+      font-size: 16px;
+      color: #111;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-meta {
+      display: flex;
+      gap: 15px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .card-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .card-meta-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #999;
+      font-weight: 600;
+    }
+
+    .card-meta-value {
+      font-family: monospace;
+      color: #333;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-pro {
+      background: #dbeafe;
+      color: #0c4a6e;
+    }
+
+    .badge-council {
+      background: #f3e8ff;
+      color: #5b21b6;
+    }
+
+    .badge-network {
+      background: #dbeafe;
+      color: #0c4a6e;
+    }
+
+    .badge-addon {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-feature {
+      background: #fce7f3;
+      color: #831843;
+    }
+
+    .badge-service {
+      background: #fed7aa;
+      color: #92400e;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .empty-state p {
+      margin-bottom: 20px;
+    }
+
+    .price-display {
+      font-size: 20px;
+      font-weight: 700;
+      color: #667eea;
+      margin: 10px 0;
+    }
+
+    .form-section {
+      margin-bottom: 25px;
+    }
+
+    .form-section h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 15px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input, select, textarea {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .success-panel {
+      background: #d1fae5;
+      border: 1px solid #6ee7b7;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 15px 0;
+      color: #065f46;
+    }
+
+    .success-panel h4 {
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .success-panel .copy-link {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #6ee7b7;
+      border-radius: 4px;
+      color: #065f46;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .success-panel .copy-link:hover {
+      background: #f0fdf4;
+    }
+
+    .batch-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+
+    .batch-table th,
+    .batch-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+
+    .batch-table th {
+      background: #fafafa;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .batch-table input, .batch-table select {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .batch-row-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: white;
+      border-radius: 8px;
+      padding: 15px 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      max-width: 300px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .toast.success {
+      border-left: 4px solid #10b981;
+      color: #065f46;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef4444;
+      color: #991b1b;
+    }
+
+    .toast.info {
+      border-left: 4px solid #0284c7;
+      color: #0c4a6e;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+    }
+
+    .product-card {
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 15px;
+      transition: all 0.2s;
+    }
+
+    .product-card:hover {
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border-color: #667eea;
+    }
+
+    .product-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .product-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .product-badges {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .validation-list {
+      list-style: none;
+    }
+
+    .validation-list li {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .validation-list li.pass {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .validation-list li.fail {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .validation-list li.warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .footer {
+      text-align: center;
+      color: white;
+      padding: 20px;
+      font-size: 12px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #667eea;
+      transition: width 0.3s;
+    }
+
+    .code-block {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      color: #111;
+      margin: 10px 0;
+    }
+
+    .link-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Connection Bar -->
+    <div class="connection-bar">
+      <div class="connection-status">
+        <div id="statusDot" class="status-dot connected"></div>
+        <span id="statusText">Stripe Connected (Test Mode)</span>
+      </div>
+      <div class="connection-info">
+        <div>Org: <span id="displayOrgId">org1</span></div>
+        <div>Token: <span id="displayToken">test-***</span></div>
+      </div>
+      <div class="connection-actions">
+        <button class="btn-secondary btn-icon" onclick="toggleAuthConfig()">⚙️ Settings</button>
+      </div>
+    </div>
+
+    <!-- Auth Quick-Config -->
+    <div id="authConfig" class="auth-config">
+      <h3>Authentication Configuration</h3>
+      <div class="auth-form">
+        <div class="form-group">
+          <label>Authorization Token</label>
+          <input type="password" id="authToken" placeholder="test-token-org1" />
+        </div>
+        <div class="form-group">
+          <label>Organization ID</label>
+          <input type="text" id="orgId" placeholder="org1" />
+        </div>
+        <div class="auth-actions">
+          <button class="btn-primary" onclick="saveAuth()">💾 Save Configuration</button>
+          <button class="btn-secondary" onclick="toggleAuthConfig()">✕ Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <h1>📦 Product Management</h1>
+      <p>Create, manage, and configure Stripe products with real-time synchronization</p>
+    </div>
+
+    <!-- Tab Section -->
+    <div class="tab-section">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('products')">Products</button>
+        <button class="tab" onclick="switchTab('create')">Create Product</button>
+        <button class="tab" onclick="switchTab('batch')">Batch Create</button>
+        <button class="tab" onclick="switchTab('config')">Stripe Config</button>
+        <button class="tab" style="margin-left: auto;" onclick="window.location.href='stripe-admin.html'">← Back to Stripe Admin</button>
+      </div>
+
+      <!-- Products Tab -->
+      <div id="products" class="tab-content active">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="font-size: 16px; color: #111; margin: 0;">Product Catalog</h3>
+          <button class="btn-primary btn-icon" onclick="loadProducts()">🔄 Refresh</button>
+        </div>
+        <div id="productsList" class="products-grid"></div>
+      </div>
+
+      <!-- Create Product Tab -->
+      <div id="create" class="tab-content">
+        <h3 style="font-size: 18px; margin-bottom: 25px; color: #111;">Create New Product</h3>
+        <form onsubmit="submitCreateForm(event)" style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+          <div class="form-section">
+            <h3>Basic Information</h3>
+            <div class="form-grid">
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Product Name *</label>
+                <input type="text" id="productName" placeholder="e.g., Premium Analytics" required />
+              </div>
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Description</label>
+                <textarea id="productDesc" placeholder="Brief description of the product..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Pricing</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Monthly Price ($) *</label>
+                <input type="number" id="monthlyPrice" placeholder="29.99" step="0.01" min="0" required />
+              </div>
+              <div class="form-group">
+                <label>Annual Price ($) (optional)</label>
+                <input type="number" id="annualPrice" placeholder="299.99" step="0.01" min="0" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Classification</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Tier</label>
+                <select id="productTier">
+                  <option value="pro">Pro</option>
+                  <option value="council">Council</option>
+                  <option value="network">Network</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Category</label>
+                <select id="productCategory">
+                  <option value="addon">Add-on</option>
+                  <option value="feature">Feature</option>
+                  <option value="service">Service</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Metadata</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Feature Flag (optional)</label>
+                <input type="text" id="featureFlag" placeholder="e.g., premium_analytics" />
+              </div>
+              <div class="form-group">
+                <label>Launch Date (optional)</label>
+                <input type="date" id="launchDate" />
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button type="submit" class="btn-primary">✓ Create Product</button>
+            <button type="reset" class="btn-secondary">↻ Reset</button>
+          </div>
+        </form>
+
+        <div id="createSuccess" style="display: none; margin-top: 20px;"></div>
+      </div>
+
+      <!-- Batch Create Tab -->
+      <div id="batch" class="tab-content">
+        <h3 style="font-size: 18px; margin-bottom: 20px; color: #111;">Batch Create Products</h3>
+        <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+          <div style="overflow-x: auto; margin-bottom: 20px;">
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th>Monthly Price</th>
+                  <th>Tier</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="batchTable">
+                <tr class="batch-row" data-row="0">
+                  <td><input type="text" placeholder="Product Name" /></td>
+                  <td><input type="number" placeholder="29.99" step="0.01" /></td>
+                  <td><select><option>addon</option><option>feature</option><option>service</option></select></td>
+                  <td><select><option>pro</option><option>council</option><option>network</option></select></td>
+                  <td><input type="text" placeholder="Description" /></td>
+                  <td><button type="button" class="btn-danger btn-icon" onclick="removeBatchRow(this)">✕</button></td>
+                </tr>
+                <tr class="batch-row" data-row="1">
+                  <td><input type="text" placeholder="Product Name" /></td>
+                  <td><input type="number" placeholder="29.99" step="0.01" /></td>
+                  <td><select><option>addon</option><option>feature</option><option>service</option></select></td>
+                  <td><select><option>pro</option><option>council</option><option>network</option></select></td>
+                  <td><input type="text" placeholder="Description" /></td>
+                  <td><button type="button" class="btn-danger btn-icon" onclick="removeBatchRow(this)">✕</button></td>
+                </tr>
+                <tr class="batch-row" data-row="2">
+                  <td><input type="text" placeholder="Product Name" /></td>
+                  <td><input type="number" placeholder="29.99" step="0.01" /></td>
+                  <td><select><option>addon</option><option>feature</option><option>service</option></select></td>
+                  <td><select><option>pro</option><option>council</option><option>network</option></select></td>
+                  <td><input type="text" placeholder="Description" /></td>
+                  <td><button type="button" class="btn-danger btn-icon" onclick="removeBatchRow(this)">✕</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button type="button" class="btn-secondary" onclick="addBatchRow()">➕ Add Row</button>
+            <button type="button" class="btn-primary" onclick="submitBatchCreate()">✓ Create All</button>
+          </div>
+
+          <div id="batchResults"></div>
+        </div>
+      </div>
+
+      <!-- Stripe Config Tab -->
+      <div id="config" class="tab-content">
+        <h3 style="font-size: 18px; margin-bottom: 20px; color: #111;">Stripe Configuration Status</h3>
+
+        <div class="card">
+          <h3>Validation Progress</h3>
+          <div id="validationProgress" style="margin: 15px 0;">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div style="text-align: center; font-size: 14px; color: #666;">
+              <span id="progressPercent">0%</span> Complete
+            </div>
+          </div>
+        </div>
+
+        <div id="validationChecks"></div>
+
+        <div style="margin-top: 20px;">
+          <button class="btn-primary" onclick="loadStripeStatus()">🔄 Test Connection</button>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <h3>Local Webhook Forwarding</h3>
+          <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+            To test webhooks locally, forward Stripe events to your development server:
+          </p>
+          <div class="code-block">stripe listen --forward-to http://localhost:4001/billing/webhook</div>
+          <p style="color: #666; font-size: 13px; margin-top: 10px;">
+            Then in another terminal, trigger test events:
+          </p>
+          <div class="code-block">stripe trigger checkout.session.completed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>ChamberAI Product Management | Last updated: <span id="timestamp"></span></p>
+    </div>
+  </div>
+
+  <script type="module">
+    const API_BASE = window.location.origin;
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAuth();
+      loadProducts();
+      loadStripeStatus();
+      updateTimestamp();
+      setInterval(updateTimestamp, 60000);
+    });
+
+    // Auth functions
+    function getHeaders() {
+      return {
+        "Authorization": `Bearer ${localStorage.getItem("authToken") || "test-token-org1"}`,
+        "X-Org-Id": localStorage.getItem("orgId") || "org1",
+        "Content-Type": "application/json"
+      };
+    }
+
+    function loadAuth() {
+      const token = localStorage.getItem("authToken") || "test-token-org1";
+      const orgId = localStorage.getItem("orgId") || "org1";
+      document.getElementById("authToken").value = token;
+      document.getElementById("orgId").value = orgId;
+      document.getElementById("displayOrgId").textContent = orgId;
+      document.getElementById("displayToken").textContent = token.substring(0, 4) + "-***";
+
+      // Hide auth config if already configured
+      if (token && orgId) {
+        document.getElementById("authConfig").classList.remove("open");
+      }
+    }
+
+    function toggleAuthConfig() {
+      document.getElementById("authConfig").classList.toggle("open");
+    }
+
+    function saveAuth() {
+      const token = document.getElementById("authToken").value.trim();
+      const orgId = document.getElementById("orgId").value.trim();
+
+      if (!token || !orgId) {
+        showToast("Please enter both token and organization ID", "error");
+        return;
+      }
+
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("orgId", orgId);
+      loadAuth();
+      showToast("Configuration saved successfully", "success");
+      loadProducts();
+      loadStripeStatus();
+    }
+
+    // API functions
+    async function loadProducts() {
+      const productsList = document.getElementById("productsList");
+      productsList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;"><div class="spinner"></div><p style="color: #666; margin-top: 10px;">Loading products...</p></div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/products/stripe/all`, { headers: getHeaders() });
+        const data = await res.json();
+
+        if (!data.products || data.products.length === 0) {
+          productsList.innerHTML = `
+            <div style="grid-column: 1/-1;">
+              <div class="empty-state">
+                <h3>No products yet</h3>
+                <p>Click "Create Product" to get started</p>
+                <button class="btn-primary" onclick="switchTab('create')">➕ Create First Product</button>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        productsList.innerHTML = data.products.map(product => renderProductCard(product)).join("");
+      } catch (err) {
+        console.error("Error loading products:", err);
+        productsList.innerHTML = '<div style="grid-column: 1/-1;"><div class="alert error">Failed to load products</div></div>';
+      }
+    }
+
+    function renderProductCard(product) {
+      const tierBadge = `<span class="badge badge-${product.tier}">${product.tier.toUpperCase()}</span>`;
+      const categoryBadge = `<span class="badge badge-${product.category}">${product.category.toUpperCase()}</span>`;
+      const stripeLink = `https://dashboard.stripe.com/products/${product.stripe_product_id}`;
+
+      return `
+        <div class="product-card">
+          <div class="product-header">
+            <div class="product-name">${product.name}</div>
+            <div class="product-badges">${tierBadge} ${categoryBadge}</div>
+          </div>
+          <div class="price-display">$${product.monthly_price}/month</div>
+          <div class="card-meta">
+            <div class="card-meta-item">
+              <div class="card-meta-label">Stripe Product</div>
+              <div class="card-meta-value" style="word-break: break-all;">
+                ${product.stripe_product_id}
+                <a href="${stripeLink}" target="_blank" style="margin-left: 5px; text-decoration: none; color: #667eea;">↗</a>
+              </div>
+            </div>
+            <div class="card-meta-item">
+              <div class="card-meta-label">Stripe Price</div>
+              <div class="card-meta-value" style="word-break: break-all;">${product.stripe_price_id}</div>
+            </div>
+          </div>
+          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+            <button class="btn-danger btn-icon" onclick="archiveProduct('${product.id}')">🗑 Archive</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function submitCreateForm(event) {
+      event.preventDefault();
+
+      const formData = {
+        name: document.getElementById("productName").value,
+        description: document.getElementById("productDesc").value,
+        monthly_price: parseFloat(document.getElementById("monthlyPrice").value),
+        tier: document.getElementById("productTier").value,
+        category: document.getElementById("productCategory").value,
+        metadata: {
+          feature_flag: document.getElementById("featureFlag").value || null,
+          launch_date: document.getElementById("launchDate").value || null
+        }
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/products`, {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(formData)
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+          showToast("Error: " + (result.message || "Failed to create product"), "error");
+          return;
+        }
+
+        const successDiv = document.getElementById("createSuccess");
+        successDiv.innerHTML = `
+          <div class="success-panel">
+            <h4>✓ Product Created Successfully</h4>
+            <div class="card-meta">
+              <div class="card-meta-item">
+                <div class="card-meta-label">Stripe Product</div>
+                <div class="card-meta-value">${result.product.stripe_product_id}</div>
+              </div>
+              <div class="card-meta-item">
+                <div class="card-meta-label">Stripe Price</div>
+                <div class="card-meta-value">${result.product.stripe_price_id}</div>
+              </div>
+            </div>
+            <a href="https://dashboard.stripe.com/products/${result.product.stripe_product_id}" target="_blank" class="copy-link">
+              View in Stripe Dashboard ↗
+            </a>
+          </div>
+        `;
+        successDiv.style.display = "block";
+
+        // Clear form and reload products
+        event.target.reset();
+        setTimeout(() => {
+          loadProducts();
+          showToast("Product created and synced with Stripe", "success");
+        }, 1000);
+      } catch (err) {
+        console.error("Error:", err);
+        showToast("Error creating product", "error");
+      }
+    }
+
+    async function archiveProduct(id) {
+      if (!confirm("Are you sure you want to archive this product?")) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/products/${id}`, {
+          method: "DELETE",
+          headers: getHeaders()
+        });
+
+        if (res.ok) {
+          showToast("Product archived", "success");
+          loadProducts();
+        } else {
+          showToast("Error archiving product", "error");
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        showToast("Error archiving product", "error");
+      }
+    }
+
+    function addBatchRow() {
+      const tbody = document.getElementById("batchTable");
+      const rowCount = tbody.querySelectorAll(".batch-row").length;
+      const row = document.createElement("tr");
+      row.className = "batch-row";
+      row.dataset.row = rowCount;
+      row.innerHTML = `
+        <td><input type="text" placeholder="Product Name" /></td>
+        <td><input type="number" placeholder="29.99" step="0.01" /></td>
+        <td><select><option>addon</option><option>feature</option><option>service</option></select></td>
+        <td><select><option>pro</option><option>council</option><option>network</option></select></td>
+        <td><input type="text" placeholder="Description" /></td>
+        <td><button type="button" class="btn-danger btn-icon" onclick="removeBatchRow(this)">✕</button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function removeBatchRow(btn) {
+      btn.closest(".batch-row").remove();
+    }
+
+    async function submitBatchCreate() {
+      const rows = document.querySelectorAll(".batch-row");
+      const products = [];
+
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const selects = row.querySelectorAll("select");
+
+        if (inputs[0].value.trim()) {
+          products.push({
+            name: inputs[0].value,
+            monthly_price: parseFloat(inputs[1].value) || 0,
+            category: selects[0].value,
+            tier: selects[1].value,
+            description: inputs[2].value
+          });
+        }
+      });
+
+      if (products.length === 0) {
+        showToast("Please fill in at least one product", "error");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/products/batch/create`, {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({ products })
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          const resultsDiv = document.getElementById("batchResults");
+          let html = `<div class="success-panel"><h4>✓ Created ${result.created} of ${result.total} products</h4><ul style="margin-left: 20px; margin-top: 10px;">`;
+
+          result.products.forEach(p => {
+            html += `<li>${p.name} <strong>${p.stripe_product_id}</strong> ✓</li>`;
+          });
+
+          html += `</ul></div>`;
+          resultsDiv.innerHTML = html;
+          setTimeout(() => loadProducts(), 1000);
+          showToast("Batch products created successfully", "success");
+        } else {
+          showToast("Error creating batch products", "error");
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        showToast("Error creating batch products", "error");
+      }
+    }
+
+    async function loadStripeStatus() {
+      try {
+        const [systemRes, validationRes] = await Promise.all([
+          fetch(`${API_BASE}/billing/status/system`),
+          fetch(`${API_BASE}/billing/status/validation`)
+        ]);
+
+        const system = await systemRes.json();
+        const validation = await validationRes.json();
+
+        // Update connection bar
+        const statusDot = document.getElementById("statusDot");
+        const statusText = document.getElementById("statusText");
+
+        if (system.stripe.secret_key_configured) {
+          statusDot.className = "status-dot connected";
+          statusText.textContent = "Stripe Connected (Test Mode)";
+        } else {
+          statusDot.className = "status-dot unconfigured";
+          statusText.textContent = "Stripe Unconfigured";
+        }
+
+        // Render validation
+        const checksDiv = document.getElementById("validationChecks");
+        let html = "";
+
+        // Progress
+        const percent = validation.validation_percentage || 0;
+        document.querySelector(".progress-fill").style.width = percent + "%";
+        document.getElementById("progressPercent").textContent = percent + "%";
+
+        // Checks
+        Object.entries(validation.checks).forEach(([name, check]) => {
+          const status = check.status === "✓" ? "pass" : check.status === "✗" ? "fail" : "warn";
+          html += `<li class="${status}"><strong>${check.status}</strong> ${name.replace(/_/g, " ")}</li>`;
+        });
+
+        checksDiv.innerHTML = `<ul class="validation-list">${html}</ul>`;
+
+        if (validation.recommendations.length > 0) {
+          checksDiv.innerHTML += `<div class="card" style="margin-top: 20px;"><h3>Next Steps</h3><ol style="margin-left: 20px; margin-top: 10px;">`;
+          validation.recommendations.forEach(rec => {
+            checksDiv.innerHTML += `<li style="margin-bottom: 8px;">${rec}</li>`;
+          });
+          checksDiv.innerHTML += `</ol></div>`;
+        }
+      } catch (err) {
+        console.error("Error loading status:", err);
+        showToast("Error loading Stripe status", "error");
+      }
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+      document.getElementById(name).classList.add("active");
+      event.target.classList.add("active");
+    }
+
+    function showToast(msg, type = "info") {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    function updateTimestamp() {
+      document.getElementById("timestamp").textContent = new Date().toLocaleString();
+    }
+
+    // Expose functions to global scope for onclick handlers
+    window.switchTab = switchTab;
+    window.toggleAuthConfig = toggleAuthConfig;
+    window.saveAuth = saveAuth;
+    window.loadProducts = loadProducts;
+    window.archiveProduct = archiveProduct;
+    window.addBatchRow = addBatchRow;
+    window.removeBatchRow = removeBatchRow;
+    window.submitBatchCreate = submitBatchCreate;
+    window.loadStripeStatus = loadStripeStatus;
+    window.submitCreateForm = submitCreateForm;
+  </script>
+</body>
+</html>

@@ -147,8 +147,6 @@ services:
       - CONSOLE_HOST=0.0.0.0
       - CONSOLE_PORT=5173
       - CONSOLE_STRICT_PORT=true
-    volumes:
-      - ./apps/secretary-console:/app/apps/secretary-console:ro
     networks:
       - chamberofcommerceai-network
     healthcheck:
