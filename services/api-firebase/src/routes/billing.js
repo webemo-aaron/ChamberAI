@@ -6,7 +6,26 @@ import { requireAuth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/rbac.js";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+
+// Lazy-load Stripe client - only if configured
+let stripe = null;
+function getStripe() {
+  if (!stripe && process.env.STRIPE_SECRET_KEY) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+  return stripe;
+}
+
+// Check if Stripe is fully configured
+function isStripeConfigured() {
+  return !!(
+    process.env.STRIPE_SECRET_KEY &&
+    process.env.STRIPE_WEBHOOK_SECRET &&
+    process.env.STRIPE_PRICE_PRO &&
+    process.env.STRIPE_PRICE_COUNCIL &&
+    process.env.STRIPE_PRICE_NETWORK
+  );
+}
 
 /**
  * Resolve orgId from Stripe customer ID (used in webhook handlers)
@@ -47,6 +66,13 @@ function tierFromSubscription(sub) {
  */
 router.post("/billing/checkout", requireRole("admin"), async (req, res, next) => {
   try {
+    if (!isStripeConfigured()) {
+      return res.status(503).json({
+        error: "Billing service not configured",
+        message: "Stripe is not yet set up on this deployment. Contact your administrator."
+      });
+    }
+
     const { tier } = req.body;
     const validTiers = ["pro", "council", "council_annual", "network"];
 
@@ -77,11 +103,12 @@ router.post("/billing/checkout", requireRole("admin"), async (req, res, next) =>
     const orgId = req.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
 
     // Get or create Stripe customer for this org
+    const stripeClient = getStripe();
     const orgData = (await orgRef(db, orgId).get()).data() || {};
     let customerId = orgData.stripeCustomerId;
 
     if (!customerId) {
-      const customer = await stripe.customers.create({
+      const customer = await stripeClient.customers.create({
         email: req.user?.email || "admin@chamber.local",
         metadata: { orgId }
       });
@@ -89,7 +116,7 @@ router.post("/billing/checkout", requireRole("admin"), async (req, res, next) =>
       await orgRef(db, orgId).set({ stripeCustomerId: customerId }, { merge: true });
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripeClient.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       customer: customerId,
@@ -132,12 +159,52 @@ router.get("/billing/status", requireAuth, async (req, res, next) => {
 });
 
 /**
+ * GET /billing/status/system
+ * Returns Stripe configuration status (public, no auth required)
+ * Useful for deployment health checks and system diagnostics
+ * @returns {configured, key_type, prices_configured, webhook_configured}
+ */
+router.get("/billing/status/system", async (req, res, next) => {
+  try {
+    const hasSecretKey = !!process.env.STRIPE_SECRET_KEY;
+    const isLiveKey = process.env.STRIPE_SECRET_KEY?.startsWith("sk_live_");
+
+    res.json({
+      configured: isStripeConfigured(),
+      key_type: isLiveKey ? "live" : hasSecretKey ? "test" : "none",
+      prices_configured: !!(
+        process.env.STRIPE_PRICE_PRO &&
+        process.env.STRIPE_PRICE_COUNCIL &&
+        process.env.STRIPE_PRICE_NETWORK
+      ),
+      webhook_configured: !!process.env.STRIPE_WEBHOOK_SECRET,
+      missing_config: {
+        secret_key: !hasSecretKey,
+        webhook_secret: !process.env.STRIPE_WEBHOOK_SECRET,
+        price_pro: !process.env.STRIPE_PRICE_PRO,
+        price_council: !process.env.STRIPE_PRICE_COUNCIL,
+        price_network: !process.env.STRIPE_PRICE_NETWORK
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * POST /billing/portal
  * Creates a Stripe Customer Portal session for managing subscription
  * @returns {url: string} - Stripe Portal URL
  */
 router.post("/billing/portal", requireRole("admin"), async (req, res, next) => {
   try {
+    if (!isStripeConfigured()) {
+      return res.status(503).json({
+        error: "Billing service not configured",
+        message: "Stripe is not yet set up on this deployment. Contact your administrator."
+      });
+    }
+
     const db = initFirestore();
     const orgId = req.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
     const orgData = (await orgRef(db, orgId).get()).data() || {};
@@ -148,8 +215,9 @@ router.post("/billing/portal", requireRole("admin"), async (req, res, next) => {
     }
 
     const appBaseUrl = process.env.APP_BASE_URL || "http://localhost:5173";
+    const stripeClient = getStripe();
 
-    const portalSession = await stripe.billingPortal.sessions.create({
+    const portalSession = await stripeClient.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${appBaseUrl}/billing/portal-return`
     });
@@ -170,8 +238,18 @@ router.post(
   express.raw({ type: "application/json" }),
   async (req, res, next) => {
     try {
-      const sig = req.headers["stripe-signature"] || "";
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+
+      // If webhook secret is not configured, reject webhook
+      if (!webhookSecret) {
+        console.warn("Webhook received but STRIPE_WEBHOOK_SECRET not configured");
+        return res.status(503).json({
+          error: "Billing service not configured",
+          message: "Stripe webhook secret not set. Configure STRIPE_WEBHOOK_SECRET to enable webhooks."
+        });
+      }
+
+      const sig = req.headers["stripe-signature"] || "";
       const isTestMode = webhookSecret.startsWith("whsec_local") || webhookSecret.includes("test");
 
       let event;
@@ -184,10 +262,11 @@ router.post(
           console.log("Webhook processed in test mode (signature verification skipped)", { type: event.type });
         } else {
           // Production mode: verify Stripe signature
-          event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+          const stripeClient = getStripe();
+          event = stripeClient.webhooks.constructEvent(req.body, sig, webhookSecret);
         }
       } catch (err) {
-        console.error("Webhook processing failed", { message: err.message, sig, webhookSecret });
+        console.error("Webhook processing failed", { message: err.message, sig });
         return res.status(400).json({ error: "Invalid webhook signature" });
       }
 
@@ -203,7 +282,8 @@ router.post(
           const resolvedOrgId = orgId || (await orgIdFromCustomer(db, customerId)) || "default";
 
           // Fetch full subscription to get real period end
-          const stripeSubscription = await stripe.subscriptions.retrieve(session.subscription);
+          const stripeClient = getStripe();
+          const stripeSubscription = await stripeClient.subscriptions.retrieve(session.subscription);
           const tier = tierFromSubscription(stripeSubscription);
           const validUntil = new Date(stripeSubscription.current_period_end * 1000).toISOString();
 

@@ -8,7 +8,21 @@ import { requireTier } from "../middleware/requireTier.js";
 
 const router = express.Router();
 
-router.post("/meetings", requireRole("admin", "secretary"), requireTier("pro"), async (req, res, next) => {
+/**
+ * Middleware: Optional tier requirement
+ * If DEMO_MODE=true, allows free tier to create meetings (for development/deployment)
+ * Otherwise, requires pro tier
+ */
+function requireTierOrDemo(req, res, next) {
+  // If DEMO_MODE is enabled, skip tier requirement (allows free tier during deployment)
+  if (process.env.DEMO_MODE === "true" || process.env.DEMO_MODE === "1") {
+    return next();
+  }
+  // Otherwise, enforce Pro tier requirement
+  return requireTier("pro")(req, res, next);
+}
+
+router.post("/meetings", requireRole("admin", "secretary"), requireTierOrDemo, async (req, res, next) => {
   try {
     requireFields(req.body, ["date", "start_time", "location"]);
     const db = initFirestore();
