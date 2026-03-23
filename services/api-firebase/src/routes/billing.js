@@ -29,6 +29,7 @@ function tierFromSubscription(sub) {
   return {
     [process.env.STRIPE_PRICE_PRO]: "pro",
     [process.env.STRIPE_PRICE_COUNCIL]: "council",
+    [process.env.STRIPE_PRICE_COUNCIL_ANNUAL]: "council",
     [process.env.STRIPE_PRICE_NETWORK]: "network"
   }[priceId] ?? "free";
 }
@@ -37,29 +38,32 @@ function tierFromSubscription(sub) {
  * POST /billing/checkout
  * Creates a Stripe Checkout session for the specified tier
  * Pricing:
- *   pro: $9/month (unlimited meetings + AI minutes)
+ *   pro: $29/month (unlimited meetings + AI minutes)
  *   council: $149/month (DOCX + analytics + API)
+ *   council_annual: $1,430/year (Council tier, paid annually)
  *   network: $399/month (multi-chamber + enterprise)
- * @body {tier: 'pro'|'council'|'network'} - Subscription tier
+ * @body {tier: 'pro'|'council'|'council_annual'|'network'} - Subscription tier
  * @returns {url: string} - Stripe Checkout URL
  */
 router.post("/billing/checkout", requireRole("admin"), async (req, res, next) => {
   try {
     const { tier } = req.body;
-    const validTiers = ["pro", "council", "network"];
+    const validTiers = ["pro", "council", "council_annual", "network"];
 
     if (!validTiers.includes(tier)) {
-      return res.status(400).json({ error: "Invalid tier. Must be pro, council, or network." });
+      return res.status(400).json({ error: "Invalid tier. Must be pro, council, council_annual, or network." });
     }
 
     // Map tiers to Stripe price IDs from environment
     // Set these in .env after creating products/prices in Stripe:
-    // STRIPE_PRICE_PRO=price_... (for $9/month)
+    // STRIPE_PRICE_PRO=price_... (for $29/month)
     // STRIPE_PRICE_COUNCIL=price_... (for $149/month)
+    // STRIPE_PRICE_COUNCIL_ANNUAL=price_... (for $1,430/year)
     // STRIPE_PRICE_NETWORK=price_... (for $399/month)
     const priceMap = {
       pro: process.env.STRIPE_PRICE_PRO,
       council: process.env.STRIPE_PRICE_COUNCIL,
+      council_annual: process.env.STRIPE_PRICE_COUNCIL_ANNUAL,
       network: process.env.STRIPE_PRICE_NETWORK
     };
 

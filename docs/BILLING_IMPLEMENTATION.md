@@ -4,7 +4,7 @@
 
 The complete premium billing system and **monetized 4-tier pricing model** has been implemented (commits c1067ca + a82144a + updated for Pro at $9/mo).
 
-**Key change**: Meetings and AI minutes now require **Pro tier ($9/mo minimum)** to ensure infrastructure costs are covered.
+**Key change**: Meetings and AI minutes now require **Pro tier ($29/mo minimum)** to ensure infrastructure costs are covered.
 
 **Status**: ✅ Code-ready. Requires Stripe account setup and environment configuration before deployment.
 
@@ -15,7 +15,7 @@ The complete premium billing system and **monetized 4-tier pricing model** has b
 | Tier | Price | Meetings | AI Minutes | Key Feature | Target |
 |------|-------|----------|-----------|-------------|--------|
 | Free | $0 | Demo only | — | Evaluation only | Trial users |
-| **Pro** | **$9/mo** | **Unlimited** | **✓** | Volume engine | All real users |
+| **Pro** | **$29/mo** | **Unlimited** | **✓** | Volume engine | All real users |
 | Council | $149/mo | Unlimited | ✓ Advanced | DOCX + analytics | Premium buyers |
 | Network | $399/mo | Unlimited | ✓ Advanced | Multi-chamber | Enterprise |
 
@@ -39,7 +39,7 @@ The complete premium billing system and **monetized 4-tier pricing model** has b
 - **`POST /meetings`** now requires `requireTier("pro")`
 - Free tier users cannot create real meetings (returns 402)
 - Free tier is evaluation-only (demo data provided)
-- Automatic conversion trigger: "You've tried the demo. Create your first real meeting → $9/mo"
+- Automatic conversion trigger: "You've tried the demo. Create your first real meeting → $29/mo"
 
 ### 4. Premium Features (Code-Ready) ✅
 
@@ -78,7 +78,7 @@ Free (0)
 ├─ PDF/Markdown export
 └─ No credit card required
 
-Pro ($29/month) ← Governance reports unlock
+Pro ($29/month) ← Volume engine
 ├─ Everything in Free +
 ├─ 5 team members
 ├─ Governance compliance report (monthly scorecard)

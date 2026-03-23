@@ -40,7 +40,7 @@ This document outlines the 4-tier pricing model, ideal customer profile, market 
 
 ## 4-Tier Model
 
-| Feature | Free | Pro ($9/mo) | Council ($149/mo) | Network ($399/mo) |
+| Feature | Free | Pro ($29/mo) | Council ($149/mo) | Network ($399/mo) |
 |---------|------|-----------|------------------|------------------|
 | **Meetings (real)** | Demo only | Unlimited | Unlimited | Unlimited |
 | **AI minutes draft** | — | ✓ | ✓ Advanced | ✓ Advanced |
@@ -67,13 +67,13 @@ This document outlines the 4-tier pricing model, ideal customer profile, market 
 - **Conversion path**: Most free users convert to Pro within 2 weeks of trying to record
 - **LTV**: $0 (demo tier, full conversion funnel at Pro)
 
-#### Pro ($9/month) ← VOLUME ENGINE
+#### Pro ($29/month) ← VOLUME ENGINE
 - **Use case**: All chambers with real meetings (default paid tier)
 - **Sweet spot**: 5-20 team members, 1-4 meetings/month
 - **Key wins**: Unlimited meeting recording + AI minutes, governance reports, Zapier
-- **ROI talk**: "Saves 5 hours/month on minutes → ROI in first week at $9/mo cost"
+- **ROI talk**: "Saves 5 hours/month on minutes → ROI in Month 1 at $29/mo cost"
 - **Contracts**: 85% monthly, 15% annual
-- **LTV**: ~$216 (24-month retention, high churn as expected for commodity tier)
+- **LTV**: ~$696 (24-month retention at $29/mo)
 - **CAC**: $5-15 (viral/organic, very low friction)
 - **Gross margin**: ~70% after compute/storage
 
@@ -102,26 +102,26 @@ This document outlines the 4-tier pricing model, ideal customer profile, market 
 ## Unit Economics: Pro Tier (Volume Engine)
 
 ```
-Revenue per customer/month:              $9.00
+Revenue per customer/month:              $29.00
 Infrastructure cost (transcription):     ~$2.50 (per meeting, high variance)
 Infrastructure cost (storage):           ~$0.50
-Payment processing (2.9% + $0.30):       ~$0.56
+Payment processing (2.9% + $0.30):       ~$0.94
 Support overhead (minimal, self-serve):  ~$0.50
-Gross margin:                            ~$4.94 (55%)
+Gross margin:                            ~$24.56 (85%)
 
 ---
 
 Profitable at scale (high volume):
 - Transcription cost decreases w/ volume ($2.50 → $1.50 at 1000s meetings/mo)
-- Gross margin improves to ~70% at volume
+- Gross margin improves to ~87% at volume
 - Pro tier funds infrastructure for entire platform
 - Council tier (premium) = pure margin
 
 Year 1 Pro tier projection:
-  Month 1-3:   200 customers    → $1,800/month revenue
-  Month 4-6:   500 customers    → $4,500/month revenue
-  Month 7-12:  1,200 customers  → $10,800/month revenue
-  Year 1 ARR:  ~$60,000 (Pro tier alone)
+  Month 1-3:   200 customers    → $5,800/month revenue
+  Month 4-6:   500 customers    → $14,500/month revenue
+  Month 7-12:  1,200 customers  → $34,800/month revenue
+  Year 1 ARR:  ~$174,000 (Pro tier alone)
 ```
 
 ---
@@ -155,15 +155,15 @@ Year 1 projection:
 
 ### Pro Tier (Volume Acquisition Engine)
 ```
-Annual Contract Value (ACV):             $108 ($9/mo × 12)
+Annual Contract Value (ACV):             $348 ($29/mo × 12)
 Expected retention:                      18 months (low-friction SaaS)
-Lifetime Value (LTV):                    $162
+Lifetime Value (LTV):                    $522
 
 Customer Acquisition Cost (CAC):         $3-8 (organic, very low friction)
-LTV:CAC ratio:                           20:1 (excellent for volume)
+LTV:CAC ratio:                           65:1 (excellent for volume)
 
 CAC payback period:                      1-2 weeks
-Conversion to Council:                   10-15% of Pro customers → $162 → $3,576 LTV upgrade
+Conversion to Council:                   10-15% of Pro customers → $522 → $3,576 LTV upgrade
 ```
 
 ### Council Tier (Profitability & Expansion)
@@ -182,7 +182,7 @@ Expansion from Pro:                      $500 → $3,576 net new LTV
 ### Portfolio Strategy
 | Tier | ACV | LTV | CAC | Payback | Purpose |
 |------|-----|-----|-----|---------|---------|
-| **Pro** | $108 | $162 | $5 | 2 weeks | Volume funnel, infrastructure funding |
+| **Pro** | $348 | $522 | $5 | 1 week | Volume funnel, infrastructure funding |
 | **Council** | $1,788 | $3,576 | $400 | 3 months | Profit engine, expansion from Pro |
 | **Network** | $4,788 | $11,424 | $1,500 | 4 months | Enterprise, highest LTV |
 
