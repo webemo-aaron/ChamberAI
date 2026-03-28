@@ -24,6 +24,8 @@ body {
     radial-gradient(circle at 10% 20%, #b7d9d0 0%, transparent 50%),
     linear-gradient(120deg, #f6f1e9 0%, #efe7dc 100%);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .grain {
@@ -39,6 +41,11 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 24px 40px 8px;
+  flex-shrink: 0;
+  height: 72px;
+  background: inherit;
+  position: relative;
+  z-index: 99;
 }
 
 .brand {
@@ -74,6 +81,7 @@ body {
   gap: 8px;
   align-items: center;
   font-size: 12px;
+  position: relative;
 }
 
 .api-config .pill {
@@ -88,11 +96,91 @@ body {
   background: var(--panel);
 }
 
+.api-popover {
+  position: fixed;
+  top: 72px;
+  right: 40px;
+  background: var(--panel);
+  border: 1px solid #d0c7bb;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 1001;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.api-popover.hidden {
+  display: none;
+}
+
+.popover-content {
+  padding: 20px;
+}
+
+.popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.popover-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.popover-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popover-close:hover {
+  color: var(--accent);
+}
+
+.popover-body {
+  display: grid;
+  gap: 12px;
+}
+
+.popover-body label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.popover-body input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d0c7bb;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.popover-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 .shell {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(420px, 1.2fr);
+  grid-template-columns: minmax(280px, 1fr) minmax(380px, 1.2fr);
   gap: 28px;
   padding: 24px 40px 60px;
+  margin-left: 220px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .left-pane,
@@ -2683,3 +2771,89 @@ textarea {
     background: #0f172a;
   }
 }
+
+
+/* ============================================================================
+   Phase 4: Sidebar Responsive Layout
+   ============================================================================ */
+
+/* Desktop: Show sidebar (>768px) */
+@media (min-width: 769px) {
+  .shell {
+    margin-left: 220px;
+  }
+}
+
+/* Tablet: Show sidebar but stack content (600-768px) */
+@media (min-width: 600px) and (max-width: 768px) {
+  .shell {
+    margin-left: 220px;
+    grid-template-columns: 1fr;
+    padding: 20px 24px 60px;
+  }
+}
+
+/* Mobile: Hide sidebar, show bottom nav, full-width content (<600px) */
+@media (max-width: 768px) {
+  .shell {
+    margin-left: 0;
+    grid-template-columns: 1fr;
+    padding: 20px 16px 80px;
+  }
+}
+
+/* Very small mobile (<480px) */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 16px 20px 4px;
+    height: auto;
+  }
+
+  .brand {
+    gap: 12px;
+  }
+
+  .brand-mark {
+    font-size: 24px;
+    padding: 10px 14px;
+  }
+
+  .brand-title {
+    font-size: 18px;
+  }
+
+  .brand-sub {
+    font-size: 12px;
+  }
+
+  .api-config {
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .shell {
+    padding: 16px 12px 72px;
+    gap: 20px;
+  }
+
+  .api-popover {
+    right: 16px;
+    min-width: 280px;
+  }
+}
+
+/* Modal z-index above sidebar */
+.modal {
+  z-index: 1002;
+}
+
+/* Toast positioning with sidebar */
+.toast {
+  z-index: 1001;
+}
+
+/* Hide view-nav tabs (replaced by sidebar + bottom nav) */
+.view-nav {
+  display: none;
+}
+

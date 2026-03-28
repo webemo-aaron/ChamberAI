@@ -9,7 +9,8 @@ export const FEATURE_FLAGS = [
   { key: "analytics_dashboard", label: "Analytics Dashboard" },
   { key: "integrations_crm", label: "CRM Integration" },
   { key: "integrations_calendar", label: "Calendar Integration" },
-  { key: "integrations_email", label: "Email Integration" }
+  { key: "integrations_email", label: "Email Integration" },
+  { key: "kiosk_widget_embed", label: "Kiosk Widget Embed" }
 ];
 
 export function defaultFlags() {

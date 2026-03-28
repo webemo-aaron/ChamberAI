@@ -30,6 +30,9 @@ import { loginHandler } from "./views/login/login.js";
 import { settingsHandler } from "./views/settings/settings-view.js";
 import { kioskHandler } from "./views/kiosk/kiosk-view.js";
 import { kioskConfigHandler } from "./views/kiosk/kiosk-config.js";
+import { initKioskWidget } from "./components/kiosk-widget.js";
+import { initSidebar } from "./components/sidebar.js";
+import { initTopbar } from "./components/topbar.js";
 
 // ============================================================================
 // DOM Element References (Shell Chrome Only)
@@ -217,7 +220,21 @@ async function initializeApp() {
     updateAuthDisplay();
   });
 
-  // 9. Show ready toast
+  // 9. Initialize sidebar and topbar (Phase 4)
+  initSidebar();
+  initTopbar();
+
+  // 10. Initialize kiosk widget (Phase 9c)
+  // Widget handles its own feature flag and tier checks
+  initKioskWidget({
+    container: document.body,
+    onError: (error) => {
+      console.debug("[App] Widget initialization error:", error.message);
+      // Non-blocking error - widget fails gracefully
+    }
+  });
+
+  // 11. Show ready toast
   showToast("ChamberAI ready");
 }
 

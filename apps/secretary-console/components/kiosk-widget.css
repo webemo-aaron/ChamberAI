@@ -1,0 +1,451 @@
+/**
+ * Kiosk Chat Widget - Styling
+ *
+ * Provides responsive bubble and window styling for the embedded chat widget.
+ * Supports dark mode via CSS custom properties.
+ * Uses flexbox for layout and CSS animations for interactions.
+ */
+
+/* CSS Custom Properties for Dark Mode Support */
+:root {
+  --widget-bubble-bg-from: #3b82f6;
+  --widget-bubble-bg-to: #2563eb;
+  --widget-bubble-icon-color: #ffffff;
+  --widget-online-indicator-color: #10b981;
+  --widget-window-bg: #ffffff;
+  --widget-header-bg: #f8fafc;
+  --widget-border-color: #e2e8f0;
+  --widget-title-color: #1e293b;
+  --widget-text-secondary: #64748b;
+  --widget-hover-bg: #eef2f5;
+  --widget-close-hover-bg: #fee2e2;
+  --widget-close-color: #dc2626;
+  --widget-shadow: rgba(0, 0, 0, 0.15);
+  --widget-shadow-hover: rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --widget-bubble-bg-from: #1e293b;
+    --widget-bubble-bg-to: #0f172a;
+    --widget-window-bg: #111827;
+    --widget-header-bg: #1f2937;
+    --widget-border-color: #374151;
+    --widget-title-color: #f1f5f9;
+    --widget-text-secondary: #cbd5e1;
+    --widget-hover-bg: #374151;
+    --widget-shadow: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ============================================================================
+   Widget Shell (Container)
+   ============================================================================ */
+
+.kiosk-widget-shell {
+  position: fixed;
+  z-index: 9999;
+  bottom: 16px;
+  right: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+
+/* ============================================================================
+   Bubble Component
+   ============================================================================ */
+
+.kiosk-bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--widget-bubble-bg-from),
+    var(--widget-bubble-bg-to)
+  );
+  box-shadow: 0 4px 12px var(--widget-shadow);
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s ease-in-out;
+  animation: kioskPopIn 0.3s ease-out;
+  /* Focus styles for keyboard navigation */
+  outline: none;
+}
+
+.kiosk-bubble:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px var(--widget-shadow-hover);
+}
+
+.kiosk-bubble:active {
+  transform: scale(1.05);
+}
+
+.kiosk-bubble:focus-visible {
+  outline: 2px solid var(--widget-title-color);
+  outline-offset: 2px;
+}
+
+.kiosk-bubble[aria-expanded="true"] {
+  opacity: 0.9;
+  box-shadow: 0 8px 16px var(--widget-shadow-hover);
+}
+
+/* Bubble Icon */
+.bubble-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  color: var(--widget-bubble-icon-color);
+}
+
+/* Online Indicator Dot */
+.bubble-online-indicator {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--widget-online-indicator-color);
+  bottom: 2px;
+  right: 2px;
+  box-shadow: 0 0 0 2px var(--widget-window-bg);
+}
+
+/* Unread Badge */
+.bubble-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px var(--widget-shadow-hover);
+  animation: kioskPulse 2s infinite ease-in-out;
+}
+
+/* ============================================================================
+   Window Component
+   ============================================================================ */
+
+.kiosk-widget-window {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  width: 380px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background-color: var(--widget-window-bg);
+  border: 1px solid var(--widget-border-color);
+  box-shadow: 0 10px 40px var(--widget-shadow);
+  z-index: 10000;
+  overflow: hidden;
+  animation: kioskPopIn 0.18s ease-out;
+}
+
+/* ============================================================================
+   Window Header
+   ============================================================================ */
+
+.widget-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 1rem;
+  background-color: var(--widget-header-bg);
+  border-bottom: 1px solid var(--widget-border-color);
+  flex-shrink: 0;
+}
+
+.widget-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--widget-title-color);
+  letter-spacing: -0.3px;
+}
+
+.widget-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ============================================================================
+   Window Control Buttons
+   ============================================================================ */
+
+.widget-minimize-btn,
+.widget-close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background-color: transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--widget-text-secondary);
+  transition: all 0.18s ease-in-out;
+  outline: none;
+}
+
+.widget-minimize-btn:hover {
+  background-color: var(--widget-hover-bg);
+}
+
+.widget-minimize-btn:focus-visible {
+  outline: 2px solid var(--widget-title-color);
+  outline-offset: -2px;
+}
+
+.widget-close-btn:hover {
+  background-color: var(--widget-close-hover-bg);
+  color: var(--widget-close-color);
+}
+
+.widget-close-btn:focus-visible {
+  outline: 2px solid var(--widget-title-color);
+  outline-offset: -2px;
+}
+
+/* ============================================================================
+   Chat Container (houses KioskChat)
+   ============================================================================ */
+
+.widget-chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--widget-window-bg);
+}
+
+/* Override KioskChat scrollbar styling for widget context */
+.widget-chat-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.widget-chat-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.widget-chat-container::-webkit-scrollbar-thumb {
+  background-color: var(--widget-border-color);
+  border-radius: 3px;
+}
+
+.widget-chat-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--widget-text-secondary);
+}
+
+/* ============================================================================
+   Animations
+   ============================================================================ */
+
+/* Pop-in animation for window expansion */
+@keyframes kioskPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Slide-out animation for minimize */
+@keyframes kioskSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+/* Bounce animation for notification */
+@keyframes kioskBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+/* Pulse animation for unread badge */
+@keyframes kioskPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ============================================================================
+   Responsive: Tablet (768px - 1023px)
+   ============================================================================ */
+
+@media (max-width: 1023px) {
+  .kiosk-widget-shell {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .kiosk-bubble {
+    width: 60px;
+    height: 60px;
+  }
+
+  .kiosk-widget-window {
+    width: 380px;
+    height: 500px;
+  }
+}
+
+/* ============================================================================
+   Responsive: Mobile Landscape (480px - 767px)
+   ============================================================================ */
+
+@media (max-width: 767px) {
+  .kiosk-widget-shell {
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .kiosk-bubble {
+    width: 56px;
+    height: 56px;
+  }
+
+  .bubble-icon {
+    font-size: 18px;
+  }
+
+  .kiosk-widget-window {
+    width: 340px;
+    height: 450px;
+    bottom: 68px;
+    right: 12px;
+    left: auto;
+  }
+}
+
+/* ============================================================================
+   Responsive: Mobile Portrait (<480px)
+   ============================================================================ */
+
+@media (max-width: 479px) {
+  .kiosk-widget-shell {
+    bottom: 12px;
+    right: 8px;
+  }
+
+  .kiosk-bubble {
+    width: 56px;
+    height: 56px;
+  }
+
+  .bubble-icon {
+    font-size: 18px;
+  }
+
+  .kiosk-widget-window {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    bottom: 76px;
+    width: auto;
+    max-width: 380px;
+    height: 60vh;
+    max-height: 500px;
+    border-radius: 12px;
+  }
+
+  .widget-window-header {
+    height: 48px;
+    padding: 0.75rem;
+  }
+
+  .widget-title {
+    font-size: 0.8125rem;
+  }
+
+  .widget-minimize-btn,
+  .widget-close-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+  }
+}
+
+/* ============================================================================
+   Reduced Motion Support
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .kiosk-bubble,
+  .widget-minimize-btn,
+  .widget-close-btn,
+  .kiosk-widget-window {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .bubble-badge {
+    animation: none !important;
+  }
+}
+
+/* ============================================================================
+   High Contrast Mode Support
+   ============================================================================ */
+
+@media (prefers-contrast: more) {
+  .kiosk-bubble {
+    border: 2px solid currentColor;
+  }
+
+  .widget-window-header {
+    border-bottom: 2px solid var(--widget-border-color);
+  }
+
+  .kiosk-widget-window {
+    border: 2px solid var(--widget-border-color);
+  }
+}
+
+/* ============================================================================
+   Print Media (Hide Widget)
+   ============================================================================ */
+
+@media print {
+  .kiosk-widget-shell {
+    display: none !important;
+  }
+}

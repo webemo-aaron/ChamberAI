@@ -6,6 +6,8 @@
     <title>CAM-AIMS Secretary Console</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./components/sidebar.css" />
+    <link rel="stylesheet" href="./components/kiosk-widget.css" />
   </head>
   <body>
     <div class="grain"></div>
@@ -20,28 +22,46 @@
         </div>
       </div>
       <div class="api-config">
-        <label for="apiBase">API Base</label>
-        <input id="apiBase" type="url" placeholder="http://localhost:4000" />
-        <button id="saveApiBase" class="btn ghost" data-testid="save-api-base">Save</button>
-        <a
-          href="https://webemo-aaron.github.io/ChamberAI/docs/viewer.html?doc=USER_GUIDE.md"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn ghost"
-        >
-          Docs
-        </a>
+        <button id="apiConfigBtn" class="btn ghost" title="API Configuration" aria-label="Open API configuration">⚙️</button>
         <span id="authCycleStatus" class="pill">Auth: not connected</span>
         <span id="roleBadge" class="pill">Role: Guest</span>
         <button id="logout" class="btn ghost" data-testid="logout">Logout</button>
       </div>
     </header>
 
-    <!-- Navigation: View tabs -->
-    <nav class="view-nav" role="navigation" aria-label="Application views">
-      <button id="viewMeetingsBtn" class="view-tab active" aria-pressed="true">Meetings</button>
-      <button id="viewBusinessHubBtn" class="view-tab" aria-pressed="false">Business Hub</button>
-      <button id="viewKioskBtn" class="view-tab" aria-pressed="false" style="display: none;">AI Kiosk</button>
+    <!-- API Config Popover (hidden by default) -->
+    <div id="apiPopover" class="api-popover hidden" role="dialog" aria-label="API Configuration">
+      <div class="popover-content">
+        <div class="popover-header">
+          <h3>API Configuration</h3>
+          <button class="popover-close" aria-label="Close" onclick="this.closest('.api-popover').classList.add('hidden')">✕</button>
+        </div>
+        <div class="popover-body">
+          <label for="apiBase">API Base URL</label>
+          <input id="apiBase" type="url" placeholder="http://localhost:4000" />
+          <div class="popover-actions">
+            <button id="saveApiBase" class="btn" data-testid="save-api-base">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Navigation (Desktop & Tablet) -->
+    <nav id="sidebar" class="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-header"></div>
+      <ul id="sidebarNav" class="sidebar-nav">
+        <!-- Links populated by sidebar.js -->
+      </ul>
+      <div id="sidebarFooter" class="sidebar-footer">
+        <!-- User info + logout populated by sidebar.js -->
+      </div>
+    </nav>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav id="bottomNav" class="bottom-nav" role="navigation" aria-label="Mobile navigation" style="display: none;">
+      <ul id="bottomNavLinks" class="bottom-nav-links">
+        <!-- Links populated by sidebar.js -->
+      </ul>
     </nav>
 
     <!-- Main: Meetings View (default) -->
@@ -165,6 +185,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Kiosk Widget Shell (rendered by components/kiosk-widget.js) -->
+    <!-- Markup is dynamically created on initialization -->
 
     <!-- Business Modal -->
     <div id="bizModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bizModalTitle" aria-hidden="true">
