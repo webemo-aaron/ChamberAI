@@ -5,13 +5,33 @@ export { API_BASE, UI_BASE };
 
 export async function bootstrapPage(page) {
   await page.goto(`${UI_BASE}/`);
+
+  // Check for login page (full-page /login route) or modal (legacy)
+  const loginPageContainer = page.locator("#loginPageContainer");
   const loginModal = page.locator("#loginModal");
-  const loginVisible = await loginModal.isVisible().catch(() => false);
-  if (loginVisible) {
+
+  const pageLoginVisible = await loginPageContainer.isVisible().catch(() => false);
+  const modalLoginVisible = await loginModal.isVisible().catch(() => false);
+
+  if (pageLoginVisible || modalLoginVisible) {
+    // Both page and modal use same form IDs, so we can use the same logic
     await page.locator("#loginEmail").fill("admin@acme.com");
     await page.locator("#loginRole").selectOption("admin");
     await page.locator("#loginSubmit").click();
+
+    // Wait for redirect to /meetings after login
+    if (pageLoginVisible) {
+      await page.waitForNavigation().catch(() => {
+        // Navigation might happen via hash change, not full page load
+        return page.waitForFunction(() =>
+          window.location.hash === "#/meetings" ||
+          !document.getElementById("loginPageContainer")?.style?.display?.includes("flex")
+        );
+      });
+    }
   }
+
+  // Configure API base
   await page.locator("#apiBase").fill(API_BASE);
   await page.locator("#saveApiBase").click();
 }

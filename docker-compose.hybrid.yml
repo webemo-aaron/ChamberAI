@@ -2,8 +2,8 @@ services:
   # Static console frontend (React)
   console:
     build:
-      context: apps/secretary-console
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.console
     image: chamberofcommerceai-console:local
     restart: unless-stopped
     expose:

@@ -9,6 +9,8 @@
   </head>
   <body>
     <div class="grain"></div>
+
+    <!-- Topbar: Brand, API config, auth status -->
     <header class="topbar">
       <div class="brand">
         <span class="brand-mark">CAM</span>
@@ -35,730 +37,90 @@
       </div>
     </header>
 
+    <!-- Navigation: View tabs -->
     <nav class="view-nav" role="navigation" aria-label="Application views">
       <button id="viewMeetingsBtn" class="view-tab active" aria-pressed="true">Meetings</button>
       <button id="viewBusinessHubBtn" class="view-tab" aria-pressed="false">Business Hub</button>
+      <button id="viewKioskBtn" class="view-tab" aria-pressed="false" style="display: none;">AI Kiosk</button>
     </nav>
 
+    <!-- Main: Meetings View (default) -->
     <main class="shell" id="meetingsView">
       <section class="left-pane">
-        <div class="panel banner" id="onboardingBanner">
-          <div>
-            <h2>Start here</h2>
-            <ol>
-              <li>Create a meeting.</li>
-              <li>Register room audio (.mp3/.wav).</li>
-              <li>Process to generate draft minutes.</li>
-              <li>Review motions, action items, and approve.</li>
-            </ol>
-          </div>
-          <button id="dismissBanner" class="btn ghost" data-testid="dismiss-banner">Dismiss</button>
-        </div>
-        <div class="panel hero">
-          <div>
-            <h1>Meetings</h1>
-            <p>Track recording, draft minutes, and approvals in one place.</p>
-          </div>
-          <div class="hero-actions">
-            <button id="quickCreate" class="btn" data-testid="quick-create">Quick Create</button>
-            <button id="seedDemo" class="btn ghost" data-testid="seed-demo">Seed Demo</button>
-            <button id="refreshMeetings" class="btn ghost" data-testid="refresh-meetings">Refresh</button>
-          </div>
+        <!-- Onboarding Banner (Phase 5: content populated) -->
+        <div id="onboardingBanner" class="onboarding-banner" style="display: none;">
+          <span>Welcome to CAM-AIMS Secretary Console</span>
+          <button id="dismissBanner" class="btn ghost">Dismiss</button>
         </div>
 
-        <div class="panel form">
-          <h2>New Meeting</h2>
-          <div class="grid">
-            <label>
-              Date
-              <input id="newDate" type="date" data-testid="meeting-date" />
-            </label>
-            <label>
-              Start Time
-              <input id="newStart" type="time" data-testid="meeting-start-time" />
-            </label>
-            <label>
-              Location
-              <input id="newLocation" type="text" placeholder="Chamber Hall" data-testid="meeting-location" />
-            </label>
-            <label>
-              Chair
-              <input id="newChair" type="text" placeholder="Alex Chair" data-testid="meeting-chair" />
-            </label>
-            <label>
-              Secretary
-              <input id="newSecretary" type="text" placeholder="Riley Secretary" data-testid="meeting-secretary" />
-            </label>
-            <label>
-              Tags
-              <input id="newTags" type="text" placeholder="budget, annual, special" data-testid="meeting-tags" />
-            </label>
-          </div>
-          <button id="createMeeting" class="btn" data-testid="create-meeting">Create Meeting</button>
-          <div id="newMeetingError" class="hint"></div>
-        </div>
+        <!-- Search Input (Phase 5: event handlers) -->
+        <input id="meetingSearch" type="text" placeholder="Search meetings... (/)"/>
 
-        <div class="panel list">
-          <div class="panel-head">
-            <h2>Meeting Queue</h2>
-            <span id="meetingCount" class="pill">0</span>
-          </div>
-          <label class="filter">
-            Filter by Tag
-            <select id="tagFilter" data-testid="tag-filter">
-              <option value="">All</option>
-            </select>
-          </label>
-          <div id="tagChips" class="tag-chip-row"></div>
-          <label class="filter">
-            Search
-            <input id="meetingSearch" type="text" placeholder="Search by location or chair (/) " data-testid="meeting-search" />
-            <span class="hint">Press Esc to clear.</span>
-          </label>
-          <label class="filter">
-            Status
-            <select id="statusFilter" data-testid="status-filter">
-              <option value="">All</option>
-              <option value="CREATED">CREATED</option>
-              <option value="UPLOADED">UPLOADED</option>
-              <option value="PROCESSING">PROCESSING</option>
-              <option value="DRAFT_READY">DRAFT_READY</option>
-              <option value="APPROVED">APPROVED</option>
-            </select>
-          </label>
-          <details class="disclosure" id="advancedFiltersDisclosure">
-            <summary>Advanced Filters & Search</summary>
-            <div class="disclosure-body">
-              <label class="filter">
-                Advanced Search
-                <input id="advancedSearchQuery" type="text" placeholder="Search minutes, motions, action items" data-testid="advanced-search-query" />
-              </label>
-              <div class="inline-actions">
-                <button id="advancedSearchBtn" class="btn ghost" type="button" data-testid="advanced-search-run">Run Search</button>
-                <button id="advancedSearchReset" class="btn ghost" type="button" data-testid="advanced-search-reset">Reset Search</button>
-              </div>
-              <label class="filter">
-                Recent
-                <select id="recentFilter" data-testid="recent-filter">
-                  <option value="">All</option>
-                  <option value="30">Last 30 days</option>
-                  <option value="60">Last 60 days</option>
-                  <option value="90">Last 90 days</option>
-                </select>
-              </label>
-              <div class="inline-actions">
-                <button id="clearFilters" class="btn ghost" type="button" data-testid="clear-filters">Clear Filters</button>
-              </div>
-            </div>
-          </details>
-          <div id="meetingList" class="meeting-list"></div>
-          <div id="meetingEmpty" class="empty">No meetings yet. Create your first meeting.</div>
-        </div>
+        <!-- Feature Flags Display (Phase 5: populated by flags module) -->
+        <div id="featureFlagsEl" class="feature-flags" style="display: none;"></div>
 
-        <div class="panel form">
-          <div class="panel-head">
-            <h2>Settings</h2>
-          </div>
-          <details class="disclosure" id="settingsModulesDisclosure" open>
-            <summary>Modules</summary>
-            <div class="disclosure-body">
-              <div id="featureFlags" class="flag-grid"></div>
-            </div>
-          </details>
-          <details class="disclosure" id="settingsOpsDisclosure">
-            <summary>Retention & Limits</summary>
-            <div class="disclosure-body">
-              <div class="grid">
-                <label>
-                  Retention Days
-                  <input id="settingRetention" type="number" min="1" max="365" />
-                </label>
-                <label>
-                  Max File Size (MB)
-                  <input id="settingMaxSize" type="number" min="1" max="1024" />
-                </label>
-                <label>
-                  Max Duration (seconds)
-                  <input id="settingMaxDuration" type="number" min="300" max="21600" />
-                </label>
-              </div>
-              <div class="inline-actions">
-                <button id="runRetentionSweep" class="btn ghost" data-testid="run-retention-sweep" type="button">Run Retention Sweep</button>
-              </div>
-            </div>
-          </details>
-          <details class="disclosure" id="settingsInviteDisclosure">
-            <summary>Email Invites</summary>
-            <div class="disclosure-body">
-              <label>
-                Authorized Sender Email (admin)
-                <input id="inviteAuthorizedEmail" type="email" placeholder="aaron@mahoosuc.solutions" />
-              </label>
-              <div class="inline-actions">
-                <button id="inviteAuthorizeSender" class="btn ghost" type="button">Authorize Sender</button>
-              </div>
-              <div id="inviteAuthorizedList" class="hint">Authorized senders will appear here.</div>
-              <hr />
-              <label>
-                Invite Recipient
-                <input id="inviteRecipientEmail" type="email" placeholder="chair@chamber.org" />
-              </label>
-              <label>
-                Meeting Title
-                <input id="inviteMeetingTitle" type="text" placeholder="Board Meeting - March 2026" />
-              </label>
-              <label>
-                Motion Link (optional)
-                <input id="inviteMotionLink" type="url" placeholder="https://app.usemotion.com/..." />
-              </label>
-              <div id="inviteMotionSource" class="hint"></div>
-              <label>
-                Invite Link (optional)
-                <input id="inviteJoinLink" type="url" placeholder="https://secretary-console.vercel.app" />
-              </label>
-              <label>
-                Note (optional)
-                <input id="inviteNote" type="text" placeholder="Please join from your laptop 10 minutes early." />
-              </label>
-              <div class="inline-actions">
-                <button id="inviteSendBtn" class="btn" type="button">Send Invite</button>
-                <button id="inviteRefreshBtn" class="btn ghost" type="button">Refresh Invite Data</button>
-              </div>
-              <div id="inviteStatus" class="hint"></div>
-            </div>
-          </details>
-          <details class="disclosure" id="settingsMotionDisclosure">
-            <summary>Motion Integration</summary>
-            <div class="disclosure-body">
-              <label class="check">
-                <input id="motionEnabled" type="checkbox" />
-                Enable Motion integration for all meetings
-              </label>
-              <label>
-                Motion API Key
-                <input id="motionApiKey" type="password" placeholder="motion-api-key" />
-              </label>
-              <label>
-                Workspace ID (optional)
-                <input id="motionWorkspaceId" type="text" placeholder="workspace-id" />
-              </label>
-              <label>
-                Default Project ID (optional)
-                <input id="motionProjectId" type="text" placeholder="project-id" />
-              </label>
-              <label>
-                Default Meeting Link Template
-                <input
-                  id="motionLinkTemplate"
-                  type="url"
-                  placeholder="https://app.usemotion.com/?q={{meeting_title}}"
-                />
-              </label>
-              <div class="inline-actions">
-                <button id="motionSaveBtn" class="btn ghost" type="button">Save Motion Config</button>
-                <button id="motionTestBtn" class="btn ghost" type="button">Test Connection</button>
-              </div>
-              <div id="motionStatus" class="hint"></div>
-            </div>
-          </details>
-          <button id="saveSettings" class="btn ghost" data-testid="save-settings">Save Settings</button>
-          <div id="retentionResult" class="hint" role="status" aria-live="polite" aria-atomic="true"></div>
-          <div id="settingsStatus" class="settings-banner hidden" role="status" aria-live="polite" aria-atomic="true"></div>
-        </div>
-
-        <div class="panel form">
-          <div class="panel-head">
-            <h2>Geo Intelligence</h2>
-          </div>
-          <p class="hint">
-            Scan local signals by ZIP, city, or town and generate localized opportunity content.
-          </p>
-          <div class="grid">
-            <label>
-              Scope Type
-              <select id="geoScopeType">
-                <option value="zip_code">ZIP Code</option>
-                <option value="city">City</option>
-                <option value="town">Town</option>
-              </select>
-            </label>
-            <label>
-              Scope ID
-              <input id="geoScopeId" type="text" placeholder="04032 or Bethel" />
-            </label>
-          </div>
-          <label>
-            Existing Local Details (optional, one per line)
-            <textarea id="geoExistingDetails" rows="4" placeholder="Downtown restaurants&#10;Main street retail"></textarea>
-          </label>
-          <div class="inline-actions">
-            <button id="geoScan" class="btn" type="button">Scan Area</button>
-            <button id="geoGenerate" class="btn ghost" type="button">Generate Brief</button>
-            <button id="geoRefresh" class="btn ghost" type="button">Refresh</button>
-            <button id="geoCopyOutreach" class="btn ghost" type="button">Copy Outreach</button>
-            <button id="geoExportBriefs" class="btn ghost" type="button">Export Briefs JSON</button>
-          </div>
-          <div id="geoStatus" class="hint geo-status">Ready.</div>
-          <div class="geo-grid">
-            <div class="geo-card">
-              <h3>Geo Profile</h3>
-              <div id="geoProfileResult" class="hint">No geo profile yet for this scope.</div>
-            </div>
-            <div class="geo-card">
-              <h3>Latest Brief</h3>
-              <div id="geoBriefResult" class="hint">No generated brief yet for this scope.</div>
-            </div>
-          </div>
-          <div class="geo-card">
-            <h3>Recent Briefs</h3>
-            <div id="geoBriefList" class="hint">No brief history yet.</div>
-          </div>
-        </div>
+        <!-- Content rendered by handlers -->
       </section>
-
       <section class="right-pane">
-        <div class="panel detail">
-          <div class="panel-head">
-            <h2>Meeting Detail</h2>
-            <span id="meetingStatus" class="pill">No meeting selected</span>
-          </div>
-
-          <div id="detailBody" class="detail-body">
-            <div class="checklist" id="approvalChecklist"></div>
-            <div class="detail-grid">
-              <div>
-                <h3>Metadata</h3>
-                <div class="meta" id="meetingMeta">Select a meeting to view details.</div>
-                <div class="meta-form">
-                  <label>
-                    End Time
-                    <input id="metaEndTime" type="time" />
-                  </label>
-                  <label>
-                    Tags
-                    <input id="metaTags" type="text" placeholder="budget, annual, special" />
-                  </label>
-                  <label class="check">
-                    <input id="flagNoMotions" type="checkbox" />
-                    No motions recorded
-                  </label>
-                  <label class="check">
-                    <input id="flagNoActionItems" type="checkbox" />
-                    No action items recorded
-                  </label>
-                  <label class="check">
-                    <input id="flagNoAdjournment" type="checkbox" />
-                    Adjournment time not recorded
-                  </label>
-                  <button id="saveMeta" class="btn ghost" type="button">Save Metadata</button>
-                </div>
-              </div>
-              <div>
-                <h3>Actions</h3>
-                <div class="actions">
-                  <div class="upload-card">
-                    <div class="upload-head">Room Audio</div>
-                    <div id="dropzone" class="dropzone">
-                      <span>Drop .mp3/.wav here or</span>
-                      <button id="pickFile" class="btn ghost" data-testid="pick-file" type="button">Choose File</button>
-                      <input id="fileInput" type="file" accept=".mp3,.wav,audio/*" hidden />
-                    </div>
-                    <div id="fileMeta" class="file-meta">No file selected.</div>
-                    <label>
-                      Duration (seconds)
-                      <input id="audioDuration" type="number" min="1" value="1200" />
-                    </label>
-                    <div id="fileHint" class="hint">Max 500MB. Supported: mp3, wav.</div>
-                    <button id="registerAudio" class="btn ghost" data-testid="register-audio" type="button">Register Audio</button>
-                    <div class="audio-list">
-                      <div class="list-head">Audio Sources</div>
-                      <div id="audioSources" class="list-body"></div>
-                    </div>
-                  </div>
-                  <button id="processMeeting" class="btn" data-testid="process-meeting">Process</button>
-                  <button id="approveMeeting" class="btn accent" data-testid="approve-meeting">Approve</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="tab-bar" role="tablist" aria-label="Meeting detail sections">
-              <button id="tabButtonMinutes" class="tab active" data-tab="minutes" role="tab" aria-selected="true" aria-controls="tab-minutes" tabindex="0">Minutes</button>
-              <button id="tabButtonActions" class="tab" data-tab="actions" role="tab" aria-selected="false" aria-controls="tab-actions" tabindex="-1">Action Items</button>
-              <button id="tabButtonAudit" class="tab" data-tab="audit" role="tab" aria-selected="false" aria-controls="tab-audit" tabindex="-1">Audit Log</button>
-              <button id="tabButtonMotions" class="tab" data-tab="motions" role="tab" aria-selected="false" aria-controls="tab-motions" tabindex="-1">Motions</button>
-              <button id="publicSummaryTab" class="tab hidden" data-tab="public-summary" role="tab" aria-selected="false" aria-controls="tab-public-summary" tabindex="-1">Public Summary</button>
-            </div>
-
-            <div class="tab-content" id="tab-minutes" role="tabpanel" aria-labelledby="tabButtonMinutes" tabindex="0">
-              <div class="minutes-block">
-                <textarea id="minutesContent" rows="12" placeholder="Draft minutes will appear here..." data-testid="minutes-content"></textarea>
-                <div id="collabStatus" class="hint" data-testid="collab-status" role="status" aria-live="polite" aria-atomic="true">Collaboration inactive.</div>
-                <div class="inline-actions">
-                  <button id="saveMinutes" class="btn ghost" data-testid="save-minutes">Save Draft</button>
-                </div>
-                <div class="version-history">
-                  <div class="list-head">Version History</div>
-                  <div class="version-history-controls">
-                    <button id="versionHistoryPrev" class="btn ghost" type="button" data-testid="version-history-prev">Previous</button>
-                    <span id="versionHistoryPage" class="hint" data-testid="version-history-page">Page 1/1</span>
-                    <button id="versionHistoryNext" class="btn ghost" type="button" data-testid="version-history-next">Next</button>
-                  </div>
-                  <div id="versionHistoryList" class="version-list"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="tab-content hidden" id="tab-actions" role="tabpanel" aria-labelledby="tabButtonActions" tabindex="0">
-              <div class="actions-block">
-                <div id="approvalWarnings" class="warnings"></div>
-                <div class="hint" id="actionGate"></div>
-                <div class="adjournment-gate">
-                  <label class="check">
-                    <input id="flagNoAdjournmentInline" type="checkbox" />
-                    Adjournment time not recorded
-                  </label>
-                  <button id="saveAdjournmentFlag" class="btn ghost" type="button">Save</button>
-                  <span class="hint" id="adjournmentGate"></span>
-                </div>
-                <div class="inline-actions">
-                  <button id="exportActionCsv" class="btn ghost" type="button">Export Action Items CSV</button>
-                  <button id="importActionCsv" class="btn ghost" type="button">Import Action Items CSV</button>
-                  <input id="actionCsvInput" type="file" accept=".csv,text/csv" hidden />
-                </div>
-                <div class="action-row">
-                  <input id="actionDescription" type="text" placeholder="Action item description" data-testid="action-description" />
-                  <input id="actionOwner" type="text" placeholder="Owner" data-testid="action-owner" />
-                  <input id="actionDue" type="date" data-testid="action-due-date" />
-                  <button id="addActionItem" class="btn ghost" data-testid="add-action-item">Add</button>
-                </div>
-                <div id="actionItemsList" class="action-items"></div>
-              </div>
-            </div>
-
-            <div class="tab-content hidden" id="tab-audit" role="tabpanel" aria-labelledby="tabButtonAudit" tabindex="0">
-              <div id="auditLog" class="audit-log"></div>
-            </div>
-
-            <div class="tab-content hidden" id="tab-motions" role="tabpanel" aria-labelledby="tabButtonMotions" tabindex="0">
-              <div class="motions-block">
-                <div id="motionWarnings" class="warnings"></div>
-                <div id="motionGate" class="hint"></div>
-                <div class="motions-table">
-                  <div class="motions-row header">
-                    <span>Motion</span>
-                    <span>Mover</span>
-                    <span>Seconder</span>
-                    <span>Vote</span>
-                    <span>Outcome</span>
-                    <span>Actions</span>
-                  </div>
-                  <div id="motionsList"></div>
-                </div>
-                <div class="motion-editor">
-                  <input id="motionText" type="text" placeholder="Motion text" data-testid="motion-text" />
-                  <input id="motionMover" type="text" placeholder="Mover" data-testid="motion-mover" />
-                  <input id="motionSeconder" type="text" placeholder="Seconder" data-testid="motion-seconder" />
-                  <input id="motionVote" type="text" placeholder="Vote method" data-testid="motion-vote" />
-                  <input id="motionOutcome" type="text" placeholder="Outcome" data-testid="motion-outcome" />
-                  <button id="addMotion" class="btn ghost" data-testid="add-motion">Add Motion</button>
-                </div>
-                <div class="export-block">
-                  <div class="export-actions">
-                    <button id="exportPdf" class="btn ghost" data-testid="export-pdf">Export PDF</button>
-                    <button id="exportDocx" class="btn ghost" data-testid="export-docx">Export DOCX</button>
-                    <button id="exportMinutesMd" class="btn ghost" data-testid="export-minutes-md">Download Minutes MD</button>
-                    <button id="clearExportHistory" class="btn ghost">Clear Export History</button>
-                  </div>
-                  <details class="disclosure">
-                    <summary>Advanced Export Options</summary>
-                    <div class="disclosure-body">
-                      <div class="export-filters">
-                        <label class="check">
-                          <input id="exportLatestOnly" type="checkbox" />
-                          Show latest only
-                        </label>
-                        <label>
-                          Group by
-                          <select id="exportGroup">
-                            <option value="none">None</option>
-                            <option value="format">Format</option>
-                          </select>
-                        </label>
-                      </div>
-                    </div>
-                  </details>
-                  <div id="exportResults" class="export-results"></div>
-                  <div id="exportHistory" class="export-results"></div>
-                </div>
-                <div class="hint">Mover + Outcome required for approval.</div>
-              </div>
-            </div>
-
-            <div class="tab-content hidden" id="tab-public-summary" role="tabpanel" aria-labelledby="publicSummaryTab" tabindex="0">
-              <div class="minutes-block">
-                <label>
-                  Summary Title
-                  <input id="publicSummaryTitle" type="text" placeholder="Board meeting highlights" />
-                </label>
-                <details class="disclosure">
-                  <summary>Edit Summary Sections</summary>
-                  <div class="disclosure-body">
-                    <div class="summary-grid">
-                      <label>
-                        Key Highlights
-                        <textarea id="publicSummaryHighlights" rows="3" placeholder="Top 2-3 outcomes or updates."></textarea>
-                      </label>
-                      <label>
-                        Community Impact
-                        <textarea id="publicSummaryImpact" rows="3" placeholder="Why this matters to members or visitors."></textarea>
-                      </label>
-                      <label>
-                        Motions & Decisions
-                        <textarea id="publicSummaryMotions" rows="3" placeholder="Public-safe summary of motions/outcomes."></textarea>
-                      </label>
-                      <label>
-                        Action Items (Public)
-                        <textarea id="publicSummaryActions" rows="3" placeholder="Member-facing actions or next steps."></textarea>
-                      </label>
-                      <label>
-                        Attendance / Guests
-                        <textarea id="publicSummaryAttendance" rows="2" placeholder="Optional acknowledgements or guests."></textarea>
-                      </label>
-                      <label>
-                        Call to Action
-                        <textarea id="publicSummaryCTA" rows="2" placeholder="How members can engage or respond."></textarea>
-                      </label>
-                      <label>
-                        Notes
-                        <textarea id="publicSummaryNotes" rows="2" placeholder="Optional notes to include in the summary."></textarea>
-                      </label>
-                    </div>
-                  </div>
-                </details>
-
-                <div class="summary-checklist">
-                  <div class="hint">Publish Readiness Checklist</div>
-                  <label class="check">
-                    <input id="summaryNoConfidential" type="checkbox" />
-                    No confidential or sensitive info included
-                  </label>
-                  <label class="check">
-                    <input id="summaryNamesApproved" type="checkbox" />
-                    Names/roles approved for public release
-                  </label>
-                  <label class="check">
-                    <input id="summaryMotionsReviewed" type="checkbox" />
-                    Motions/outcomes reviewed for accuracy
-                  </label>
-                  <label class="check">
-                    <input id="summaryActionsReviewed" type="checkbox" />
-                    Action items sanitized for public view
-                  </label>
-                  <label class="check">
-                    <input id="summaryChairApproved" type="checkbox" />
-                    Chair approval recorded
-                  </label>
-                  <div id="publicSummaryReady" class="hint"></div>
-                </div>
-
-                <label>
-                  Compiled Public Summary
-                  <textarea id="publicSummaryContent" rows="8" placeholder="Compiled summary will appear here."></textarea>
-                </label>
-                <div id="publicSummaryPublishStatus" class="hint" role="status" aria-live="polite" aria-atomic="true"></div>
-                <div class="inline-actions">
-                  <button id="savePublicSummary" class="btn ghost" data-testid="save-public-summary">Save Summary</button>
-                  <button id="composePublicSummary" class="btn ghost" data-testid="compose-public-summary">Compose Summary</button>
-                  <button id="generatePublicSummary" class="btn" data-testid="generate-public-summary">Generate</button>
-                  <button id="publishPublicSummary" class="btn accent" data-testid="publish-public-summary" type="button">Publish Summary</button>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- Tab Bar (Phase 5: handlers manage active state) -->
+        <div class="tab-bar" role="tablist">
+          <button class="tab" role="tab" data-tab="minutes" aria-selected="false" tabindex="-1">Minutes</button>
+          <button class="tab" role="tab" data-tab="actions" aria-selected="false" tabindex="-1">Actions</button>
+          <button class="tab" role="tab" data-tab="audit" aria-selected="false" tabindex="-1">Audit Log</button>
+          <button class="tab" role="tab" data-tab="motions" aria-selected="false" tabindex="-1">Motions</button>
+          <button class="tab" role="tab" data-tab="public-summary" aria-selected="false" tabindex="-1">Public Summary</button>
         </div>
 
-        <div class="panel notice">
-          <h3>Governance Notes</h3>
-          <ul>
-            <li>Minutes are the official record.</li>
-            <li>Audio stays private with retention controls.</li>
-            <li>Approvals are blocked when required fields are missing.</li>
-          </ul>
-        </div>
+        <!-- Tab Panels (Phase 5: content rendered here) -->
+        <div id="tab-minutes" class="tab-pane hidden"></div>
+        <div id="tab-actions" class="tab-pane hidden"></div>
+        <div id="tab-audit" class="tab-pane hidden"></div>
+        <div id="tab-motions" class="tab-pane hidden"></div>
+        <div id="tab-public-summary" class="tab-pane hidden"></div>
+
+        <!-- Content rendered by handlers -->
       </section>
     </main>
 
-    <!-- Business Hub View -->
+    <!-- Main: Business Hub View (hidden) -->
     <main class="shell hidden" id="businessHubView">
-      <section class="left-pane">
-        <!-- Geo Intelligence Panel -->
-        <div class="panel form" id="geoScopePanel">
-          <h2>Geo Intelligence</h2>
-          <div class="grid">
-            <label>Scope Type
-              <select id="geoScopeType">
-                <option value="city">City</option>
-                <option value="zip_code">ZIP Code</option>
-                <option value="town">Town</option>
-              </select>
-            </label>
-            <label>Location
-              <input id="geoScopeId" type="text" placeholder="e.g. Bethel" />
-            </label>
-          </div>
-          <div class="inline-actions">
-            <button id="geoScanBtn" class="btn ghost">Scan Local Data</button>
-            <button id="geoGenerateBriefBtn" class="btn">Generate Brief</button>
-          </div>
-          <div id="geoStatus" class="geo-status hidden"></div>
-        </div>
+      <!-- Content rendered by handlers -->
+    </main>
 
-        <!-- Business Directory List -->
-        <div class="panel list" id="businessDirectoryPanel">
-          <div class="panel-head">
-            <h2>Local Businesses</h2>
-            <span id="businessCount" class="pill">0</span>
-          </div>
-          <label class="filter">
-            <input id="businessSearch" type="search" placeholder="Search businesses..." data-testid="business-search" />
-          </label>
-          <div id="businessList" class="meeting-list" role="list" aria-live="polite" aria-label="Business list"></div>
-          <button id="addBusinessBtn" class="btn" style="margin-top:8px" data-testid="add-business">+ Add Business</button>
-        </div>
-      </section>
-
-      <section class="right-pane">
-        <!-- Empty state -->
-        <div class="panel detail" id="businessEmptyState">
-          <p class="empty">Select a business from the list or add one to get started.</p>
-        </div>
-
-        <!-- Business Detail -->
-        <div class="panel detail hidden" id="businessDetailPanel">
-          <div class="panel-head">
-            <h2 id="bizDetailName">Business Name</h2>
-            <span id="bizDetailCategory" class="pill"></span>
-          </div>
-
-          <!-- Tab bar -->
-          <div class="tab-bar" id="bizTabBar" role="tablist" aria-label="Business detail sections">
-            <button id="bizTabProfile"  class="tab active" data-biz-tab="biz-profile"  role="tab" aria-selected="true"  aria-controls="biz-tab-profile"  tabindex="0">Profile</button>
-            <button id="bizTabGeo"     class="tab"         data-biz-tab="biz-geo"      role="tab" aria-selected="false" aria-controls="biz-tab-geo"      tabindex="-1">Geo Intel</button>
-            <button id="bizTabReviews" class="tab"         data-biz-tab="biz-reviews"  role="tab" aria-selected="false" aria-controls="biz-tab-reviews"  tabindex="-1">Reviews</button>
-            <button id="bizTabQuotes"  class="tab"         data-biz-tab="biz-quotes"   role="tab" aria-selected="false" aria-controls="biz-tab-quotes"   tabindex="-1">Quotes</button>
-            <button id="bizTabAiSearch" class="tab"        data-biz-tab="biz-ai-search" role="tab" aria-selected="false" aria-controls="biz-tab-ai-search" tabindex="-1">AI Search</button>
-          </div>
-
-          <!-- Profile Tab -->
-          <div class="tab-content" id="biz-tab-profile" role="tabpanel" aria-labelledby="bizTabProfile" tabindex="0">
-            <div class="meta-form">
-              <label>Business Name<input id="bizName" type="text" data-testid="biz-name" /></label>
-              <label>Category<input id="bizCategory" type="text" data-testid="biz-category" /></label>
-              <label>Address<input id="bizAddress" type="text" /></label>
-              <div class="grid">
-                <label>City<input id="bizCity" type="text" /></label>
-                <label>State<input id="bizState" type="text" maxlength="2" /></label>
-                <label>ZIP<input id="bizZip" type="text" /></label>
-              </div>
-              <label>Phone<input id="bizPhone" type="tel" /></label>
-              <label>Email<input id="bizEmail" type="email" /></label>
-              <label>Website<input id="bizWebsite" type="url" /></label>
-              <label>Description<textarea id="bizDescription" rows="3"></textarea></label>
-              <label>Tags (comma separated)<input id="bizTags" type="text" /></label>
-              <div class="grid">
-                <label>Geo Scope Type
-                  <select id="bizGeoScopeType">
-                    <option value="city">City</option>
-                    <option value="zip_code">ZIP</option>
-                    <option value="town">Town</option>
-                  </select>
-                </label>
-                <label>Geo Scope ID<input id="bizGeoScopeId" type="text" /></label>
-              </div>
-              <label class="check">
-                <input id="bizAiSearchEnabled" type="checkbox" />
-                Enable AI Search indexing
-              </label>
-            </div>
-            <div class="inline-actions">
-              <button id="saveBizBtn" class="btn" data-testid="save-business">Save</button>
-              <button id="deleteBizBtn" class="btn ghost">Delete</button>
-            </div>
-            <div id="bizSaveStatus" class="hint hidden"></div>
-          </div>
-
-          <!-- Geo Intelligence Tab -->
-          <div class="tab-content hidden" id="biz-tab-geo" role="tabpanel" aria-labelledby="bizTabGeo" tabindex="0">
-            <div id="bizGeoContent">
-              <p class="empty">No geo profile linked. Set the Geo Scope on the Profile tab and scan.</p>
-            </div>
-          </div>
-
-          <!-- Reviews Tab -->
-          <div class="tab-content hidden" id="biz-tab-reviews" role="tabpanel" aria-labelledby="bizTabReviews" tabindex="0">
-            <div class="inline-actions" style="margin-bottom:12px">
-              <button id="addReviewBtn" class="btn ghost">+ Log Review</button>
-            </div>
-            <div id="reviewList" class="meeting-list" aria-live="polite"></div>
-          </div>
-
-          <!-- Quotes Tab -->
-          <div class="tab-content hidden" id="biz-tab-quotes" role="tabpanel" aria-labelledby="bizTabQuotes" tabindex="0">
-            <div class="inline-actions" style="margin-bottom:12px">
-              <button id="addQuoteBtn" class="btn ghost">+ New Quote</button>
-            </div>
-            <div id="quoteList" class="meeting-list" aria-live="polite"></div>
-          </div>
-
-          <!-- AI Search Tab -->
-          <div class="tab-content hidden" id="biz-tab-ai-search" role="tabpanel" aria-labelledby="bizTabAiSearch" tabindex="0">
-            <div id="aiSearchContent">
-              <p class="empty">Loading AI Search readiness...</p>
-            </div>
-          </div>
-
-        </div><!-- /businessDetailPanel -->
-      </section><!-- /right-pane -->
-    </main><!-- /businessHubView -->
-
-    <footer class="footer">
-      <span>CAM-AIMS Mock Console · In-memory API expected</span>
-    </footer>
-
+    <!-- Toast notification -->
     <div id="toast" class="toast hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 
+    <!-- Login Modal -->
     <div id="loginModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle" aria-hidden="true">
-      <div class="modal-card">
+      <div class="modal-content">
         <h2 id="loginModalTitle">Sign In</h2>
-        <p>Use Google sign-in (Firebase) or fallback demo role login.</p>
-        <div class="modal-actions">
+        <div class="modal-body">
           <button id="loginGoogle" class="btn" type="button">Continue with Google</button>
-        </div>
-        <div class="hint">If Google auth is not configured, use demo login below.</div>
-        <div class="grid">
-          <label>
-            Email
-            <input id="loginEmail" type="email" placeholder="admin@acme.com" />
-          </label>
-          <label>
-            Role
-            <select id="loginRole">
-              <option value="admin">Admin</option>
-              <option value="secretary">Secretary</option>
-              <option value="viewer">Viewer</option>
-            </select>
-          </label>
-        </div>
-        <div class="modal-actions">
+          <div class="hint" style="margin: 16px 0; text-align: center;">Or</div>
+          <div class="grid">
+            <label>
+              Email
+              <input id="loginEmail" type="email" placeholder="admin@acme.com" />
+            </label>
+            <label>
+              Role
+              <select id="loginRole">
+                <option value="guest">Guest</option>
+                <option value="secretary">Secretary</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+          </div>
           <button id="loginSubmit" class="btn" data-testid="login-submit">Enter</button>
         </div>
       </div>
     </div>
 
+    <!-- Quick Create Modal -->
     <div id="quickModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quickModalTitle" aria-hidden="true">
-      <div class="modal-card">
+      <div class="modal-content">
         <h2 id="quickModalTitle">Quick Create Meeting</h2>
-          <p>Uses today’s date, a 6:00 PM start, and your last used values.</p>
+        <div class="modal-body">
           <div class="grid">
             <label>
               Location
@@ -777,117 +139,93 @@
               <input id="quickTags" type="text" placeholder="budget, annual, special" />
             </label>
           </div>
-        <div class="modal-actions">
-          <button id="quickSubmit" class="btn" data-testid="quick-submit">Create</button>
-          <button id="quickCancel" class="btn ghost" data-testid="quick-cancel">Cancel</button>
+          <div class="modal-actions">
+            <button id="quickSubmit" class="btn" data-testid="quick-submit">Create</button>
+            <button id="quickCancel" class="btn ghost" data-testid="quick-cancel">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- CSV Preview Modal -->
     <div id="csvPreviewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="csvPreviewModalTitle" aria-hidden="true">
-      <div class="modal-card">
+      <div class="modal-content">
         <h2 id="csvPreviewModalTitle">Import Action Items</h2>
-        <p>Preview parsed rows before applying.</p>
-        <label class="check">
-          <input id="csvSkipInvalid" type="checkbox" checked />
-          Skip rows missing owner/due date
-        </label>
-        <div id="csvPreviewNote" class="hint"></div>
-        <div id="csvPreviewTable" class="preview-table"></div>
-        <div class="modal-actions">
-          <button id="csvApply" class="btn" data-testid="csv-apply">Apply Import</button>
-          <button id="csvCancel" class="btn ghost" data-testid="csv-cancel">Cancel</button>
+        <div class="modal-body">
+          <label>
+            <input id="csvSkipInvalid" type="checkbox" checked />
+            Skip invalid rows
+          </label>
+          <div id="csvPreviewNote" class="hint"></div>
+          <div id="csvPreviewTable" class="preview-table"></div>
+          <div class="modal-actions">
+            <button id="csvApply" class="btn" data-testid="csv-apply">Apply Import</button>
+            <button id="csvCancel" class="btn ghost" data-testid="csv-cancel">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Business Hub Modals -->
+    <!-- Business Modal -->
     <div id="bizModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bizModalTitle" aria-hidden="true">
-      <div class="modal-card">
+      <div class="modal-content">
         <h2 id="bizModalTitle">Add Business</h2>
-        <div class="grid">
-          <label>Name<input id="bizModalName" type="text" data-testid="biz-modal-name" /></label>
-          <label>Category<input id="bizModalCategory" type="text" /></label>
-        </div>
-        <label>Address<input id="bizModalAddress" type="text" /></label>
-        <div class="grid">
-          <label>City<input id="bizModalCity" type="text" /></label>
-          <label>State<input id="bizModalState" type="text" maxlength="2" /></label>
-          <label>ZIP<input id="bizModalZip" type="text" /></label>
-        </div>
-        <div class="grid">
-          <label>Phone<input id="bizModalPhone" type="tel" /></label>
-          <label>Email<input id="bizModalEmail" type="email" /></label>
-        </div>
-        <div class="grid">
-          <label>Geo Scope
-            <select id="bizModalGeoType"><option value="city">City</option><option value="zip_code">ZIP</option><option value="town">Town</option></select>
-          </label>
-          <label>Scope ID<input id="bizModalGeoId" type="text" /></label>
-        </div>
-        <div id="bizModalError" class="hint error hidden"></div>
-        <div class="modal-actions">
-          <button id="saveBizModalBtn" class="btn" data-testid="save-biz-modal">Save</button>
-          <button id="cancelBizModalBtn" class="btn ghost">Cancel</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="reviewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle" aria-hidden="true">
-      <div class="modal-card">
-        <h2 id="reviewModalTitle">Log Review</h2>
-        <div class="grid">
-          <label>Platform<select id="reviewPlatform"><option>Google</option><option>Yelp</option><option>Facebook</option><option>Other</option></select></label>
-          <label>Rating (1-5)<input id="reviewRating" type="number" min="1" max="5" value="5" /></label>
-        </div>
-        <label>Reviewer Name<input id="reviewerName" type="text" /></label>
-        <label>Review Text<textarea id="reviewText" rows="4"></textarea></label>
-        <div class="modal-actions">
-          <button id="saveReviewBtn" class="btn">Save Review</button>
-          <button id="cancelReviewBtn" class="btn ghost">Cancel</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="quoteModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle" aria-hidden="true">
-      <div class="modal-card">
-        <h2 id="quoteModalTitle">New Quote</h2>
-        <label>Title<input id="quoteTitle" type="text" /></label>
-        <label>Description<textarea id="quoteDescription" rows="3"></textarea></label>
-        <div class="grid">
-          <label>Service Class
-            <select id="quoteServiceClass">
-              <option value="quick_win_automation">Quick Win Automation</option>
-              <option value="workflow_redesign">Workflow Redesign</option>
-              <option value="strategy_transformation">Strategy Transformation</option>
-            </select>
-          </label>
-          <label>Total (USD)<input id="quoteTotal" type="number" min="0" placeholder="0" /></label>
-        </div>
-        <label>Contact Name<input id="quoteContactName" type="text" /></label>
-        <label>Contact Email<input id="quoteContactEmail" type="email" /></label>
-        <div class="modal-actions">
-          <button id="saveQuoteBtn" class="btn">Save Quote</button>
-          <button id="cancelQuoteBtn" class="btn ghost">Cancel</button>
+        <div class="modal-body">
+          <div class="grid">
+            <label>
+              Name
+              <input id="bizModalName" type="text" data-testid="biz-modal-name" />
+            </label>
+            <label>
+              Category
+              <input id="bizModalCategory" type="text" />
+            </label>
+            <label>
+              Address
+              <input id="bizModalAddress" type="text" />
+            </label>
+            <label>
+              City
+              <input id="bizModalCity" type="text" />
+            </label>
+            <label>
+              State
+              <input id="bizModalState" type="text" maxlength="2" />
+            </label>
+            <label>
+              ZIP
+              <input id="bizModalZip" type="text" />
+            </label>
+            <label>
+              Phone
+              <input id="bizModalPhone" type="tel" />
+            </label>
+            <label>
+              Email
+              <input id="bizModalEmail" type="email" />
+            </label>
+            <label>
+              Geo Scope Type
+              <select id="bizModalGeoType">
+                <option value="city">City</option>
+                <option value="zip_code">ZIP</option>
+                <option value="town">Town</option>
+              </select>
+            </label>
+            <label>
+              Scope ID
+              <input id="bizModalGeoId" type="text" />
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button id="bizModalSubmit" class="btn" data-testid="biz-modal-submit">Create</button>
+            <button id="bizModalCancel" class="btn ghost" data-testid="biz-modal-cancel">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <script src="./firebase-config.js"></script>
-    <script>
-      (function loadOptionalLocalFirebaseConfig() {
-        if (window.localStorage?.getItem("camLoadLocalFirebaseConfig") !== "true") {
-          return;
-        }
-        const script = document.createElement("script");
-        script.src = "./firebase-config.local.js";
-        script.async = false;
-        script.onerror = function () {
-          // Local override is optional and gitignored.
-        };
-        document.head.appendChild(script);
-      })();
-    </script>
-    <script src="./app.js" type="module"></script>
+    <!-- Module entry point -->
+    <script type="module" src="./app.js"></script>
   </body>
 </html>

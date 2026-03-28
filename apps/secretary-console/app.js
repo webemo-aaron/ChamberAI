@@ -1,72 +1,75 @@
+/**
+ * ChamberAI Secretary Console - Main Entry Point
+ *
+ * Responsibilities:
+ * - Initialize core modules (router, auth, toast, API)
+ * - Restore user session and API configuration from localStorage
+ * - Register all routes with placeholder handlers
+ * - Set up shell chrome event handlers (topbar, nav, auth modals)
+ * - Manage modal lifecycle and focus trapping
+ *
+ * View rendering logic is delegated to handler functions (Phase 5).
+ * All state except shell chrome is managed by core modules.
+ */
+
+import { registerRoute, navigate, onRouteChange } from "./core/router.js";
+import { request, setApiBase, getApiBase } from "./core/api.js";
+import {
+  getCurrentRole,
+  setRole,
+  initFirebaseAuth,
+  applyRolePermissions,
+  onAuthStateChange,
+  getFirebaseUser
+} from "./core/auth.js";
+import { showToast, initToast } from "./core/toast.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { FEATURE_FLAGS, defaultFlags } from "./modules.js";
+import { BillingService, TIERS } from "./billing.js";
+import { loginHandler } from "./views/login/login.js";
+import { settingsHandler } from "./views/settings/settings-view.js";
+import { kioskHandler } from "./views/kiosk/kiosk-view.js";
+import { kioskConfigHandler } from "./views/kiosk/kiosk-config.js";
 
+// ============================================================================
+// DOM Element References (Shell Chrome Only)
+// ============================================================================
+
+// Helper to safely get elements with warning on missing
+function getElement(id) {
+  const el = document.getElementById(id);
+  if (!el) console.warn(`DOM element not found: #${id} (will be available in Phase 5)`);
+  return el;
+}
+
+// API Configuration
 const apiBaseInput = document.getElementById("apiBase");
 const saveApiBaseBtn = document.getElementById("saveApiBase");
-const refreshBtn = document.getElementById("refreshMeetings");
-const quickCreateBtn = document.getElementById("quickCreate");
-const seedDemoBtn = document.getElementById("seedDemo");
-const createBtn = document.getElementById("createMeeting");
-const newTags = document.getElementById("newTags");
-const newMeetingError = document.getElementById("newMeetingError");
-const meetingList = document.getElementById("meetingList");
-const meetingEmpty = document.getElementById("meetingEmpty");
-const meetingCount = document.getElementById("meetingCount");
-const meetingStatus = document.getElementById("meetingStatus");
-const meetingMeta = document.getElementById("meetingMeta");
-const metaEndTime = document.getElementById("metaEndTime");
-const metaTags = document.getElementById("metaTags");
-const flagNoMotions = document.getElementById("flagNoMotions");
-const flagNoActionItems = document.getElementById("flagNoActionItems");
-const flagNoAdjournment = document.getElementById("flagNoAdjournment");
-const saveMetaBtn = document.getElementById("saveMeta");
-const registerAudioBtn = document.getElementById("registerAudio");
-const pickFileBtn = document.getElementById("pickFile");
-const fileInput = document.getElementById("fileInput");
-const dropzone = document.getElementById("dropzone");
-const fileMeta = document.getElementById("fileMeta");
-const fileHint = document.getElementById("fileHint");
-const audioDuration = document.getElementById("audioDuration");
-const audioSourcesList = document.getElementById("audioSources");
-const processBtn = document.getElementById("processMeeting");
-const approveBtn = document.getElementById("approveMeeting");
-const saveMinutesBtn = document.getElementById("saveMinutes");
-const minutesContent = document.getElementById("minutesContent");
-const collabStatus = document.getElementById("collabStatus");
-const versionHistoryList = document.getElementById("versionHistoryList");
-const versionHistoryPrev = document.getElementById("versionHistoryPrev");
-const versionHistoryNext = document.getElementById("versionHistoryNext");
-const versionHistoryPage = document.getElementById("versionHistoryPage");
-const actionDescription = document.getElementById("actionDescription");
-const actionOwner = document.getElementById("actionOwner");
-const actionDue = document.getElementById("actionDue");
-const addActionBtn = document.getElementById("addActionItem");
-const actionItemsList = document.getElementById("actionItemsList");
-const auditLog = document.getElementById("auditLog");
-const approvalWarnings = document.getElementById("approvalWarnings");
-const motionWarnings = document.getElementById("motionWarnings");
-const motionGate = document.getElementById("motionGate");
-const actionGate = document.getElementById("actionGate");
-const adjournmentGate = document.getElementById("adjournmentGate");
-const flagNoAdjournmentInline = document.getElementById("flagNoAdjournmentInline");
-const saveAdjournmentFlag = document.getElementById("saveAdjournmentFlag");
-const exportActionCsv = document.getElementById("exportActionCsv");
-const importActionCsv = document.getElementById("importActionCsv");
-const actionCsvInput = document.getElementById("actionCsvInput");
-const csvPreviewModal = document.getElementById("csvPreviewModal");
-const csvPreviewTable = document.getElementById("csvPreviewTable");
-const csvApply = document.getElementById("csvApply");
-const csvCancel = document.getElementById("csvCancel");
-const csvSkipInvalid = document.getElementById("csvSkipInvalid");
-const csvPreviewNote = document.getElementById("csvPreviewNote");
 
+// Authentication
+const loginModal = document.getElementById("loginModal");
+const loginEmail = document.getElementById("loginEmail");
+const loginRole = document.getElementById("loginRole");
+const loginSubmit = document.getElementById("loginSubmit");
+const loginGoogle = document.getElementById("loginGoogle");
+const logoutBtn = document.getElementById("logout");
+const roleBadge = document.getElementById("roleBadge");
+const authCycleStatus = document.getElementById("authCycleStatus");
+
+// Navigation
+const viewMeetingsBtn = document.getElementById("viewMeetingsBtn");
+const viewBusinessHubBtn = document.getElementById("viewBusinessHubBtn");
+const viewKioskBtn = document.getElementById("viewKioskBtn");
+const meetingsView = document.getElementById("meetingsView");
+const businessHubView = document.getElementById("businessHubView");
+
+// Tab Management (Phase 5: tabs and panels will be populated with content)
 const tabs = Array.from(document.querySelectorAll(".tab-bar .tab[role='tab']"));
-const tabMinutes = document.getElementById("tab-minutes");
-const tabActions = document.getElementById("tab-actions");
-const tabAudit = document.getElementById("tab-audit");
-const tabMotions = document.getElementById("tab-motions");
-const tabPublicSummary = document.getElementById("tab-public-summary");
-const publicSummaryTab = document.getElementById("publicSummaryTab");
+const tabMinutes = getElement("tab-minutes");
+const tabActions = getElement("tab-actions");
+const tabAudit = getElement("tab-audit");
+const tabMotions = getElement("tab-motions");
+const tabPublicSummary = getElement("tab-public-summary");
 const tabPanelsByKey = {
   minutes: tabMinutes,
   actions: tabActions,
@@ -75,168 +78,191 @@ const tabPanelsByKey = {
   "public-summary": tabPublicSummary
 };
 
-const motionText = document.getElementById("motionText");
-const motionMover = document.getElementById("motionMover");
-const motionSeconder = document.getElementById("motionSeconder");
-const motionVote = document.getElementById("motionVote");
-const motionOutcome = document.getElementById("motionOutcome");
-const addMotionBtn = document.getElementById("addMotion");
-const motionsList = document.getElementById("motionsList");
-const exportPdfBtn = document.getElementById("exportPdf");
-const exportDocxBtn = document.getElementById("exportDocx");
-const exportMinutesMd = document.getElementById("exportMinutesMd");
-const publicSummaryTitle = document.getElementById("publicSummaryTitle");
-const publicSummaryHighlights = document.getElementById("publicSummaryHighlights");
-const publicSummaryImpact = document.getElementById("publicSummaryImpact");
-const publicSummaryMotions = document.getElementById("publicSummaryMotions");
-const publicSummaryActions = document.getElementById("publicSummaryActions");
-const publicSummaryAttendance = document.getElementById("publicSummaryAttendance");
-const publicSummaryCTA = document.getElementById("publicSummaryCTA");
-const publicSummaryNotes = document.getElementById("publicSummaryNotes");
-const publicSummaryContent = document.getElementById("publicSummaryContent");
-const savePublicSummary = document.getElementById("savePublicSummary");
-const composePublicSummary = document.getElementById("composePublicSummary");
-const generatePublicSummary = document.getElementById("generatePublicSummary");
-const publishPublicSummary = document.getElementById("publishPublicSummary");
-const publicSummaryPublishStatus = document.getElementById("publicSummaryPublishStatus");
-const publicSummaryReady = document.getElementById("publicSummaryReady");
-const summaryNoConfidential = document.getElementById("summaryNoConfidential");
-const summaryNamesApproved = document.getElementById("summaryNamesApproved");
-const summaryMotionsReviewed = document.getElementById("summaryMotionsReviewed");
-const summaryActionsReviewed = document.getElementById("summaryActionsReviewed");
-const summaryChairApproved = document.getElementById("summaryChairApproved");
-const exportResults = document.getElementById("exportResults");
-const exportHistory = document.getElementById("exportHistory");
-const approvalChecklist = document.getElementById("approvalChecklist");
-const exportLatestOnly = document.getElementById("exportLatestOnly");
-const exportGroup = document.getElementById("exportGroup");
-const onboardingBanner = document.getElementById("onboardingBanner");
-const dismissBanner = document.getElementById("dismissBanner");
-const roleBadge = document.getElementById("roleBadge");
-const authCycleStatus = document.getElementById("authCycleStatus");
-const logoutBtn = document.getElementById("logout");
-const loginModal = document.getElementById("loginModal");
-const loginEmail = document.getElementById("loginEmail");
-const loginRole = document.getElementById("loginRole");
-const loginSubmit = document.getElementById("loginSubmit");
-const loginGoogle = document.getElementById("loginGoogle");
+// Modals
 const quickModal = document.getElementById("quickModal");
-const tagFilter = document.getElementById("tagFilter");
-const meetingSearch = document.getElementById("meetingSearch");
-const advancedSearchQuery = document.getElementById("advancedSearchQuery");
-const advancedSearchBtn = document.getElementById("advancedSearchBtn");
-const advancedSearchReset = document.getElementById("advancedSearchReset");
-const clearFilters = document.getElementById("clearFilters");
-const clearExportHistory = document.getElementById("clearExportHistory");
-const tagChips = document.getElementById("tagChips");
-const statusFilter = document.getElementById("statusFilter");
-const recentFilter = document.getElementById("recentFilter");
-const quickLocation = document.getElementById("quickLocation");
-const quickChair = document.getElementById("quickChair");
-const quickSecretary = document.getElementById("quickSecretary");
-const quickTags = document.getElementById("quickTags");
-const quickSubmit = document.getElementById("quickSubmit");
-const quickCancel = document.getElementById("quickCancel");
-const settingRetention = document.getElementById("settingRetention");
-const settingMaxSize = document.getElementById("settingMaxSize");
-const settingMaxDuration = document.getElementById("settingMaxDuration");
-const saveSettingsBtn = document.getElementById("saveSettings");
-const settingsStatus = document.getElementById("settingsStatus");
-const runRetentionSweep = document.getElementById("runRetentionSweep");
-const retentionResult = document.getElementById("retentionResult");
-const toast = document.getElementById("toast");
-const featureFlagsEl = document.getElementById("featureFlags");
-const settingsInviteDisclosure = document.getElementById("settingsInviteDisclosure");
-const settingsMotionDisclosure = document.getElementById("settingsMotionDisclosure");
-const inviteAuthorizedEmail = document.getElementById("inviteAuthorizedEmail");
-const inviteAuthorizeSender = document.getElementById("inviteAuthorizeSender");
-const inviteAuthorizedList = document.getElementById("inviteAuthorizedList");
-const inviteRecipientEmail = document.getElementById("inviteRecipientEmail");
-const inviteMeetingTitle = document.getElementById("inviteMeetingTitle");
-const inviteMotionLink = document.getElementById("inviteMotionLink");
-const inviteMotionSource = document.getElementById("inviteMotionSource");
-const inviteJoinLink = document.getElementById("inviteJoinLink");
-const inviteNote = document.getElementById("inviteNote");
-const inviteSendBtn = document.getElementById("inviteSendBtn");
-const inviteRefreshBtn = document.getElementById("inviteRefreshBtn");
-const inviteStatus = document.getElementById("inviteStatus");
-const motionEnabled = document.getElementById("motionEnabled");
-const motionApiKey = document.getElementById("motionApiKey");
-const motionWorkspaceId = document.getElementById("motionWorkspaceId");
-const motionProjectId = document.getElementById("motionProjectId");
-const motionLinkTemplate = document.getElementById("motionLinkTemplate");
-const motionSaveBtn = document.getElementById("motionSaveBtn");
-const motionTestBtn = document.getElementById("motionTestBtn");
-const motionStatus = document.getElementById("motionStatus");
-const geoScopeType = document.getElementById("geoScopeType");
-const geoScopeId = document.getElementById("geoScopeId");
-const geoExistingDetails = document.getElementById("geoExistingDetails");
-const geoScanBtn = document.getElementById("geoScan");
-const geoGenerateBtn = document.getElementById("geoGenerate");
-const geoRefreshBtn = document.getElementById("geoRefresh");
-const geoCopyOutreachBtn = document.getElementById("geoCopyOutreach");
-const geoExportBriefsBtn = document.getElementById("geoExportBriefs");
-const geoStatus = document.getElementById("geoStatus");
-const geoProfileResult = document.getElementById("geoProfileResult");
-const geoBriefResult = document.getElementById("geoBriefResult");
-const geoBriefList = document.getElementById("geoBriefList");
+const csvPreviewModal = document.getElementById("csvPreviewModal");
 
-let meetings = [];
-let selectedMeetingId = null;
-let actionItems = [];
-let selectedFile = null;
-let motions = [];
-let approvalStatus = null;
-let motionEditIndex = null;
-let activeTagFilter = "";
-let searchQuery = "";
-let statusQuery = "";
-let recentDays = "";
-let pendingCsvItems = [];
-let currentRole = localStorage.getItem("camRole") || "";
-let featureFlags = defaultFlags();
-let settingsSyncVersion = 0;
-let currentMinutesVersion = 0;
-let minutesSyncTimer = null;
-let minutesAutosaveTimer = null;
-let startupRetriesInProgress = false;
-let versionHistoryOffset = 0;
-const versionHistoryLimit = 5;
-let versionHistoryHasMore = false;
-let versionHistoryTotal = 0;
-let summaryLoadToken = 0;
-let summaryUserEditing = false;
-let firebaseAuth = null;
-let firebaseUser = null;
-let signInWithPopupFn = null;
-let signOutFn = null;
-let googleProvider = null;
-let inviteAuthorizedSenders = [];
-let motionConfig = null;
-let geoProfiles = [];
-let geoBriefs = [];
+// Onboarding (Phase 5: content and handlers)
+const onboardingBanner = getElement("onboardingBanner");
+const dismissBanner = getElement("dismissBanner");
 
-const hostedApiBase = "https://chamberai-api-ecfgvedexq-uc.a.run.app";
-const inferredApiBase = window.location.hostname.endsWith(".vercel.app") ? hostedApiBase : "http://localhost:4000";
-const defaultApiBase = localStorage.getItem("camApiBase") || inferredApiBase;
-apiBaseInput.value = defaultApiBase;
+// Search & Filters (Phase 5: event handlers)
+const meetingSearch = getElement("meetingSearch");
 
-if (localStorage.getItem("camOnboardingDismissed") === "true") {
-  onboardingBanner.style.display = "none";
-}
-inviteJoinLink.value = window.location.origin;
-updateInviteMotionSource();
-updateAuthCycleStatus();
-activateTabByKey("minutes");
+// Feature Flags Display (Phase 5: populated by flags module)
+const featureFlagsEl = getElement("featureFlagsEl");
 
+// ============================================================================
+// Shell Chrome State
+// ============================================================================
+
+/** Modal behavior configuration for focus trapping */
 const modalBehavior = new Map([
   [loginModal, { initialFocus: loginGoogle, closeOnEscape: false, closeOnBackdrop: false }],
-  [quickModal, { initialFocus: quickLocation, closeOnEscape: true, closeOnBackdrop: true }],
-  [csvPreviewModal, { initialFocus: csvSkipInvalid, closeOnEscape: true, closeOnBackdrop: true }]
+  [quickModal, { initialFocus: quickModal.querySelector("button"), closeOnEscape: true, closeOnBackdrop: true }],
+  [csvPreviewModal, { initialFocus: csvPreviewModal.querySelector("button"), closeOnEscape: true, closeOnBackdrop: true }]
 ]);
+
 let activeModal = null;
 let modalReturnFocus = null;
 
+// ============================================================================
+// Initialization
+// ============================================================================
+
+/**
+ * Main application initialization
+ */
+async function initializeApp() {
+  // 1. Initialize toast for user feedback
+  initToast();
+
+  // 2. Restore API base from localStorage
+  const savedApiBase = localStorage.getItem("camApiBase");
+  if (savedApiBase) {
+    setApiBase(savedApiBase);
+    apiBaseInput.value = savedApiBase;
+  } else {
+    const inferredApiBase = window.location.hostname.endsWith(".vercel.app")
+      ? "https://chamberai-api-ecfgvedexq-uc.a.run.app"
+      : "http://localhost:4000";
+    setApiBase(inferredApiBase);
+    apiBaseInput.value = inferredApiBase;
+  }
+
+  // 3. Restore onboarding banner state (Phase 5: element added)
+  if (onboardingBanner && localStorage.getItem("camOnboardingDismissed") === "true") {
+    onboardingBanner.style.display = "none";
+  }
+
+  // 4. Initialize Firebase auth
+  try {
+    if (window.CHAMBERAI_FIREBASE_CONFIG) {
+      await initFirebaseAuth(window.CHAMBERAI_FIREBASE_CONFIG);
+    }
+  } catch (error) {
+    console.warn("Firebase initialization failed:", error);
+  }
+
+  // 5. Restore user session from localStorage
+  const savedRole = localStorage.getItem("camRole");
+  if (savedRole) {
+    setRole(
+      savedRole,
+      localStorage.getItem("camEmail") || "user@example.com",
+      localStorage.getItem("camDisplayName") || ""
+    );
+    updateAuthDisplay();
+    closeModal(loginModal);
+  }
+
+  // 6. Register all routes with auth guard
+  registerRoute("/", () => navigate("/meetings"));
+  registerRoute("/login", loginHandler);
+  registerRoute("/meetings", (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    meetingsHandler(params, context);
+  });
+  registerRoute("/meetings/:id", (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    meetingDetailHandler(params, context);
+  });
+  registerRoute("/business-hub", (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    businessHubHandler(params, context);
+  });
+  registerRoute("/settings", settingsHandler);
+  registerRoute("/kiosk", (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    kioskHandler(params, context);
+  });
+  registerRoute("/kiosk-config", (params, context) => {
+    if (getCurrentRole() !== "admin") {
+      showToast("Kiosk configuration requires admin access", "error");
+      navigate("/meetings");
+      return;
+    }
+    kioskConfigHandler(params, context);
+  });
+
+  // 7. Set up navigation button handlers and visibility
+  if (viewKioskBtn) {
+    viewKioskBtn.addEventListener("click", () => {
+      navigate("/kiosk");
+    });
+  }
+
+  // Show kiosk button only for admins
+  onRouteChange(() => {
+    if (viewKioskBtn) {
+      const role = getCurrentRole();
+      viewKioskBtn.style.display = role === "admin" ? "block" : "none";
+    }
+  });
+
+  // 8. Set up auth state listener
+  onAuthStateChange((user) => {
+    updateAuthDisplay();
+  });
+
+  // 9. Show ready toast
+  showToast("ChamberAI ready");
+}
+
+// ============================================================================
+// Route Handlers (Placeholders for Phase 5)
+// ============================================================================
+
+/**
+ * Handle /meetings route - list view
+ * @param {Object} params - Route parameters
+ */
+async function meetingsHandler(params) {
+  // Phase 5: Move meeting list rendering here
+  showToast("Loading meetings...");
+}
+
+/**
+ * Handle /meetings/:id route - detail view
+ * @param {Object} params - Route parameters with id
+ */
+async function meetingDetailHandler(params) {
+  // Phase 5: Move meeting detail rendering here
+  if (params.id) {
+    showToast(`Loading meeting ${params.id}...`);
+  }
+}
+
+/**
+ * Handle /business-hub route
+ * @param {Object} params - Route parameters
+ */
+async function businessHubHandler(params) {
+  // Phase 5: Move business hub rendering here
+  showToast("Loading business hub...");
+}
+
+// ============================================================================
+// Shell Chrome Event Handlers
+// ============================================================================
+
+/**
+ * Get all focusable elements within a container
+ * @param {HTMLElement} container - Container to search
+ * @returns {HTMLElement[]} Array of focusable elements
+ */
 function getFocusableElements(container) {
   return Array.from(
     container.querySelectorAll(
@@ -245,14 +271,23 @@ function getFocusableElements(container) {
   ).filter((element) => !element.hasAttribute("hidden") && !element.closest(".hidden"));
 }
 
+/**
+ * Handle keyboard navigation within modal (Tab and Escape)
+ * @param {KeyboardEvent} event
+ */
 function handleModalKeydown(event) {
   if (!activeModal) return;
+
   const config = modalBehavior.get(activeModal) ?? {};
+
+  // Handle Escape key
   if (event.key === "Escape" && config.closeOnEscape) {
     event.preventDefault();
     closeModal(activeModal);
     return;
   }
+
+  // Handle Tab key for focus trapping
   if (event.key !== "Tab") return;
 
   const focusables = getFocusableElements(activeModal);
@@ -260,152 +295,225 @@ function handleModalKeydown(event) {
     event.preventDefault();
     return;
   }
+
   const first = focusables[0];
   const last = focusables[focusables.length - 1];
   const current = document.activeElement;
 
+  // Trap focus when tabbing backward from first element
   if (event.shiftKey && current === first) {
     event.preventDefault();
     last.focus();
     return;
   }
+
+  // Trap focus when tabbing forward from last element
   if (!event.shiftKey && current === last) {
     event.preventDefault();
     first.focus();
   }
 }
 
-document.addEventListener("keydown", handleModalKeydown, true);
-
+/**
+ * Open a modal with focus management
+ * @param {HTMLElement} modal - Modal element to open
+ * @param {Object} options - Configuration options
+ * @param {HTMLElement} [options.returnFocus] - Element to focus when modal closes
+ * @param {HTMLElement} [options.initialFocus] - Element to focus when modal opens
+ */
 function openModal(modal, options = {}) {
   if (!modal) return;
+
+  // Close existing modal if different
   if (activeModal && activeModal !== modal) {
     closeModal(activeModal, { restoreFocus: false });
   }
+
   const config = modalBehavior.get(modal) ?? {};
   activeModal = modal;
   modalReturnFocus = options.returnFocus ?? document.activeElement;
+
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
+
   const initialTarget = options.initialFocus ?? config.initialFocus;
   requestAnimationFrame(() => {
     if (initialTarget && typeof initialTarget.focus === "function") {
       initialTarget.focus();
       return;
     }
+
     const focusables = getFocusableElements(modal);
     if (focusables[0]) focusables[0].focus();
   });
 }
 
+/**
+ * Close a modal with optional focus restoration
+ * @param {HTMLElement} modal - Modal element to close
+ * @param {Object} options - Configuration options
+ * @param {boolean} [options.restoreFocus=true] - Whether to restore focus
+ */
 function closeModal(modal, options = {}) {
   if (!modal) return;
+
   const restoreFocus = options.restoreFocus !== false;
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
+
   if (activeModal === modal) {
     activeModal = null;
   }
+
   if (restoreFocus && modalReturnFocus && typeof modalReturnFocus.focus === "function") {
     modalReturnFocus.focus();
   }
+
   modalReturnFocus = null;
 }
 
+/**
+ * Activate a tab and show its panel
+ * @param {HTMLElement} tab - Tab element to activate
+ * @param {Object} options - Configuration options
+ * @param {boolean} [options.focus=false] - Whether to focus the tab
+ */
 function activateTab(tab, options = {}) {
   if (!tab || tab.classList.contains("hidden")) return;
+
   const shouldFocus = Boolean(options.focus);
+
   tabs.forEach((candidate) => {
     const isActive = candidate === tab;
     candidate.classList.toggle("active", isActive);
     candidate.setAttribute("aria-selected", isActive ? "true" : "false");
     candidate.tabIndex = isActive ? 0 : -1;
+
     const target = candidate.dataset.tab;
     const panel = tabPanelsByKey[target];
     if (panel) panel.classList.toggle("hidden", !isActive);
   });
+
   if (shouldFocus) tab.focus();
 }
 
+/**
+ * Activate a tab by key
+ * @param {string} key - Tab data-tab key
+ * @param {Object} options - Configuration options
+ */
 function activateTabByKey(key, options = {}) {
   const targetTab = tabs.find((candidate) => candidate.dataset.tab === key);
   if (!targetTab) return;
   activateTab(targetTab, options);
 }
 
-if (!currentRole) {
-  openModal(loginModal, { returnFocus: loginSubmit });
-} else {
-  setRole(
-    currentRole,
-    localStorage.getItem("camEmail") || "user@example.com",
-    localStorage.getItem("camDisplayName") || ""
-  );
+/**
+ * Update auth display elements
+ */
+function updateAuthDisplay() {
+  const role = getCurrentRole();
+
+  if (role) {
+    const roleText = role.charAt(0).toUpperCase() + role.slice(1);
+    roleBadge.textContent = `Role: ${roleText}`;
+    loginModal.classList.add("hidden");
+    loginModal.setAttribute("aria-hidden", "true");
+  } else {
+    roleBadge.textContent = "Role: Guest";
+    loginModal.classList.remove("hidden");
+    loginModal.setAttribute("aria-hidden", "false");
+  }
+
+  if (authCycleStatus) {
+    authCycleStatus.textContent = role ? `Authenticated as ${role}` : "Not authenticated";
+  }
 }
 
+// ============================================================================
+// Event Listeners - Shell Chrome
+// ============================================================================
+
+// Modal keyboard handling
+document.addEventListener("keydown", handleModalKeydown, true);
+
+// API Base Save Button
 saveApiBaseBtn.addEventListener("click", () => {
   const value = apiBaseInput.value.trim();
   if (value) {
     localStorage.setItem("camApiBase", value);
-    syncSettingsFromApi({ startup: true });
+    setApiBase(value);
+    showToast("API base updated");
+  } else {
+    showToast("Please enter a valid API base URL");
   }
 });
 
+// Login Form Submission (Manual)
 loginSubmit.addEventListener("click", () => {
   const email = loginEmail.value.trim() || "user@example.com";
-  const role = loginRole.value;
-  localStorage.setItem("camDisplayName", "");
+  const role = loginRole.value || "secretary";
+
   localStorage.setItem("camRole", role);
   localStorage.setItem("camEmail", email);
+  localStorage.setItem("camDisplayName", "");
+
   setRole(role, email, "");
-  updateAuthCycleStatus();
-  syncSettingsFromApi({ startup: true });
+  updateAuthDisplay();
   closeModal(loginModal);
+  showToast(`Signed in as ${role}`);
 });
 
+// Login Form Submission (Google)
 loginGoogle.addEventListener("click", async () => {
-  if (!firebaseAuth || !signInWithPopupFn || !googleProvider) {
-    showToast("Google auth is not configured.");
-    return;
-  }
   try {
-    const result = await signInWithPopupFn(firebaseAuth, googleProvider);
+    const user = getFirebaseUser();
+    if (!user) {
+      showToast("Google authentication not configured");
+      return;
+    }
+
     const role = loginRole.value || localStorage.getItem("camRole") || "secretary";
-    const email = result.user?.email || loginEmail.value.trim() || "user@example.com";
-    const displayName = result.user?.displayName || "";
+    const email = user.email || loginEmail.value.trim() || "user@example.com";
+    const displayName = user.displayName || "";
+
     localStorage.setItem("camRole", role);
     localStorage.setItem("camEmail", email);
     localStorage.setItem("camDisplayName", displayName);
+
     setRole(role, email, displayName);
-    syncSettingsFromApi({ startup: true });
+    updateAuthDisplay();
     closeModal(loginModal);
-    showToast("Signed in with Google.");
+    showToast("Signed in with Google");
   } catch (error) {
-    console.error(error);
-    const code = error?.code ? ` (${error.code})` : "";
-    showToast(`Google sign-in failed${code}.`);
+    console.error("Google sign-in failed:", error);
+    showToast("Google sign-in failed");
   }
 });
 
+// Logout Button
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("camRole");
   localStorage.removeItem("camEmail");
   localStorage.removeItem("camDisplayName");
-  currentRole = "";
-  roleBadge.textContent = "Role: Guest";
+
+  setRole("guest", "", "");
   applyRolePermissions("guest");
+  updateAuthDisplay();
   openModal(loginModal, { returnFocus: logoutBtn });
-  if (firebaseAuth && signOutFn) {
-    signOutFn(firebaseAuth).catch(() => {});
-  }
-  updateAuthCycleStatus();
+
+  showToast("Signed out");
 });
 
-dismissBanner.addEventListener("click", () => {
-  localStorage.setItem("camOnboardingDismissed", "true");
-  onboardingBanner.style.display = "none";
-});
+// Dismiss Onboarding Banner (Phase 5)
+if (dismissBanner) {
+  dismissBanner.addEventListener("click", () => {
+    localStorage.setItem("camOnboardingDismissed", "true");
+    if (onboardingBanner) onboardingBanner.style.display = "none";
+  });
+}
 
+// Modal Backdrop Click Handlers
 quickModal.addEventListener("click", (event) => {
   if (event.target === quickModal && modalBehavior.get(quickModal)?.closeOnBackdrop) {
     closeModal(quickModal);
@@ -414,2997 +522,35 @@ quickModal.addEventListener("click", (event) => {
 
 csvPreviewModal.addEventListener("click", (event) => {
   if (event.target === csvPreviewModal && modalBehavior.get(csvPreviewModal)?.closeOnBackdrop) {
-    pendingCsvItems = [];
     closeModal(csvPreviewModal);
   }
 });
 
+// Search Keyboard Shortcut (Phase 5)
 document.addEventListener("keydown", (event) => {
   if (activeModal) return;
+  if (!meetingSearch) return;
+
+  // '/' key to focus search
   if (event.key === "/") {
     event.preventDefault();
     meetingSearch.focus();
   }
-  if (event.key === "Escape") {
+
+  // 'Escape' key to blur search
+  if (event.key === "Escape" && document.activeElement === meetingSearch) {
     meetingSearch.value = "";
-    searchQuery = "";
     meetingSearch.blur();
-    renderMeetings();
   }
-});
-
-refreshBtn.addEventListener("click", () => loadMeetings());
-createBtn.addEventListener("click", async () => {
-  newMeetingError.textContent = "";
-  const payload = {
-    date: document.getElementById("newDate").value,
-    start_time: document.getElementById("newStart").value,
-    location: document.getElementById("newLocation").value,
-    chair_name: document.getElementById("newChair").value,
-    secretary_name: document.getElementById("newSecretary").value,
-    tags: newTags.value
-  };
-
-  const missing = [];
-  if (!payload.date) missing.push("date");
-  if (!payload.start_time) missing.push("start time");
-  if (!payload.location) missing.push("location");
-  if (missing.length > 0) {
-    newMeetingError.textContent = `Required: ${missing.join(", ")}.`;
-    return;
-  }
-
-  const created = await request("/meetings", "POST", payload);
-  if (created) {
-    await loadMeetings();
-    selectMeeting(created.id);
-    newTags.value = "";
-  }
-});
-
-seedDemoBtn.addEventListener("click", async () => {
-  const created = await request("/meetings", "POST", {
-    date: new Date().toISOString().slice(0, 10),
-    start_time: "18:00",
-    location: "Chamber Hall",
-    chair_name: "Alex Chair",
-    secretary_name: "Riley Secretary",
-    tags: "demo"
-  });
-  if (!created) return;
-  await request(`/meetings/${created.id}/audio-sources`, "POST", {
-    type: "UPLOAD",
-    file_uri: "meeting_good.wav",
-    duration_seconds: 1200
-  });
-  await request(`/meetings/${created.id}/process`, "POST");
-  await request(`/meetings/${created.id}/action-items`, "PUT", {
-    items: [
-      {
-        description: "Send follow-up summary to board.",
-        owner_name: "Taylor Treasurer",
-        due_date: new Date().toISOString().slice(0, 10)
-      }
-    ]
-  });
-  await loadMeetings();
-  selectMeeting(created.id);
-  showToast("Demo meeting created.");
-});
-
-tagFilter.addEventListener("change", () => {
-  activeTagFilter = tagFilter.value;
-  renderMeetings();
-});
-
-meetingSearch.addEventListener("input", (event) => {
-  searchQuery = event.target.value.toLowerCase();
-  renderMeetings();
-});
-
-advancedSearchBtn.addEventListener("click", () => {
-  runAdvancedSearch();
-});
-
-advancedSearchQuery.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    runAdvancedSearch();
-  }
-});
-
-advancedSearchReset.addEventListener("click", async () => {
-  advancedSearchQuery.value = "";
-  await loadMeetings();
-});
-
-statusFilter.addEventListener("change", () => {
-  statusQuery = statusFilter.value;
-  renderMeetings();
-});
-
-recentFilter.addEventListener("change", () => {
-  recentDays = recentFilter.value;
-  renderMeetings();
-});
-
-saveSettingsBtn.addEventListener("click", async () => {
-  const patch = {
-    retentionDays: Number(settingRetention.value || "60"),
-    maxFileSizeMb: Number(settingMaxSize.value || "500"),
-    maxDurationSeconds: Number(settingMaxDuration.value || "14400"),
-    featureFlags: collectFeatureFlags()
-  };
-  const validation = validateSettings(patch);
-  if (!validation.ok) {
-    showSettingsBanner(validation.message, "error");
-    return;
-  }
-  const result = await saveSettings(request, patch);
-  if (result?.error) {
-    showSettingsBanner(`Save failed: ${result.error}`, "error");
-  } else {
-    showSettingsBanner("Settings saved.", "success");
-    showToast("Settings updated.");
-    renderFeatureFlags();
-  }
-});
-
-runRetentionSweep.addEventListener("click", async () => {
-  const result = await request("/retention/sweep", "POST");
-  if (result?.error) {
-    retentionResult.textContent = `Sweep failed: ${result.error}`;
-    return;
-  }
-  const deletedCount = Array.isArray(result?.deleted) ? result.deleted.length : 0;
-  retentionResult.textContent = `Sweep complete. Deleted ${deletedCount} audio source(s).`;
-  showToast("Retention sweep complete.");
-});
-
-inviteAuthorizeSender.addEventListener("click", async () => {
-  if (currentRole !== "admin") {
-    inviteStatus.textContent = "Only admins can authorize sender emails.";
-    return;
-  }
-  const email = inviteAuthorizedEmail.value.trim().toLowerCase();
-  if (!email) {
-    inviteStatus.textContent = "Enter an email to authorize.";
-    return;
-  }
-  const result = await request("/invites/authorized-senders", "POST", { email });
-  if (!result || result.error) {
-    inviteStatus.textContent = `Authorization failed: ${result?.error ?? "unknown error"}`;
-    return;
-  }
-  inviteAuthorizedEmail.value = "";
-  inviteStatus.textContent = `${email} authorized.`;
-  inviteAuthorizedSenders = Array.isArray(result.authorizedSenders) ? result.authorizedSenders : inviteAuthorizedSenders;
-  renderAuthorizedSenders();
-});
-
-inviteSendBtn.addEventListener("click", async () => {
-  const recipient = inviteRecipientEmail.value.trim().toLowerCase();
-  if (!recipient) {
-    inviteStatus.textContent = "Recipient email is required.";
-    return;
-  }
-  const payload = {
-    to: recipient,
-    meetingTitle: inviteMeetingTitle.value.trim(),
-    motionLink: inviteMotionLink.value.trim(),
-    inviteUrl: inviteJoinLink.value.trim() || window.location.origin,
-    note: inviteNote.value.trim(),
-    chamberName: "ChamberAI",
-    senderName: localStorage.getItem("camDisplayName") || "Chamber Secretary"
-  };
-  const response = await request("/invites/send", "POST", payload);
-  if (!response || response.error) {
-    inviteStatus.textContent = `Send failed: ${response?.error ?? "unknown error"}`;
-    return;
-  }
-  inviteStatus.textContent = `Invite sent to ${recipient}.`;
-  inviteRecipientEmail.value = "";
-  inviteNote.value = "";
-  showToast("Invite sent.");
-});
-
-inviteRefreshBtn.addEventListener("click", () => {
-  loadInviteWorkspace();
-});
-
-inviteMotionLink.addEventListener("input", () => {
-  updateInviteMotionSource();
-});
-
-motionSaveBtn.addEventListener("click", async () => {
-  const payload = {
-    enabled: motionEnabled.checked,
-    workspaceId: motionWorkspaceId.value.trim(),
-    defaultProjectId: motionProjectId.value.trim(),
-    defaultLinkTemplate: motionLinkTemplate.value.trim()
-  };
-  if (motionApiKey.value.trim()) {
-    payload.apiKey = motionApiKey.value.trim();
-  }
-
-  const response = await request("/integrations/motion/config", "PUT", payload);
-  if (!response || response.error) {
-    motionStatus.textContent = `Save failed: ${response?.error ?? "unknown error"}`;
-    return;
-  }
-  motionStatus.textContent = "Motion config saved.";
-  motionApiKey.value = "";
-  motionConfig = response;
-  applyMotionConfigToForm();
-});
-
-motionTestBtn.addEventListener("click", async () => {
-  const response = await request("/integrations/motion/test", "POST", {});
-  if (!response || response.error) {
-    motionStatus.textContent = `Connection failed: ${response?.error ?? "unknown error"}`;
-    return;
-  }
-  const displayName = response.name || response.email || response.userId || "connected";
-  motionStatus.textContent = `Motion connection OK (${displayName}).`;
-});
-
-geoScanBtn.addEventListener("click", async () => {
-  const payload = buildGeoPayload();
-  if (!payload) return;
-  setGeoStatus("Scanning local signals…", "loading");
-  const profile = await request("/geo-profiles/scan", "POST", payload);
-  if (!profile || profile.error) {
-    setGeoStatus(`Scan failed: ${profile?.error ?? "unknown error"}`, "error");
-    return;
-  }
-  setGeoStatus(`Area scan complete for ${profile.scope_id}.`, "ready");
-  renderGeoProfile(profile);
-  await loadGeoWorkspace({ suppressAlert: true });
-});
-
-geoGenerateBtn.addEventListener("click", async () => {
-  const payload = buildGeoPayload();
-  if (!payload) return;
-  setGeoStatus("Generating localized brief…", "loading");
-  const brief = await request("/geo-content-briefs/generate", "POST", payload);
-  if (!brief || brief.error) {
-    setGeoStatus(`Brief generation failed: ${brief?.error ?? "unknown error"}`, "error");
-    return;
-  }
-  setGeoStatus(`Localized brief generated for ${brief.scope_id}.`, "ready");
-  renderGeoBrief(brief);
-  await loadGeoWorkspace({ suppressAlert: true });
-});
-
-geoRefreshBtn.addEventListener("click", () => {
-  setGeoStatus("Refreshing geo workspace…", "loading");
-  loadGeoWorkspace({ suppressAlert: true });
-});
-
-geoCopyOutreachBtn.addEventListener("click", async () => {
-  const brief = geoBriefs[0];
-  if (!brief?.outreach_draft) {
-    setGeoStatus("No outreach draft available to copy.", "error");
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(brief.outreach_draft);
-    setGeoStatus("Outreach draft copied to clipboard.", "ready");
-  } catch {
-    setGeoStatus("Clipboard copy failed in this browser context.", "error");
-  }
-});
-
-geoExportBriefsBtn.addEventListener("click", () => {
-  if (!Array.isArray(geoBriefs) || geoBriefs.length === 0) {
-    setGeoStatus("No briefs available to export.", "error");
-    return;
-  }
-  const blob = new Blob([JSON.stringify(geoBriefs, null, 2)], { type: "application/json" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  const stamp = new Date().toISOString().slice(0, 10);
-  link.download = `geo-briefs-${stamp}.json`;
-  link.click();
-  setGeoStatus("Briefs exported as JSON.", "ready");
-});
-
-geoScopeType.addEventListener("change", () => {
-  loadGeoWorkspace({ suppressAlert: true });
-});
-
-geoScopeId.addEventListener("change", () => {
-  loadGeoWorkspace({ suppressAlert: true });
-});
-
-quickCreateBtn.addEventListener("click", () => {
-  quickLocation.value = localStorage.getItem("camLastLocation") ?? "";
-  quickChair.value = localStorage.getItem("camLastChair") ?? "";
-  quickSecretary.value = localStorage.getItem("camLastSecretary") ?? "";
-  quickTags.value = localStorage.getItem("camLastTags") ?? "";
-  openModal(quickModal, { returnFocus: quickCreateBtn });
-});
-
-quickCancel.addEventListener("click", () => {
-  closeModal(quickModal);
-});
-
-quickSubmit.addEventListener("click", async () => {
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const payload = {
-    date,
-    start_time: "18:00",
-    location: quickLocation.value || "Chamber Hall",
-    chair_name: quickChair.value || "Chair",
-    secretary_name: quickSecretary.value || "Secretary",
-    tags: quickTags.value || ""
-  };
-
-  const created = await request("/meetings", "POST", payload);
-  if (created) {
-    localStorage.setItem("camLastLocation", payload.location);
-    localStorage.setItem("camLastChair", payload.chair_name);
-    localStorage.setItem("camLastSecretary", payload.secretary_name);
-    localStorage.setItem("camLastTags", payload.tags);
-    closeModal(quickModal);
-    await loadMeetings();
-    selectMeeting(created.id);
-    showToast("Meeting created.");
-  }
-});
-
-pickFileBtn.addEventListener("click", () => fileInput.click());
-
-fileInput.addEventListener("change", () => {
-  const file = fileInput.files?.[0] ?? null;
-  updateSelectedFile(file);
-});
-
-["dragenter", "dragover"].forEach((eventName) => {
-  dropzone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    dropzone.classList.add("dragover");
-  });
-});
-
-["dragleave", "drop"].forEach((eventName) => {
-  dropzone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    dropzone.classList.remove("dragover");
-  });
-});
-
-dropzone.addEventListener("drop", (event) => {
-  const file = event.dataTransfer?.files?.[0] ?? null;
-  if (file) {
-    updateSelectedFile(file);
-  }
-});
-
-registerAudioBtn.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  if (!selectedFile) {
-    alert("Select an audio file first.");
-    return;
-  }
-  if (hasFileErrors(selectedFile)) {
-    alert("Fix file validation errors before registering.");
-    return;
-  }
-
-  const duration = Number(audioDuration.value || "1200");
-
-  await request(`/meetings/${selectedMeetingId}/audio-sources`, "POST", {
-    type: "UPLOAD",
-    file_uri: selectedFile.name,
-    duration_seconds: Number.isNaN(duration) ? 1200 : duration
-  });
-
-  updateSelectedFile(null);
-  await loadMeetingDetail(selectedMeetingId);
-});
-
-processBtn.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  await request(`/meetings/${selectedMeetingId}/process`, "POST");
-  await loadMeetingDetail(selectedMeetingId);
-});
-
-approveBtn.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  const result = await request(`/meetings/${selectedMeetingId}/approve`, "POST");
-  if (result?.error) {
-    alert(result.error);
-    if (result.details) {
-      renderApprovalWarnings(result.details);
-    }
-  } else {
-    await loadMeetingDetail(selectedMeetingId);
-    showToast("Minutes approved.");
-  }
-});
-
-saveMinutesBtn.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  if (minutesAutosaveTimer) {
-    clearTimeout(minutesAutosaveTimer);
-    minutesAutosaveTimer = null;
-  }
-  await saveMinutesDraft();
-});
-
-minutesContent.addEventListener("input", () => {
-  if (!selectedMeetingId) return;
-  collabStatus.textContent = "Editing draft…";
-  if (minutesAutosaveTimer) clearTimeout(minutesAutosaveTimer);
-  minutesAutosaveTimer = setTimeout(() => {
-    minutesAutosaveTimer = null;
-    saveMinutesDraft({ silent: true });
-  }, 800);
-});
-
-savePublicSummary.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  const payload = collectPublicSummaryPayload();
-  const result = await request(`/meetings/${selectedMeetingId}/public-summary`, "PUT", payload);
-  if (!result || result.error) {
-    showToast(`Public summary save failed: ${result?.error ?? "unknown error"}`);
-    return;
-  }
-  showToast("Public summary saved.");
-});
-
-composePublicSummary.addEventListener("click", () => {
-  publicSummaryContent.value = composePublicSummaryText();
-  updatePublicSummaryReady();
-});
-
-generatePublicSummary.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  const result = await request(`/meetings/${selectedMeetingId}/public-summary/generate`, "POST");
-  if (result) {
-    applyPublicSummary(result, { force: true });
-  }
-});
-
-publishPublicSummary.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  if (!isPublicSummaryReady()) {
-    showToast("Checklist incomplete. Complete readiness items before publishing.");
-    return;
-  }
-  const result = await request(`/meetings/${selectedMeetingId}/public-summary/publish`, "POST");
-  if (!result || result.error) {
-    showToast(`Public summary publish failed: ${result?.error ?? "unknown error"}`);
-    return;
-  }
-  applyPublicSummary(result, { force: true });
-  showToast("Public summary published.");
-});
-
-[
-  summaryNoConfidential,
-  summaryNamesApproved,
-  summaryMotionsReviewed,
-  summaryActionsReviewed,
-  summaryChairApproved
-].forEach((checkbox) => {
-  checkbox.addEventListener("change", updatePublicSummaryReady);
-});
-
-[
-  publicSummaryTitle,
-  publicSummaryHighlights,
-  publicSummaryImpact,
-  publicSummaryMotions,
-  publicSummaryActions,
-  publicSummaryAttendance,
-  publicSummaryCTA,
-  publicSummaryNotes,
-  publicSummaryContent
-].forEach((input) => {
-  input.addEventListener("input", () => {
-    summaryUserEditing = true;
-  });
-});
-
-addActionBtn.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  const item = {
-    description: actionDescription.value,
-    owner_name: actionOwner.value,
-    due_date: actionDue.value
-  };
-  actionItems = [...actionItems, item];
-  await request(`/meetings/${selectedMeetingId}/action-items`, "PUT", { items: actionItems });
-  actionDescription.value = "";
-  actionOwner.value = "";
-  actionDue.value = "";
-  await loadMeetingDetail(selectedMeetingId);
-});
-
-tabs.forEach((tab) => {
-  tab.addEventListener("click", () => {
-    activateTab(tab);
-  });
-  tab.addEventListener("keydown", (event) => {
-    const visibleTabs = tabs.filter((candidate) => !candidate.classList.contains("hidden"));
-    if (visibleTabs.length === 0) return;
-    const visibleIndex = visibleTabs.indexOf(tab);
-    if (visibleIndex < 0) return;
-
-    let nextTab = null;
-    if (event.key === "ArrowRight") {
-      nextTab = visibleTabs[(visibleIndex + 1) % visibleTabs.length];
-    } else if (event.key === "ArrowLeft") {
-      nextTab = visibleTabs[(visibleIndex - 1 + visibleTabs.length) % visibleTabs.length];
-    } else if (event.key === "Home") {
-      nextTab = visibleTabs[0];
-    } else if (event.key === "End") {
-      nextTab = visibleTabs[visibleTabs.length - 1];
-    } else if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      activateTab(tab);
-      return;
-    }
-
-    if (nextTab) {
-      event.preventDefault();
-      activateTab(nextTab, { focus: true });
-    }
-  });
-});
-
-addMotionBtn.addEventListener("click", () => {
-  saveMotion();
-});
-
-exportPdfBtn.addEventListener("click", () => exportMinutes("pdf"));
-exportDocxBtn.addEventListener("click", () => exportMinutes("docx"));
-exportMinutesMd.addEventListener("click", () => downloadMinutesMd());
-exportLatestOnly.addEventListener("change", () => {
-  if (!selectedMeetingId) return;
-  loadMeetingDetail(selectedMeetingId);
-});
-exportGroup.addEventListener("change", () => {
-  if (!selectedMeetingId) return;
-  loadMeetingDetail(selectedMeetingId);
-});
-
-clearFilters.addEventListener("click", () => {
-  activeTagFilter = "";
-  searchQuery = "";
-  statusQuery = "";
-  recentDays = "";
-  tagFilter.value = "";
-  meetingSearch.value = "";
-  advancedSearchQuery.value = "";
-  statusFilter.value = "";
-  recentFilter.value = "";
-  renderMeetings();
-  renderTagChips(Array.from(new Set(meetings.flatMap((meeting) => meeting.tags ?? []))).sort());
-});
-
-clearExportHistory.addEventListener("click", () => {
-  exportHistory.textContent = "";
-  exportResults.textContent = "";
-  if (selectedMeetingId) {
-    localStorage.removeItem(getExportStorageKey(selectedMeetingId));
-  }
-});
-
-saveMetaBtn.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  const patch = {
-    end_time: metaEndTime.value || null,
-    tags: metaTags.value || "",
-    no_motions: flagNoMotions.checked,
-    no_action_items: flagNoActionItems.checked,
-    no_adjournment_time: flagNoAdjournment.checked
-  };
-  await request(`/meetings/${selectedMeetingId}`, "PUT", patch);
-  await loadMeetingDetail(selectedMeetingId);
-});
-
-saveAdjournmentFlag.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  await request(`/meetings/${selectedMeetingId}`, "PUT", {
-    no_adjournment_time: flagNoAdjournmentInline.checked
-  });
-  await loadMeetingDetail(selectedMeetingId);
-});
-
-exportActionCsv.addEventListener("click", async () => {
-  if (!selectedMeetingId) return;
-  const base = apiBaseInput.value.trim() || "http://localhost:4000";
-  const url = `${base}/meetings/${selectedMeetingId}/action-items/export/csv`;
-  const response = await fetch(url);
-  const csv = await response.text();
-  const blob = new Blob([csv], { type: "text/csv" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `action-items-${selectedMeetingId}.csv`;
-  link.click();
-  showToast("Action items CSV downloaded.");
-});
-
-importActionCsv.addEventListener("click", () => {
-  actionCsvInput.click();
-});
-
-actionCsvInput.addEventListener("change", async () => {
-  if (!selectedMeetingId) return;
-  const file = actionCsvInput.files?.[0];
-  if (!file) return;
-  const text = await file.text();
-  const parsed = parseActionCsv(text);
-  if (!parsed.ok) {
-    alert(parsed.error);
-    return;
-  }
-  pendingCsvItems = parsed.items;
-  renderCsvPreview(pendingCsvItems);
-  openModal(csvPreviewModal, { returnFocus: importActionCsv });
-});
-
-csvCancel.addEventListener("click", () => {
-  pendingCsvItems = [];
-  closeModal(csvPreviewModal);
-  actionCsvInput.value = "";
-});
-
-csvApply.addEventListener("click", async () => {
-  if (!selectedMeetingId || pendingCsvItems.length === 0) return;
-  const invalidRows = pendingCsvItems.filter((item) => !item.owner_name || !item.due_date);
-  if (invalidRows.length > 0 && !csvSkipInvalid.checked) {
-    alert("Import contains items missing owner or due date. Enable skip or fix CSV.");
-    return;
-  }
-  actionItems = csvSkipInvalid.checked
-    ? pendingCsvItems.filter((item) => item.owner_name && item.due_date)
-    : pendingCsvItems;
-  actionItems = await request(`/meetings/${selectedMeetingId}/action-items`, "PUT", { items: actionItems }) ?? actionItems;
-  renderActionItems();
-  pendingCsvItems = [];
-  closeModal(csvPreviewModal);
-  actionCsvInput.value = "";
-  showToast("Action items imported.");
-});
-
-async function loadMeetings(options = {}) {
-  const data = await request("/meetings", "GET", undefined, options);
-  if (!Array.isArray(data)) return false;
-  meetings = data;
-  refreshTagFilter();
-  renderMeetings();
-  return true;
-}
-
-function renderMeetings() {
-  meetingList.innerHTML = "";
-  const filtered = meetings.filter((meeting) => {
-    if (activeTagFilter && !(meeting.tags ?? []).includes(activeTagFilter)) {
-      return false;
-    }
-    if (statusQuery && meeting.status !== statusQuery) {
-      return false;
-    }
-    if (recentDays) {
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - Number(recentDays));
-      if (new Date(meeting.date) < cutoff) {
-        return false;
-      }
-    }
-    if (searchQuery) {
-      const haystack = `${meeting.location ?? ""} ${meeting.chair_name ?? ""} ${meeting.secretary_name ?? ""}`.toLowerCase();
-      if (!haystack.includes(searchQuery)) {
-        return false;
-      }
-    }
-    return true;
-  });
-  meetingCount.textContent = String(filtered.length);
-  meetingEmpty.style.display = filtered.length === 0 ? "block" : "none";
-
-  filtered
-    .slice()
-    .sort((a, b) => (a.date < b.date ? 1 : -1))
-    .forEach((meeting) => {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = "meeting-card" + (meeting.id === selectedMeetingId ? " active" : "");
-      card.setAttribute("aria-pressed", meeting.id === selectedMeetingId ? "true" : "false");
-      const tags = meeting.tags ?? [];
-      const tagHtml =
-        tags.length > 0
-          ? `<div class="tag-row">${tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>`
-          : "";
-      card.innerHTML = `
-        <span class="meeting-card-line"><strong>${meeting.date}</strong> · ${meeting.location}</span>
-        <span class="meeting-card-line">Status: <span class="status-pill status-${meeting.status.toLowerCase()}">${meeting.status}</span></span>
-        ${tagHtml}
-      `;
-      card.addEventListener("click", () => selectMeeting(meeting.id));
-      meetingList.appendChild(card);
-    });
-}
-
-async function selectMeeting(meetingId) {
-  selectedMeetingId = meetingId;
-  renderMeetings();
-  await loadMeetingDetail(meetingId);
-}
-
-async function loadMeetingDetail(meetingId) {
-  const meeting = await request(`/meetings/${meetingId}`, "GET");
-  if (!meeting || meeting.error) return;
-
-  // Reset summary readiness state early so stale checkbox state cannot leak across meetings.
-  summaryLoadToken += 1;
-  summaryUserEditing = false;
-  applyPublicSummary({ content: "", fields: {}, checklist: {} }, { force: true });
-
-  meetingStatus.textContent = meeting.status;
-  const tagLabel = (meeting.tags ?? []).length > 0 ? meeting.tags.join(", ") : "—";
-  meetingMeta.innerHTML = `
-    <div><strong>Date:</strong> ${meeting.date}</div>
-    <div><strong>Location:</strong> ${meeting.location}</div>
-    <div><strong>Chair:</strong> ${meeting.chair_name ?? "—"}</div>
-    <div><strong>Secretary:</strong> ${meeting.secretary_name ?? "—"}</div>
-    <div><strong>Start:</strong> ${meeting.start_time ?? "—"}</div>
-    <div><strong>End:</strong> ${meeting.end_time ?? "—"}</div>
-    <div><strong>Tags:</strong> ${tagLabel}</div>
-  `;
-  metaEndTime.value = meeting.end_time ?? "";
-  metaTags.value = (meeting.tags ?? []).join(", ");
-  flagNoMotions.checked = Boolean(meeting.no_motions);
-  flagNoActionItems.checked = Boolean(meeting.no_action_items);
-  flagNoAdjournment.checked = Boolean(meeting.no_adjournment_time);
-  flagNoAdjournmentInline.checked = Boolean(meeting.no_adjournment_time);
-  if (!geoScopeId.value.trim() && meeting.location) {
-    geoScopeType.value = "city";
-    geoScopeId.value = meeting.location;
-  }
-
-  const minutes = await request(`/meetings/${meetingId}/draft-minutes`, "GET");
-  minutesContent.value = minutes?.content ?? "";
-  currentMinutesVersion = Number(minutes?.minutes_version ?? 0);
-  collabStatus.textContent = "Collaboration active.";
-  versionHistoryOffset = 0;
-  await renderVersionHistory(meetingId);
-  startMinutesSync(meetingId);
-  exportResults.textContent = "";
-
-  actionItems = (await request(`/meetings/${meetingId}/action-items`, "GET")) ?? [];
-  renderActionItems();
-
-  const audioSources = (await request(`/meetings/${meetingId}/audio-sources`, "GET")) ?? [];
-  renderAudioSources(audioSources);
-
-  motions = (await request(`/meetings/${meetingId}/motions`, "GET")) ?? [];
-  motionEditIndex = null;
-  renderMotions();
-
-  const audit = (await request(`/meetings/${meetingId}/audit-log`, "GET")) ?? [];
-  renderAuditLog(audit);
-  renderExportHistory(audit);
-
-  approvalStatus = await request(`/meetings/${meetingId}/approval-status`, "GET");
-  if (approvalStatus?.ok === false) {
-    renderApprovalWarnings(approvalStatus);
-  } else {
-    clearApprovalWarnings();
-  }
-  renderMotionGate();
-  renderActionGate();
-  renderAdjournmentGate();
-  renderApprovalChecklist();
-  approveBtn.disabled = !approvalStatus?.ok || currentRole === "viewer";
-
-  if (featureFlags.public_summary) {
-    const loadToken = summaryLoadToken;
-    const summary = await request(`/meetings/${meetingId}/public-summary`, "GET");
-    if (loadToken !== summaryLoadToken) return;
-    if (summary) {
-      applyPublicSummary(summary);
-    } else {
-      applyPublicSummary({ content: "", fields: {}, checklist: {} });
-    }
-  }
-}
-
-function renderActionItems() {
-  actionItemsList.innerHTML = "";
-  if (actionItems.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "No action items captured.";
-    actionItemsList.appendChild(empty);
-    return;
-  }
-
-  if (currentRole === "viewer") {
-    actionItems.forEach((item) => {
-      const row = document.createElement("div");
-      row.className = "action-card";
-      row.innerHTML = `
-        <span>${item.description}</span>
-        <span>${item.owner_name ?? "Unassigned"}</span>
-        <span>${item.due_date ?? "No due date"}</span>
-        <span>${item.status ?? "OPEN"}</span>
-      `;
-      actionItemsList.appendChild(row);
-    });
-    return;
-  }
-
-  actionItems.forEach((item, index) => {
-    const row = document.createElement("div");
-    const missing = !item.owner_name || !item.due_date;
-    row.className = `action-card${missing ? " invalid" : ""}`;
-
-    const descInput = document.createElement("input");
-    descInput.value = item.description ?? "";
-    descInput.placeholder = "Description";
-
-    const ownerInput = document.createElement("input");
-    ownerInput.value = item.owner_name ?? "";
-    ownerInput.placeholder = "Owner";
-
-    const dueInput = document.createElement("input");
-    dueInput.type = "date";
-    dueInput.value = item.due_date ?? "";
-
-    const actions = document.createElement("div");
-    const saveBtn = document.createElement("button");
-    saveBtn.className = "btn ghost";
-    saveBtn.textContent = "Save";
-    saveBtn.addEventListener("click", () => updateActionItem(index, descInput.value, ownerInput.value, dueInput.value));
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "btn ghost";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", () => deleteActionItem(index));
-
-    const autofillBtn = document.createElement("button");
-    autofillBtn.className = "btn ghost";
-    autofillBtn.textContent = "Quick Fill";
-    autofillBtn.addEventListener("click", () => {
-      if (!ownerInput.value) ownerInput.value = "Board Member";
-      if (!dueInput.value) dueInput.value = new Date().toISOString().slice(0, 10);
-    });
-
-    actions.appendChild(saveBtn);
-    actions.appendChild(deleteBtn);
-    actions.appendChild(autofillBtn);
-
-    row.appendChild(descInput);
-    row.appendChild(ownerInput);
-    row.appendChild(dueInput);
-    row.appendChild(actions);
-    if (missing) {
-      const msg = document.createElement("div");
-      msg.className = "row-message";
-      msg.textContent = "Owner and due date are required to approve minutes.";
-      row.appendChild(msg);
-    }
-    actionItemsList.appendChild(row);
-  });
-}
-
-function renderAuditLog(entries) {
-  auditLog.innerHTML = "";
-  if (entries.length === 0) {
-    auditLog.textContent = "No audit entries yet.";
-    return;
-  }
-
-  entries.forEach((entry) => {
-    const line = document.createElement("div");
-    line.textContent = `${entry.timestamp} · ${entry.event_type}`;
-    auditLog.appendChild(line);
-  });
-}
-
-function renderAudioSources(sources) {
-  audioSourcesList.innerHTML = "";
-  if (!Array.isArray(sources) || sources.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "No audio sources yet.";
-    audioSourcesList.appendChild(empty);
-    return;
-  }
-
-  sources.forEach((source) => {
-    const item = document.createElement("div");
-    item.className = "list-item";
-    item.innerHTML = `<span>${source.file_uri}</span><span>${source.duration_seconds}s</span>`;
-    audioSourcesList.appendChild(item);
-  });
-}
-
-function renderMotions() {
-  motionsList.innerHTML = "";
-  motionWarnings.innerHTML = "";
-  if (motions.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "motions-row";
-    empty.innerHTML = "<span>No motions captured yet.</span>";
-    motionsList.appendChild(empty);
-    return;
-  }
-
-  const warnings = [];
-  motions.forEach((motion, index) => {
-    const row = document.createElement("div");
-    const missingMover = !motion.mover_name;
-    const missingOutcome = !motion.outcome;
-    if (missingMover || missingOutcome) {
-      warnings.push(
-        `Motion ${index + 1} missing ${missingMover ? "mover" : ""}${missingMover && missingOutcome ? " and " : ""}${missingOutcome ? "outcome" : ""}.`
-      );
-    }
-
-    row.className = `motions-row${missingMover || missingOutcome ? " invalid" : ""}`;
-
-    if (currentRole === "viewer") {
-      row.innerHTML = `
-        <span>${motion.text || "—"}</span>
-        <span>${motion.mover_name || "—"}</span>
-        <span>${motion.seconder_name || "—"}</span>
-        <span>${motion.vote_method || "—"}</span>
-        <span>${motion.outcome || "—"}</span>
-        <span></span>
-      `;
-    } else if (motionEditIndex === index) {
-      const textInput = document.createElement("input");
-      textInput.value = motion.text ?? "";
-      const moverInput = document.createElement("input");
-      moverInput.value = motion.mover_name ?? "";
-      const seconderInput = document.createElement("input");
-      seconderInput.value = motion.seconder_name ?? "";
-      const voteInput = document.createElement("input");
-      voteInput.value = motion.vote_method ?? "";
-      const outcomeInput = document.createElement("input");
-      outcomeInput.value = motion.outcome ?? "";
-
-      row.appendChild(textInput);
-      row.appendChild(moverInput);
-      row.appendChild(seconderInput);
-      row.appendChild(voteInput);
-      row.appendChild(outcomeInput);
-
-      const actions = document.createElement("div");
-      const saveBtn = document.createElement("button");
-      saveBtn.className = "btn ghost";
-      saveBtn.textContent = "Save";
-      saveBtn.addEventListener("click", () =>
-        applyMotionEdit(index, {
-          text: textInput.value,
-          mover_name: moverInput.value,
-          seconder_name: seconderInput.value,
-          vote_method: voteInput.value,
-          outcome: outcomeInput.value
-        })
-      );
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "btn ghost";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.addEventListener("click", () => {
-        motionEditIndex = null;
-        renderMotions();
-      });
-      actions.appendChild(saveBtn);
-      actions.appendChild(cancelBtn);
-      row.appendChild(actions);
-      if (missingMover || missingOutcome) {
-        const msg = document.createElement("div");
-        msg.className = "row-message";
-        msg.textContent = "Mover and outcome required for approval.";
-        row.appendChild(msg);
-      }
-    } else {
-      row.innerHTML = `
-        <span>${motion.text || "—"}</span>
-        <span>${motion.mover_name || "—"}</span>
-        <span>${motion.seconder_name || "—"}</span>
-        <span>${motion.vote_method || "—"}</span>
-        <span>${motion.outcome || "—"}</span>
-      `;
-      const actions = document.createElement("div");
-      const editBtn = document.createElement("button");
-      editBtn.className = "btn ghost";
-      editBtn.textContent = "Edit";
-      editBtn.addEventListener("click", () => startEditMotion(index));
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.className = "btn ghost";
-      deleteBtn.textContent = "Delete";
-      deleteBtn.addEventListener("click", () => deleteMotion(index));
-
-      actions.appendChild(editBtn);
-      actions.appendChild(deleteBtn);
-      row.appendChild(actions);
-      if (missingMover || missingOutcome) {
-        const msg = document.createElement("div");
-        msg.className = "row-message";
-        msg.textContent = "Mover and outcome required for approval.";
-        row.appendChild(msg);
-      }
-    }
-
-    motionsList.appendChild(row);
-  });
-
-  warnings.forEach((text) => {
-    const item = document.createElement("div");
-    item.className = "warning";
-    item.textContent = text;
-    motionWarnings.appendChild(item);
-  });
-}
-
-function renderMotionGate() {
-  if (!approvalStatus || approvalStatus.ok) {
-    motionGate.textContent = "";
-    return;
-  }
-  if (!approvalStatus.has_motions && !approvalStatus.no_motions_flag) {
-    motionGate.textContent = "Approval blocked: add a motion or set “No motions recorded.”";
-  } else {
-    motionGate.textContent = "";
-  }
-}
-
-function renderActionGate() {
-  if (!approvalStatus || approvalStatus.ok) {
-    actionGate.textContent = "";
-    return;
-  }
-  if (approvalStatus.missing_action_items?.length > 0 && !approvalStatus.no_action_items_flag) {
-    actionGate.textContent = "Approval blocked: assign owner and due date for all action items.";
-  } else {
-    actionGate.textContent = "";
-  }
-}
-
-function renderAdjournmentGate() {
-  if (!approvalStatus || approvalStatus.ok) {
-    adjournmentGate.textContent = "";
-    return;
-  }
-  if (!approvalStatus.has_adjournment_time && !approvalStatus.no_adjournment_time_flag) {
-    adjournmentGate.textContent = "Approval blocked: add adjournment time or mark it missing.";
-  } else {
-    adjournmentGate.textContent = "";
-  }
-}
-
-function renderApprovalChecklist() {
-  approvalChecklist.innerHTML = "";
-  if (!approvalStatus) return;
-
-  const items = [
-    {
-      label: "Motions recorded",
-      ok: approvalStatus.has_motions || approvalStatus.no_motions_flag
-    },
-    {
-      label: "Action items have owner + due date",
-      ok: approvalStatus.missing_action_items?.length === 0 || approvalStatus.no_action_items_flag
-    },
-    {
-      label: "Adjournment time captured",
-      ok: approvalStatus.has_adjournment_time || approvalStatus.no_adjournment_time_flag
-    }
-  ];
-
-  items.forEach((item) => {
-    const row = document.createElement("div");
-    row.className = `checklist-item ${item.ok ? "good" : "bad"}`;
-    row.innerHTML = `<strong>${item.ok ? "✓" : "!"}</strong><span>${item.label}</span>`;
-    approvalChecklist.appendChild(row);
-  });
-}
-
-function renderExportHistory(entries) {
-  exportHistory.innerHTML = "";
-  const exportsFromAudit = entries
-    .filter((entry) => entry.event_type === "MINUTES_EXPORT")
-    .map((entry) => ({
-      timestamp: entry.timestamp,
-      format: entry.details?.format ?? "export",
-      file_uri: entry.details?.file_uri ?? ""
-    }));
-  const exportsFromStorage = selectedMeetingId ? loadExportHistory(selectedMeetingId) : [];
-  let exports = mergeExports(exportsFromAudit, exportsFromStorage);
-
-  if (exportLatestOnly.checked) {
-    const latestByFormat = new Map();
-    exports.forEach((entry) => {
-      const existing = latestByFormat.get(entry.format);
-      if (!existing || new Date(entry.timestamp) > new Date(existing.timestamp)) {
-        latestByFormat.set(entry.format, entry);
-      }
-    });
-    exports = Array.from(latestByFormat.values());
-  }
-
-  if (exports.length === 0) {
-    exportHistory.textContent = "No exports yet.";
-    return;
-  }
-
-  if (exportGroup.value === "format") {
-    const byFormat = exports.reduce((acc, entry) => {
-      const format = entry.format ?? "export";
-      acc[format] = acc[format] || [];
-      acc[format].push(entry);
-      return acc;
-    }, {});
-    Object.entries(byFormat).forEach(([format, list]) => {
-      const header = document.createElement("div");
-      header.textContent = format.toUpperCase();
-      exportHistory.appendChild(header);
-      list.forEach((entry) => {
-        const line = document.createElement("div");
-        line.textContent = `${entry.timestamp} · ${entry.file_uri}`;
-        exportHistory.appendChild(line);
-      });
-    });
-    return;
-  }
-
-  exports.forEach((entry) => {
-    const line = document.createElement("div");
-    line.textContent = `${entry.timestamp} · ${entry.format.toUpperCase()} · ${entry.file_uri}`;
-    exportHistory.appendChild(line);
-  });
-}
-
-async function saveMotion() {
-  if (!selectedMeetingId) return;
-  if (!motionMover.value || !motionOutcome.value) {
-    alert("Mover and outcome are required for motions.");
-    return;
-  }
-  const motion = {
-    text: motionText.value,
-    mover_name: motionMover.value,
-    seconder_name: motionSeconder.value,
-    vote_method: motionVote.value,
-    outcome: motionOutcome.value
-  };
-  motions = [...motions, motion];
-  motions = await request(`/meetings/${selectedMeetingId}/motions`, "PUT", { motions });
-  renderMotions();
-  motionText.value = "";
-  motionMover.value = "";
-  motionSeconder.value = "";
-  motionVote.value = "";
-  motionOutcome.value = "";
-}
-
-async function startEditMotion(index) {
-  motionEditIndex = index;
-  renderMotions();
-}
-
-async function applyMotionEdit(index, updates) {
-  if (!selectedMeetingId) return;
-  if (!updates.mover_name || !updates.outcome) {
-    alert("Mover and outcome are required for motions.");
-    return;
-  }
-  motions = motions.map((motion, i) =>
-    i === index
-      ? {
-          ...motion,
-          ...updates
-        }
-      : motion
-  );
-  motions = await request(`/meetings/${selectedMeetingId}/motions`, "PUT", { motions });
-  motionEditIndex = null;
-  renderMotions();
-}
-
-async function deleteMotion(index) {
-  if (!selectedMeetingId) return;
-  if (currentRole === "viewer") return;
-  if (!confirm("Delete this motion?")) return;
-  motions = motions.filter((_, i) => i !== index);
-  motions = await request(`/meetings/${selectedMeetingId}/motions`, "PUT", { motions });
-  renderMotions();
-}
-
-async function exportMinutes(format) {
-  if (!selectedMeetingId) return;
-  const result = await request(`/meetings/${selectedMeetingId}/export`, "POST", { format });
-  if (result?.error) {
-    exportResults.textContent = `Export failed: ${result.error}`;
-    return;
-  }
-  const line = document.createElement("div");
-  line.textContent = `${format.toUpperCase()} export ready: ${result.file_uri}`;
-  exportResults.appendChild(line);
-  persistExportHistory(selectedMeetingId, {
-    timestamp: new Date().toISOString(),
-    format,
-    file_uri: result.file_uri
-  });
-  const audit = (await request(`/meetings/${selectedMeetingId}/audit-log`, "GET")) ?? [];
-  renderExportHistory(audit);
-  showToast(`${format.toUpperCase()} export ready.`);
-}
-
-function downloadMinutesMd() {
-  const content = minutesContent.value || "";
-  const blob = new Blob([content], { type: "text/markdown" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `minutes-${selectedMeetingId ?? "meeting"}.md`;
-  link.click();
-  showToast("Minutes markdown downloaded.");
-}
-
-async function updateActionItem(index, description, owner, dueDate) {
-  if (!selectedMeetingId) return;
-  if (currentRole === "viewer") return;
-  actionItems = actionItems.map((item, i) =>
-    i === index
-      ? {
-          ...item,
-          description,
-          owner_name: owner,
-          due_date: dueDate
-        }
-      : item
-  );
-  actionItems = await request(`/meetings/${selectedMeetingId}/action-items`, "PUT", { items: actionItems });
-  renderActionItems();
-}
-
-async function deleteActionItem(index) {
-  if (!selectedMeetingId) return;
-  if (currentRole === "viewer") return;
-  if (!confirm("Delete this action item?")) return;
-  actionItems = actionItems.filter((_, i) => i !== index);
-  actionItems = await request(`/meetings/${selectedMeetingId}/action-items`, "PUT", { items: actionItems });
-  renderActionItems();
-}
-
-function renderApprovalWarnings(details) {
-  approvalWarnings.innerHTML = "";
-  const warnings = [];
-
-  if (!details.has_motions && !details.no_motions_flag) {
-    warnings.push("Approval blocked: add a motion or set “No motions.”");
-  }
-  if (details.missing_action_items?.length > 0 && !details.no_action_items_flag) {
-    warnings.push("Approval blocked: action items need owner + due date.");
-  }
-  if (!details.has_adjournment_time && !details.no_adjournment_time_flag) {
-    warnings.push("Approval blocked: add adjournment time or mark it missing.");
-  }
-
-  if (warnings.length === 0) {
-    clearApprovalWarnings();
-    return;
-  }
-
-  warnings.forEach((text) => {
-    const item = document.createElement("div");
-    item.className = "warning";
-    item.textContent = text;
-    approvalWarnings.appendChild(item);
-  });
-}
-
-function clearApprovalWarnings() {
-  approvalWarnings.innerHTML = "";
-}
-
-async function authHeaders() {
-  const headers = {};
-  const email = localStorage.getItem("camEmail");
-  if (email) headers["x-demo-email"] = email;
-  if (firebaseUser) {
-    try {
-      const token = await firebaseUser.getIdToken();
-      headers.Authorization = `Bearer ${token}`;
-      return headers;
-    } catch (error) {
-      console.error("Failed to get Firebase token", error);
-    }
-  }
-  const role = localStorage.getItem("camRole");
-  const isLocalDevHost =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-  if (isLocalDevHost && role && role !== "guest") {
-    headers.Authorization = "Bearer demo-token";
-  } else if (!firebaseUser && role && role !== "guest") {
-    console.warn("Google auth session missing; not sending demo token in hosted mode.");
-  }
-  return headers;
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function request(path, method, payload, options = {}) {
-  const retries = Number(options.retries ?? 0);
-  const retryDelayMs = Number(options.retryDelayMs ?? 350);
-  const suppressAlert = Boolean(options.suppressAlert);
-  const base = apiBaseInput.value.trim() || "http://localhost:4000";
-  for (let attempt = 0; attempt <= retries; attempt += 1) {
-    try {
-      const response = await fetch(`${base}${path}`, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          ...(await authHeaders())
-        },
-        body: payload ? JSON.stringify(payload) : undefined
-      });
-      const text = await response.text();
-      if (!text) return null;
-
-      const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.includes("application/json")) {
-        return { error: `Unexpected response content-type: ${contentType || "unknown"}` };
-      }
-
-      const data = JSON.parse(text);
-      if (!response.ok) {
-        return data?.error ? data : { error: `HTTP ${response.status}` };
-      }
-      return data;
-    } catch (error) {
-      if (attempt < retries) {
-        await sleep(retryDelayMs * (attempt + 1));
-        continue;
-      }
-      if (!suppressAlert) {
-        console.error(error);
-      }
-      if (!suppressAlert) {
-        showToast("API request failed. Check API base and console.");
-        alert("API request failed. Check API base and console.");
-      }
-      return null;
-    }
-  }
-}
-
-async function initFirebaseAuth() {
-  const config = window.CHAMBERAI_FIREBASE_CONFIG;
-  if (!config || !config.apiKey || config.apiKey === "REPLACE_ME") return;
-
-  try {
-    const [{ initializeApp }, authModule] = await Promise.all([
-      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
-      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js")
-    ]);
-
-    const app = initializeApp(config);
-    firebaseAuth = authModule.getAuth(app);
-    googleProvider = new authModule.GoogleAuthProvider();
-    googleProvider.setCustomParameters({ prompt: "select_account" });
-    signInWithPopupFn = authModule.signInWithPopup;
-    signOutFn = authModule.signOut;
-
-    authModule.onAuthStateChanged(firebaseAuth, (user) => {
-      firebaseUser = user;
-      updateAuthCycleStatus();
-      if (!user) return;
-      const role = localStorage.getItem("camRole") || loginRole.value || "secretary";
-      const email = user.email || localStorage.getItem("camEmail") || "user@example.com";
-      const displayName = user.displayName || localStorage.getItem("camDisplayName") || "";
-      localStorage.setItem("camRole", role);
-      localStorage.setItem("camEmail", email);
-      localStorage.setItem("camDisplayName", displayName);
-      setRole(role, email, displayName);
-      closeModal(loginModal, { restoreFocus: false });
-    });
-  } catch (error) {
-    console.error("Firebase auth init failed", error);
-  }
-}
-
-initFirebaseAuth();
-
-function updateAuthCycleStatus() {
-  if (!authCycleStatus) return;
-  if (firebaseUser?.email) {
-    authCycleStatus.textContent = `Auth: Google connected (${firebaseUser.email})`;
-    return;
-  }
-  const role = localStorage.getItem("camRole");
-  if (role && role !== "guest") {
-    authCycleStatus.textContent = "Auth: local/demo session";
-    return;
-  }
-  authCycleStatus.textContent = "Auth: not connected";
-}
-
-async function runAdvancedSearch() {
-  const term = advancedSearchQuery.value.trim();
-  if (!term) {
-    await loadMeetings();
-    return;
-  }
-  const results = await request(`/search/meetings?q=${encodeURIComponent(term)}`, "GET");
-  if (!Array.isArray(results)) {
-    showToast("Advanced search failed.");
-    return;
-  }
-  meetings = results;
-  activeTagFilter = "";
-  searchQuery = "";
-  statusQuery = "";
-  recentDays = "";
-  tagFilter.value = "";
-  meetingSearch.value = "";
-  statusFilter.value = "";
-  recentFilter.value = "";
-  refreshTagFilter();
-  renderMeetings();
-}
-
-function syncSettingsFromApi(options = {}) {
-  const startup = Boolean(options.startup);
-  const requestOptions = startup
-    ? { suppressAlert: true, retries: 4, retryDelayMs: 500 }
-    : undefined;
-  const runVersion = ++settingsSyncVersion;
-  return loadSettings((path, method, payload) => request(path, method, payload, requestOptions)).then((settings) => {
-    if (runVersion !== settingsSyncVersion) return;
-    if (!settings || settings.error) return;
-    settingRetention.value = settings.retentionDays ?? 60;
-    settingMaxSize.value = settings.maxFileSizeMb ?? 500;
-    settingMaxDuration.value = settings.maxDurationSeconds ?? 14400;
-    featureFlags = { ...defaultFlags(), ...(settings.featureFlags ?? {}) };
-    renderFeatureFlags();
-    settingsStatus.classList.add("hidden");
-  });
-}
-
-function renderAuthorizedSenders() {
-  if (!Array.isArray(inviteAuthorizedSenders) || inviteAuthorizedSenders.length === 0) {
-    inviteAuthorizedList.textContent = "No authorized senders yet.";
-    return;
-  }
-  inviteAuthorizedList.textContent = `Authorized senders: ${inviteAuthorizedSenders.join(", ")}`;
-}
-
-async function loadInviteWorkspace() {
-  if (!(currentRole === "admin" || currentRole === "secretary")) {
-    inviteAuthorizedSenders = [];
-    renderAuthorizedSenders();
-    inviteStatus.textContent = "Invite tools require admin or secretary role.";
-    return;
-  }
-  const response = await request("/invites/authorized-senders", "GET", null, { suppressAlert: true });
-  if (!response || response.error) {
-    inviteStatus.textContent = `Invite config unavailable: ${response?.error ?? "unknown error"}`;
-    return;
-  }
-  inviteAuthorizedSenders = Array.isArray(response.authorizedSenders) ? response.authorizedSenders : [];
-  inviteStatus.textContent = "";
-  renderAuthorizedSenders();
-}
-
-function applyMotionConfigToForm() {
-  const cfg = motionConfig ?? {};
-  motionEnabled.checked = Boolean(cfg.enabled);
-  motionWorkspaceId.value = cfg.workspaceId ?? "";
-  motionProjectId.value = cfg.defaultProjectId ?? "";
-  motionLinkTemplate.value = cfg.defaultLinkTemplate ?? "";
-  updateInviteMotionSource();
-}
-
-function updateInviteMotionSource() {
-  const manualLink = inviteMotionLink.value.trim();
-  const template = motionConfig?.defaultLinkTemplate ?? "";
-  if (manualLink) {
-    inviteMotionSource.textContent = "Motion link source: manual link for this invite.";
-    return;
-  }
-  if (template) {
-    inviteMotionSource.textContent = "Motion link source: chamber default template.";
-    return;
-  }
-  inviteMotionSource.textContent = "Motion link source: none configured.";
-}
-
-async function loadMotionConfig() {
-  if (!(currentRole === "admin" || currentRole === "secretary")) {
-    motionStatus.textContent = "Motion config requires admin or secretary role.";
-    motionConfig = null;
-    applyMotionConfigToForm();
-    return;
-  }
-  const response = await request("/integrations/motion/config", "GET", null, { suppressAlert: true });
-  if (!response || response.error) {
-    motionStatus.textContent = `Motion config unavailable: ${response?.error ?? "unknown error"}`;
-    return;
-  }
-  motionConfig = response;
-  applyMotionConfigToForm();
-  if (response.hasApiKey) {
-    motionStatus.textContent = "Motion API key is configured.";
-  } else {
-    motionStatus.textContent = "Set Motion API key to enable API operations.";
-  }
-}
-
-function buildGeoPayload() {
-  const scopeType = geoScopeType.value;
-  const scopeId = geoScopeId.value.trim();
-  if (!scopeId) {
-    setGeoStatus("Scope ID is required (ZIP, city, or town).", "error");
-    return null;
-  }
-  const existingDetails = geoExistingDetails.value
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  return {
-    scopeType,
-    scopeId,
-    existingDetails
-  };
-}
-
-async function loadGeoWorkspace(options = {}) {
-  const suppressAlert = Boolean(options.suppressAlert);
-  const query = buildGeoQuery();
-  const reqOptions = { suppressAlert };
-  const [profilesRes, briefsRes] = await Promise.all([
-    request(`/geo-profiles${query}`, "GET", undefined, reqOptions),
-    request(`/geo-content-briefs${query}`, "GET", undefined, reqOptions)
-  ]);
-
-  geoProfiles = Array.isArray(profilesRes)
-    ? profilesRes
-    : Array.isArray(profilesRes?.items)
-      ? profilesRes.items
-      : [];
-  geoBriefs = Array.isArray(briefsRes)
-    ? briefsRes
-    : Array.isArray(briefsRes?.items)
-      ? briefsRes.items
-      : [];
-  renderGeoProfile(geoProfiles[0] ?? null);
-  renderGeoBrief(geoBriefs[0] ?? null);
-  renderGeoBriefList(geoBriefs);
-  if (geoProfiles.length === 0 && geoBriefs.length === 0) {
-    setGeoStatus("No geo data yet for this scope. Run scan or generate.", "ready");
-  } else {
-    setGeoStatus(
-      `Loaded ${geoProfiles.length} profile(s) and ${geoBriefs.length} brief(s) for current scope.`,
-      "ready"
-    );
-  }
-}
-
-function buildGeoQuery() {
-  const params = new URLSearchParams();
-  const scopeType = geoScopeType.value;
-  const scopeId = geoScopeId.value.trim();
-  params.set("limit", "25");
-  params.set("offset", "0");
-  if (scopeType) params.set("scopeType", scopeType);
-  if (scopeId) params.set("scopeId", scopeId);
-  const query = params.toString();
-  return query ? `?${query}` : "";
-}
-
-function renderGeoProfile(profile) {
-  if (!profile) {
-    geoProfileResult.textContent = "No geo profile yet for this scope.";
-    return;
-  }
-  const topTags = (profile.signals?.top_tags ?? []).join(", ") || "none";
-  const gaps = (profile.demand_gap_tags ?? []).join(", ") || "none";
-  geoProfileResult.innerHTML = `
-    <div><strong>Scope:</strong> ${profile.scope_type}:${profile.scope_id}</div>
-    <div><strong>Density:</strong> ${profile.business_density_score}/100</div>
-    <div><strong>AI Readiness:</strong> ${profile.ai_readiness_score}/100</div>
-    <div><strong>Top Tags:</strong> ${topTags}</div>
-    <div><strong>Demand Gaps:</strong> ${gaps}</div>
-  `;
-}
-
-function renderGeoBrief(brief) {
-  if (!brief) {
-    geoBriefResult.textContent = "No generated brief yet for this scope.";
-    return;
-  }
-  const useCases = (brief.top_use_cases ?? []).join(", ");
-  geoBriefResult.innerHTML = `
-    <div><strong>Summary:</strong> ${brief.opportunity_summary}</div>
-    <div><strong>Top Use Cases:</strong> ${useCases}</div>
-    <div><strong>Outreach:</strong> ${brief.outreach_draft}</div>
-  `;
-}
-
-function renderGeoBriefList(briefs) {
-  if (!Array.isArray(briefs) || briefs.length === 0) {
-    geoBriefList.textContent = "No brief history yet.";
-    return;
-  }
-  geoBriefList.innerHTML = "";
-  briefs.slice(0, 5).forEach((brief) => {
-    const line = document.createElement("div");
-    line.className = "geo-brief-line";
-    const timestamp = new Date(brief.generated_at).toLocaleString();
-    line.textContent = `${timestamp} · ${brief.scope_type}:${brief.scope_id} · ${brief.top_use_cases.join(", ")}`;
-    geoBriefList.appendChild(line);
-  });
-}
-
-function setGeoStatus(message, state = "ready") {
-  geoStatus.textContent = message;
-  geoStatus.classList.remove("loading", "error");
-  if (state === "loading") geoStatus.classList.add("loading");
-  if (state === "error") geoStatus.classList.add("error");
-}
-
-renderFeatureFlags();
-void startApp();
-
-function refreshTagFilter() {
-  const tags = new Set();
-  meetings.forEach((meeting) => {
-    (meeting.tags ?? []).forEach((tag) => tags.add(tag));
-  });
-  const current = tagFilter.value;
-  tagFilter.innerHTML = "<option value=\"\">All</option>";
-  Array.from(tags)
-    .sort()
-    .forEach((tag) => {
-      const option = document.createElement("option");
-      option.value = tag;
-      option.textContent = tag;
-      tagFilter.appendChild(option);
-    });
-  tagFilter.value = tags.has(current) ? current : "";
-  activeTagFilter = tagFilter.value;
-  meetingSearch.value = searchQuery;
-  statusFilter.value = statusQuery;
-  recentFilter.value = recentDays;
-  renderTagChips(Array.from(tags).sort());
-}
-
-function renderTagChips(tags) {
-  tagChips.innerHTML = "";
-  if (tags.length === 0) return;
-  const allChip = document.createElement("button");
-  allChip.type = "button";
-  allChip.className = `tag-chip${activeTagFilter === "" ? " active" : ""}`;
-  allChip.textContent = "All";
-  allChip.addEventListener("click", () => {
-    activeTagFilter = "";
-    tagFilter.value = "";
-    renderMeetings();
-    renderTagChips(tags);
-  });
-  tagChips.appendChild(allChip);
-  tags.forEach((tag) => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = `tag-chip${activeTagFilter === tag ? " active" : ""}`;
-    chip.textContent = tag;
-    chip.addEventListener("click", () => {
-      activeTagFilter = activeTagFilter === tag ? "" : tag;
-      tagFilter.value = activeTagFilter;
-      renderMeetings();
-      renderTagChips(tags);
-    });
-    tagChips.appendChild(chip);
-  });
-}
-
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.remove("hidden");
-  clearTimeout(showToast.timeout);
-  showToast.timeout = setTimeout(() => {
-    toast.classList.add("hidden");
-  }, 2200);
-}
-
-function composePublicSummaryText() {
-  const title = publicSummaryTitle.value.trim();
-  const parts = [
-    title ? `${title}` : "",
-    publicSummaryHighlights.value,
-    publicSummaryImpact.value,
-    publicSummaryMotions.value,
-    publicSummaryActions.value,
-    publicSummaryAttendance.value,
-    publicSummaryCTA.value,
-    publicSummaryNotes.value
-  ]
-    .map((text) => text.trim())
-    .filter(Boolean);
-  return parts.join("\\n\\n");
-}
-
-function collectPublicSummaryPayload() {
-  return {
-    content: publicSummaryContent.value,
-    fields: {
-      title: publicSummaryTitle.value,
-      highlights: publicSummaryHighlights.value,
-      impact: publicSummaryImpact.value,
-      motions: publicSummaryMotions.value,
-      actions: publicSummaryActions.value,
-      attendance: publicSummaryAttendance.value,
-      call_to_action: publicSummaryCTA.value,
-      notes: publicSummaryNotes.value
-    },
-    checklist: {
-      no_confidential: summaryNoConfidential.checked,
-      names_approved: summaryNamesApproved.checked,
-      motions_reviewed: summaryMotionsReviewed.checked,
-      actions_reviewed: summaryActionsReviewed.checked,
-      chair_approved: summaryChairApproved.checked
-    }
-  };
-}
-
-function applyPublicSummary(summary, options = {}) {
-  const force = Boolean(options.force);
-  if (summaryUserEditing && !force) return;
-  publicSummaryTitle.value = summary?.fields?.title ?? "";
-  publicSummaryHighlights.value = summary?.fields?.highlights ?? "";
-  publicSummaryImpact.value = summary?.fields?.impact ?? "";
-  publicSummaryMotions.value = summary?.fields?.motions ?? "";
-  publicSummaryActions.value = summary?.fields?.actions ?? "";
-  publicSummaryAttendance.value = summary?.fields?.attendance ?? "";
-  publicSummaryCTA.value = summary?.fields?.call_to_action ?? "";
-  publicSummaryNotes.value = summary?.fields?.notes ?? "";
-  publicSummaryContent.value = summary?.content ?? "";
-  summaryNoConfidential.checked = Boolean(summary?.checklist?.no_confidential);
-  summaryNamesApproved.checked = Boolean(summary?.checklist?.names_approved);
-  summaryMotionsReviewed.checked = Boolean(summary?.checklist?.motions_reviewed);
-  summaryActionsReviewed.checked = Boolean(summary?.checklist?.actions_reviewed);
-  summaryChairApproved.checked = Boolean(summary?.checklist?.chair_approved);
-  const publishedLabel = formatSummaryTimestamp(summary?.published_at);
-  if (publishedLabel) {
-    const published = publishedLabel;
-    publicSummaryPublishStatus.textContent = `Published ${published} by ${summary.published_by ?? "user"}.`;
-  } else {
-    publicSummaryPublishStatus.textContent = "Not published yet.";
-  }
-  summaryUserEditing = false;
-  updatePublicSummaryReady();
-}
-
-function formatSummaryTimestamp(value) {
-  if (!value) return "";
-  if (typeof value === "string") {
-    const date = new Date(value);
-    return Number.isNaN(date.valueOf()) ? "" : date.toLocaleString();
-  }
-  if (typeof value.toDate === "function") {
-    return value.toDate().toLocaleString();
-  }
-  if (typeof value === "object" && typeof value.seconds === "number") {
-    return new Date(value.seconds * 1000).toLocaleString();
-  }
-  return "";
-}
-
-function updatePublicSummaryReady() {
-  const ready = isPublicSummaryReady();
-  publicSummaryReady.textContent = ready
-    ? "Publish readiness: complete."
-    : "Publish readiness: incomplete.";
-  publicSummaryReady.classList.toggle("ready", ready);
-  publishPublicSummary.disabled = !ready;
-}
-
-function isPublicSummaryReady() {
-  return (
-    summaryNoConfidential.checked &&
-    summaryNamesApproved.checked &&
-    summaryMotionsReviewed.checked &&
-    summaryActionsReviewed.checked &&
-    summaryChairApproved.checked
-  );
-}
-
-function renderFeatureFlags() {
-  featureFlagsEl.innerHTML = "";
-  FEATURE_FLAGS.forEach((flag) => {
-    const label = document.createElement("label");
-    label.className = "check";
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.checked = Boolean(featureFlags[flag.key]);
-    input.dataset.flag = flag.key;
-    label.appendChild(input);
-    label.appendChild(document.createTextNode(flag.label));
-    featureFlagsEl.appendChild(label);
-  });
-  const hidePublicSummary = !featureFlags.public_summary;
-  const hideInviteTools = !featureFlags.integrations_email;
-  publicSummaryTab.classList.toggle("hidden", hidePublicSummary);
-  settingsInviteDisclosure.classList.toggle("hidden", hideInviteTools);
-  settingsMotionDisclosure.classList.toggle("hidden", hideInviteTools);
-  if (hidePublicSummary && publicSummaryTab.getAttribute("aria-selected") === "true") {
-    activateTabByKey("minutes");
-  }
-}
-
-function collectFeatureFlags() {
-  const flags = { ...defaultFlags() };
-  featureFlagsEl.querySelectorAll("input[data-flag]").forEach((input) => {
-    flags[input.dataset.flag] = input.checked;
-  });
-  featureFlags = flags;
-  return flags;
-}
-
-function showSettingsBanner(message, variant) {
-  settingsStatus.textContent = message;
-  settingsStatus.classList.remove("hidden", "success", "error");
-  settingsStatus.classList.add(variant);
-}
-
-function setRole(role, email, displayName = "") {
-  currentRole = role;
-  const identity = displayName || email || "user";
-  roleBadge.textContent = `Role: ${role} · ${identity}`;
-  loginEmail.value = email;
-  loginRole.value = role;
-  closeModal(loginModal, { restoreFocus: false });
-  applyRolePermissions(role);
-  loadInviteWorkspace();
-  loadMotionConfig();
-}
-
-function applyRolePermissions(role) {
-  const isViewer = role === "viewer" || role === "guest" || !role;
-  const controls = [
-    createBtn,
-    quickCreateBtn,
-    seedDemoBtn,
-    saveMetaBtn,
-    registerAudioBtn,
-    processBtn,
-    approveBtn,
-    saveMinutesBtn,
-    addActionBtn,
-    addMotionBtn,
-    importActionCsv,
-    csvApply,
-    saveAdjournmentFlag,
-    saveSettingsBtn,
-    quickSubmit,
-    inviteSendBtn,
-    inviteRefreshBtn,
-    motionSaveBtn,
-    motionTestBtn,
-    geoScanBtn,
-    geoGenerateBtn
-  ];
-  controls.forEach((control) => {
-    if (!control) return;
-    control.disabled = isViewer;
-  });
-  if (inviteAuthorizeSender) {
-    inviteAuthorizeSender.disabled = role !== "admin";
-  }
-
-  [
-    "newDate",
-    "newStart",
-    "newLocation",
-    "newChair",
-    "newSecretary",
-    "newTags",
-    "metaEndTime",
-    "metaTags",
-    "flagNoMotions",
-    "flagNoActionItems",
-    "flagNoAdjournment",
-    "flagNoAdjournmentInline",
-    "actionDescription",
-    "actionOwner",
-    "actionDue",
-    "motionText",
-    "motionMover",
-    "motionSeconder",
-    "motionVote",
-    "motionOutcome",
-    "settingRetention",
-    "settingMaxSize",
-    "settingMaxDuration",
-    "inviteAuthorizedEmail",
-    "inviteRecipientEmail",
-    "inviteMeetingTitle",
-    "inviteMotionLink",
-    "inviteJoinLink",
-    "inviteNote",
-    "motionEnabled",
-    "motionApiKey",
-    "motionWorkspaceId",
-    "motionProjectId",
-    "motionLinkTemplate",
-    "geoScopeType",
-    "geoScopeId",
-    "geoExistingDetails"
-  ].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = isViewer;
-  });
-
-  document.body.classList.toggle("readonly", isViewer);
-}
-
-function validateSettings(settings) {
-  if (settings.retentionDays < 1 || settings.retentionDays > 365) {
-    return { ok: false, message: "Retention days must be between 1 and 365." };
-  }
-  if (settings.maxFileSizeMb < 1 || settings.maxFileSizeMb > 1024) {
-    return { ok: false, message: "Max file size must be between 1 and 1024 MB." };
-  }
-  if (settings.maxDurationSeconds < 300 || settings.maxDurationSeconds > 21600) {
-    return { ok: false, message: "Max duration must be between 300 and 21600 seconds." };
-  }
-  return { ok: true, message: "" };
-}
-
-function parseActionCsv(csvText) {
-  const lines = csvText.trim().split(/\r?\n/).filter(Boolean);
-  if (lines.length === 0) {
-    return { ok: false, error: "CSV is empty." };
-  }
-  const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
-  const required = ["description", "owner_name", "due_date", "status"];
-  const missing = required.filter((field) => !header.includes(field));
-  if (missing.length > 0) {
-    return { ok: false, error: `Missing columns: ${missing.join(", ")}` };
-  }
-  const idx = Object.fromEntries(header.map((h, i) => [h, i]));
-
-  const items = lines.slice(1).map((line) => {
-    const values = splitCsvLine(line);
-    return {
-      description: values[idx.description] ?? "",
-      owner_name: values[idx.owner_name] ?? "",
-      due_date: values[idx.due_date] ?? "",
-      status: values[idx.status] ?? "OPEN"
-    };
-  });
-  return { ok: true, items };
-}
-
-function renderCsvPreview(items) {
-  csvPreviewTable.innerHTML = "";
-  const header = document.createElement("div");
-  header.className = "preview-row header";
-  header.innerHTML = "<span>Description</span><span>Owner</span><span>Due Date</span><span>Status</span>";
-  csvPreviewTable.appendChild(header);
-
-  const invalidCount = items.filter((item) => !item.owner_name || !item.due_date).length;
-  if (invalidCount > 0) {
-    csvPreviewNote.textContent = `${invalidCount} row(s) missing owner or due date.`;
-  } else {
-    csvPreviewNote.textContent = "All rows look valid.";
-  }
-
-  items.slice(0, 20).forEach((item) => {
-    const row = document.createElement("div");
-    const missing = !item.owner_name || !item.due_date;
-    row.className = `preview-row${missing ? " invalid" : ""}`;
-    row.innerHTML = `<span>${item.description || "—"}</span><span>${item.owner_name || "—"}</span><span>${item.due_date || "—"}</span><span>${item.status || "—"}</span>`;
-    csvPreviewTable.appendChild(row);
-  });
-}
-
-function splitCsvLine(line) {
-  const values = [];
-  let current = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
-    if (char === "\"" && line[i + 1] === "\"") {
-      current += "\"";
-      i += 1;
-      continue;
-    }
-    if (char === "\"") {
-      inQuotes = !inQuotes;
-      continue;
-    }
-    if (char === "," && !inQuotes) {
-      values.push(current);
-      current = "";
-      continue;
-    }
-    current += char;
-  }
-  values.push(current);
-  return values.map((value) => value.trim());
-}
-
-async function saveMinutesDraft(options = {}) {
-  if (!selectedMeetingId) return;
-  const silent = Boolean(options.silent);
-  const result = await request(`/meetings/${selectedMeetingId}/draft-minutes`, "PUT", {
-    content: minutesContent.value,
-    base_version: currentMinutesVersion
-  }, { suppressAlert: silent });
-  if (!result || result.error) {
-    if (result?.current_version !== undefined) {
-      currentMinutesVersion = Number(result.current_version);
-      minutesContent.value = result.current_content ?? "";
-      collabStatus.textContent = "Conflict detected. Loaded latest draft.";
-      if (!silent) alert("Draft conflict detected. Latest content has been loaded.");
-      await renderVersionHistory(selectedMeetingId);
-      return;
-    }
-    collabStatus.textContent = "Draft save failed.";
-    return;
-  }
-  currentMinutesVersion = Number(result.minutes_version ?? currentMinutesVersion);
-  collabStatus.textContent = silent ? "Draft auto-saved." : "Draft saved.";
-  await renderVersionHistory(selectedMeetingId);
-}
-
-function startMinutesSync(meetingId) {
-  if (minutesSyncTimer) clearInterval(minutesSyncTimer);
-  if (!meetingId) return;
-  minutesSyncTimer = setInterval(async () => {
-    if (!selectedMeetingId || selectedMeetingId !== meetingId) return;
-    const remote = await request(`/meetings/${meetingId}/draft-minutes`, "GET", undefined, { suppressAlert: true });
-    if (!remote || remote.error) return;
-    const remoteVersion = Number(remote.minutes_version ?? 0);
-    if (remoteVersion > currentMinutesVersion) {
-      currentMinutesVersion = remoteVersion;
-      minutesContent.value = remote.content ?? "";
-      collabStatus.textContent = "Synced from server.";
-      await renderVersionHistory(meetingId);
-    }
-  }, 2000);
-}
-
-async function renderVersionHistory(meetingId) {
-  versionHistoryList.innerHTML = "";
-  const response = await request(
-    `/meetings/${meetingId}/draft-minutes/versions?limit=${versionHistoryLimit}&offset=${versionHistoryOffset}`,
-    "GET",
-    undefined,
-    { suppressAlert: true }
-  );
-  const rawVersions = Array.isArray(response) ? response : response?.items ?? [];
-  let versions = rawVersions;
-  if (Array.isArray(response)) {
-    versionHistoryTotal = rawVersions.length;
-    const start = versionHistoryOffset;
-    const end = versionHistoryOffset + versionHistoryLimit;
-    versions = rawVersions.slice(start, end);
-    versionHistoryHasMore = end < versionHistoryTotal;
-  } else {
-    versionHistoryHasMore = Boolean(response?.has_more);
-    versionHistoryTotal = Number(response?.total ?? rawVersions.length ?? 0);
-  }
-  versionHistoryPrev.disabled = versionHistoryOffset <= 0;
-  versionHistoryNext.disabled = !versionHistoryHasMore;
-  const totalPages = Math.max(1, Math.ceil(versionHistoryTotal / versionHistoryLimit));
-  const currentPage = Math.min(Math.floor(versionHistoryOffset / versionHistoryLimit) + 1, totalPages);
-  versionHistoryPage.textContent = `Page ${currentPage}/${totalPages}`;
-  if (!Array.isArray(versions) || versions.length === 0) {
-    versionHistoryList.textContent = "No saved versions yet.";
-    return;
-  }
-
-  versions.forEach((version) => {
-    const row = document.createElement("div");
-    row.className = "version-item";
-    const preview = (version.content ?? "").slice(0, 64).replace(/\s+/g, " ").trim() || "(empty)";
-    const meta = document.createElement("div");
-    meta.className = "version-meta";
-    meta.textContent = `v${version.version} · ${preview}`;
-    const rollbackBtn = document.createElement("button");
-    rollbackBtn.className = "btn ghost";
-    rollbackBtn.type = "button";
-    rollbackBtn.dataset.version = String(version.version);
-    rollbackBtn.textContent = "Rollback";
-    rollbackBtn.addEventListener("click", async () => {
-      if (!selectedMeetingId) return;
-      const rollback = await request(`/meetings/${selectedMeetingId}/draft-minutes/rollback`, "POST", {
-        version: version.version
-      });
-      if (rollback?.error) {
-        collabStatus.textContent = `Rollback failed: ${rollback.error}`;
-        return;
-      }
-      currentMinutesVersion = Number(rollback.minutes_version ?? currentMinutesVersion);
-      minutesContent.value = rollback.content ?? "";
-      collabStatus.textContent = "Rolled back to selected version.";
-      showToast("Minutes rolled back.");
-      await renderVersionHistory(selectedMeetingId);
-    });
-    row.appendChild(meta);
-    row.appendChild(rollbackBtn);
-    versionHistoryList.appendChild(row);
-  });
-}
-
-versionHistoryPrev.addEventListener("click", async () => {
-  if (!selectedMeetingId || versionHistoryOffset <= 0) return;
-  versionHistoryOffset = Math.max(versionHistoryOffset - versionHistoryLimit, 0);
-  await renderVersionHistory(selectedMeetingId);
-});
-
-versionHistoryNext.addEventListener("click", async () => {
-  if (!selectedMeetingId || !versionHistoryHasMore) return;
-  const nextOffset = versionHistoryOffset + versionHistoryLimit;
-  if (versionHistoryTotal > 0 && nextOffset >= versionHistoryTotal) {
-    versionHistoryHasMore = false;
-    versionHistoryNext.disabled = true;
-    return;
-  }
-  versionHistoryOffset += versionHistoryLimit;
-  await renderVersionHistory(selectedMeetingId);
-});
-
-async function startApp() {
-  if (startupRetriesInProgress) return;
-  startupRetriesInProgress = true;
-  const startupRequestOptions = { suppressAlert: true, retries: 4, retryDelayMs: 500 };
-  const [meetingsResult] = await Promise.all([
-    loadMeetings(startupRequestOptions),
-    syncSettingsFromApi({ startup: true }),
-    loadInviteWorkspace(),
-    loadMotionConfig(),
-    loadGeoWorkspace({ suppressAlert: true })
-  ]);
-  if (!meetingsResult) {
-    showToast("API is warming up. Retry when services are ready.");
-  }
-  startupRetriesInProgress = false;
-}
-
-function getExportStorageKey(meetingId) {
-  return `camExportHistory:${meetingId}`;
-}
-
-function loadExportHistory(meetingId) {
-  const raw = localStorage.getItem(getExportStorageKey(meetingId));
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistExportHistory(meetingId, entry) {
-  const existing = loadExportHistory(meetingId);
-  existing.push(entry);
-  localStorage.setItem(getExportStorageKey(meetingId), JSON.stringify(existing));
-}
-
-function mergeExports(auditExports, storedExports) {
-  const merged = new Map();
-  [...auditExports, ...storedExports].forEach((entry) => {
-    const key = `${entry.format}|${entry.file_uri}|${entry.timestamp}`;
-    merged.set(key, entry);
-  });
-  return Array.from(merged.values());
-}
-
-function updateSelectedFile(file) {
-  selectedFile = file;
-  fileInput.value = "";
-
-  if (!file) {
-    fileMeta.textContent = "No file selected.";
-    fileHint.textContent = "Max 500MB. Supported: mp3, wav.";
-    fileHint.classList.remove("error");
-    return;
-  }
-
-  const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-  fileMeta.textContent = `${file.name} · ${sizeMb} MB`;
-
-  const errorMessage = fileValidationMessage(file);
-  if (errorMessage) {
-    fileHint.textContent = errorMessage;
-    fileHint.classList.add("error");
-  } else {
-    fileHint.textContent = "Ready to register. Duration is required for the mock API.";
-    fileHint.classList.remove("error");
-  }
-}
-
-function fileValidationMessage(file) {
-  const allowed = [".mp3", ".wav"];
-  const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-  if (!allowed.includes(ext)) {
-    return "Unsupported file type. Use .mp3 or .wav.";
-  }
-  const maxSizeMb = 500;
-  const sizeMb = file.size / (1024 * 1024);
-  if (sizeMb > maxSizeMb) {
-    return `File too large (${sizeMb.toFixed(1)} MB). Max is ${maxSizeMb} MB.`;
-  }
-  return null;
-}
-
-function hasFileErrors(file) {
-  return Boolean(fileValidationMessage(file));
-}
-
-// ============================================================================
-// BUSINESS HUB: View Switching
-// ============================================================================
-
-const viewMeetingsBtn = document.getElementById("viewMeetingsBtn");
-const viewBusinessHubBtn = document.getElementById("viewBusinessHubBtn");
-const meetingsView = document.getElementById("meetingsView");
-const businessHubView = document.getElementById("businessHubView");
-
-function switchView(view) {
-  const isBiz = view === "business";
-  meetingsView.classList.toggle("hidden", isBiz);
-  businessHubView.classList.toggle("hidden", !isBiz);
-  viewMeetingsBtn.classList.toggle("active", !isBiz);
-  viewMeetingsBtn.setAttribute("aria-pressed", isBiz ? "false" : "true");
-  viewBusinessHubBtn.classList.toggle("active", isBiz);
-  viewBusinessHubBtn.setAttribute("aria-pressed", isBiz ? "true" : "false");
-}
-
-viewMeetingsBtn.addEventListener("click", () => switchView("meetings"));
-viewBusinessHubBtn.addEventListener("click", () => switchView("business"));
-
-// ============================================================================
-// BUSINESS HUB: Tab System
-// ============================================================================
-
-const bizTabs = Array.from(document.querySelectorAll("#bizTabBar .tab[role='tab']"));
-const bizTabPanelsByKey = {
-  "biz-profile": document.getElementById("biz-tab-profile"),
-  "biz-geo": document.getElementById("biz-tab-geo"),
-  "biz-reviews": document.getElementById("biz-tab-reviews"),
-  "biz-quotes": document.getElementById("biz-tab-quotes"),
-  "biz-ai-search": document.getElementById("biz-tab-ai-search")
-};
-
-function activateBizTab(tab) {
-  bizTabs.forEach((t) => {
-    const isActive = t === tab;
-    t.classList.toggle("active", isActive);
-    t.setAttribute("aria-selected", isActive ? "true" : "false");
-    t.tabIndex = isActive ? 0 : -1;
-    const panel = bizTabPanelsByKey[t.dataset.bizTab];
-    if (panel) panel.classList.toggle("hidden", !isActive);
-  });
-}
-
-bizTabs.forEach((tab) => tab.addEventListener("click", () => activateBizTab(tab)));
-
-// ============================================================================
-// BUSINESS HUB: State and CRUD
-// ============================================================================
-
-let selectedBizId = null;
-let businesses = [];
-
-async function loadBusinesses() {
-  try {
-    const response = await fetch(`${apiBase()}/business-listings`, { headers: apiAuthHeaders() });
-    if (!response.ok) throw new Error(`Failed to load businesses: ${response.statusText}`);
-    businesses = await response.json();
-    renderBusinesses();
-  } catch (error) {
-    console.error("loadBusinesses:", error);
-    toast(`Error loading businesses: ${error.message}`);
-  }
-}
-
-function renderBusinesses() {
-  const list = document.getElementById("businessList");
-  list.innerHTML = "";
-  businesses.forEach((biz) => {
-    const card = document.createElement("div");
-    card.className = `business-card ${selectedBizId === biz.id ? "active" : ""}`;
-    card.setAttribute("role", "listitem");
-    card.innerHTML = `
-      <div style="font-weight: 600">${biz.name}</div>
-      <div style="font-size: 12px; color: var(--muted)">${biz.city}, ${biz.state}</div>
-      ${biz.category ? `<span class="biz-category-pill">${biz.category}</span>` : ""}
-    `;
-    card.addEventListener("click", () => selectBusiness(biz.id));
-    list.appendChild(card);
-  });
-  document.getElementById("businessCount").textContent = businesses.length;
-}
-
-async function selectBusiness(id) {
-  selectedBizId = id;
-  renderBusinesses();
-  document.getElementById("businessEmptyState").classList.add("hidden");
-  document.getElementById("businessDetailPanel").classList.remove("hidden");
-  activateBizTab(bizTabs[0]); // Reset to profile tab
-  await loadBusinessDetail(id);
-}
-
-async function loadBusinessDetail(id) {
-  try {
-    const response = await fetch(`${apiBase()}/business-listings/${id}`, { headers: apiAuthHeaders() });
-    if (!response.ok) throw new Error(`Failed to load business: ${response.statusText}`);
-    const biz = await response.json();
-
-    // Populate form fields
-    document.getElementById("bizName").value = biz.name;
-    document.getElementById("bizCategory").value = biz.category || "";
-    document.getElementById("bizAddress").value = biz.address;
-    document.getElementById("bizCity").value = biz.city;
-    document.getElementById("bizState").value = biz.state;
-    document.getElementById("bizZip").value = biz.zip_code;
-    document.getElementById("bizPhone").value = biz.phone;
-    document.getElementById("bizEmail").value = biz.email;
-    document.getElementById("bizWebsite").value = biz.website || "";
-    document.getElementById("bizDescription").value = biz.description || "";
-    document.getElementById("bizTags").value = (biz.tags || []).join(", ");
-    document.getElementById("bizGeoScopeType").value = biz.geo_scope_type;
-    document.getElementById("bizGeoScopeId").value = biz.geo_scope_id || "";
-    document.getElementById("bizAiSearchEnabled").checked = biz.ai_search_enabled || false;
-
-    // Update detail panel header
-    document.getElementById("bizDetailName").textContent = biz.name;
-    document.getElementById("bizDetailCategory").textContent = biz.category || "Unknown";
-
-    // Load related data
-    await loadReviews(id);
-    await loadQuotes(id);
-    await renderBizGeoTab(id);
-    await renderAiSearchTab(biz);
-  } catch (error) {
-    console.error("loadBusinessDetail:", error);
-    toast(`Error loading business details: ${error.message}`);
-  }
-}
-
-async function saveBizProfile() {
-  try {
-    if (!selectedBizId) throw new Error("No business selected");
-
-    const tags = document.getElementById("bizTags").value.split(",").map((t) => t.trim()).filter(Boolean);
-    const update = {
-      name: document.getElementById("bizName").value,
-      category: document.getElementById("bizCategory").value,
-      address: document.getElementById("bizAddress").value,
-      city: document.getElementById("bizCity").value,
-      state: document.getElementById("bizState").value,
-      zip_code: document.getElementById("bizZip").value,
-      phone: document.getElementById("bizPhone").value,
-      email: document.getElementById("bizEmail").value,
-      website: document.getElementById("bizWebsite").value,
-      description: document.getElementById("bizDescription").value,
-      tags,
-      geo_scope_type: document.getElementById("bizGeoScopeType").value,
-      geo_scope_id: document.getElementById("bizGeoScopeId").value,
-      ai_search_enabled: document.getElementById("bizAiSearchEnabled").checked
-    };
-
-    const response = await fetch(`${apiBase()}/business-listings/${selectedBizId}`, {
-      method: "PUT",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify(update)
-    });
-
-    if (!response.ok) throw new Error(`Failed to save business: ${response.statusText}`);
-    toast("Business saved successfully");
-    await loadBusinesses();
-  } catch (error) {
-    console.error("saveBizProfile:", error);
-    document.getElementById("bizSaveStatus").classList.remove("hidden");
-    document.getElementById("bizSaveStatus").textContent = `Error: ${error.message}`;
-  }
-}
-
-async function deleteBusiness() {
-  try {
-    if (!selectedBizId) throw new Error("No business selected");
-    if (!confirm("Are you sure you want to delete this business?")) return;
-
-    const response = await fetch(`${apiBase()}/business-listings/${selectedBizId}`, {
-      method: "DELETE",
-      headers: apiAuthHeaders()
-    });
-
-    if (!response.ok) throw new Error(`Failed to delete business: ${response.statusText}`);
-    toast("Business deleted successfully");
-    selectedBizId = null;
-    document.getElementById("businessEmptyState").classList.remove("hidden");
-    document.getElementById("businessDetailPanel").classList.add("hidden");
-    await loadBusinesses();
-  } catch (error) {
-    console.error("deleteBusiness:", error);
-    toast(`Error deleting business: ${error.message}`);
-  }
-}
-
-// ============================================================================
-// BUSINESS HUB: Business Modal
-// ============================================================================
-
-const bizModal = document.getElementById("bizModal");
-const bizModalName = document.getElementById("bizModalName");
-const bizModalCategory = document.getElementById("bizModalCategory");
-const bizModalAddress = document.getElementById("bizModalAddress");
-const bizModalCity = document.getElementById("bizModalCity");
-const bizModalState = document.getElementById("bizModalState");
-const bizModalZip = document.getElementById("bizModalZip");
-const bizModalPhone = document.getElementById("bizModalPhone");
-const bizModalEmail = document.getElementById("bizModalEmail");
-const bizModalGeoType = document.getElementById("bizModalGeoType");
-const bizModalGeoId = document.getElementById("bizModalGeoId");
-const bizModalError = document.getElementById("bizModalError");
-const saveBizModalBtn = document.getElementById("saveBizModalBtn");
-const cancelBizModalBtn = document.getElementById("cancelBizModalBtn");
-const addBusinessBtn = document.getElementById("addBusinessBtn");
-
-addBusinessBtn.addEventListener("click", () => {
-  bizModalName.value = "";
-  bizModalCategory.value = "";
-  bizModalAddress.value = "";
-  bizModalCity.value = "";
-  bizModalState.value = "";
-  bizModalZip.value = "";
-  bizModalPhone.value = "";
-  bizModalEmail.value = "";
-  bizModalGeoType.value = "city";
-  bizModalGeoId.value = "";
-  bizModalError.classList.add("hidden");
-  bizModal.classList.remove("hidden");
-  bizModal.setAttribute("aria-hidden", "false");
-  bizModalName.focus();
-});
-
-saveBizModalBtn.addEventListener("click", saveBizModalHandler);
-cancelBizModalBtn.addEventListener("click", () => {
-  bizModal.classList.add("hidden");
-  bizModal.setAttribute("aria-hidden", "true");
-});
-
-async function saveBizModalHandler() {
-  try {
-    const name = bizModalName.value.trim();
-    const address = bizModalAddress.value.trim();
-    const city = bizModalCity.value.trim();
-    const state = bizModalState.value.trim();
-    const zip = bizModalZip.value.trim();
-    const phone = bizModalPhone.value.trim();
-    const email = bizModalEmail.value.trim();
-
-    if (!name || !address || !city || !state || !zip || !phone || !email) {
-      bizModalError.classList.remove("hidden");
-      bizModalError.textContent = "All required fields must be filled";
-      return;
-    }
-
-    const data = {
-      name,
-      category: bizModalCategory.value.trim(),
-      address,
-      city,
-      state,
-      zip_code: zip,
-      phone,
-      email,
-      geo_scope_type: bizModalGeoType.value,
-      geo_scope_id: bizModalGeoId.value,
-      ai_search_enabled: false
-    };
-
-    const response = await fetch(`${apiBase()}/business-listings`, {
-      method: "POST",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-
-    if (!response.ok) throw new Error(`Failed to create business: ${response.statusText}`);
-    toast("Business created successfully");
-    bizModal.classList.add("hidden");
-    bizModal.setAttribute("aria-hidden", "true");
-    await loadBusinesses();
-  } catch (error) {
-    console.error("saveBizModalHandler:", error);
-    bizModalError.classList.remove("hidden");
-    bizModalError.textContent = error.message;
-  }
-}
-
-// ============================================================================
-// BUSINESS HUB: Geo Intelligence
-// ============================================================================
-
-const bizGeoScanBtn = document.getElementById("geoScanBtn");
-const bizGeoGenerateBriefBtn = document.getElementById("geoGenerateBriefBtn");
-const bizGeoStatus = document.getElementById("geoStatus");
-
-if (bizGeoScanBtn) bizGeoScanBtn.addEventListener("click", runGeoScan);
-if (bizGeoGenerateBriefBtn) bizGeoGenerateBriefBtn.addEventListener("click", generateGeoBrief);
-
-async function runGeoScan() {
-  try {
-    const scopeType = document.getElementById("geoScopeType").value;
-    const scopeId = document.getElementById("geoScopeId").value.trim();
-
-    if (!scopeId) throw new Error("Please enter a location");
-
-    bizGeoStatus.classList.remove("hidden");
-    bizGeoStatus.textContent = "Scanning...";
-
-    const response = await fetch(`${apiBase()}/geo-profiles/scan`, {
-      method: "POST",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify({ scopeType, scopeId })
-    });
-
-    if (!response.ok) throw new Error(`Scan failed: ${response.statusText}`);
-    const profile = await response.json();
-    bizGeoStatus.textContent = "✓ Scan complete";
-    toast("Geo profile updated");
-    
-    // Reload current business if viewing one
-    if (selectedBizId) await renderBizGeoTab(selectedBizId);
-  } catch (error) {
-    console.error("runGeoScan:", error);
-    bizGeoStatus.textContent = `Error: ${error.message}`;
-  }
-}
-
-async function generateGeoBrief() {
-  try {
-    const scopeType = document.getElementById("geoScopeType").value;
-    const scopeId = document.getElementById("geoScopeId").value.trim();
-
-    if (!scopeId) throw new Error("Please enter a location");
-
-    bizGeoStatus.classList.remove("hidden");
-    bizGeoStatus.textContent = "Generating brief...";
-
-    const response = await fetch(`${apiBase()}/geo-content-briefs/generate`, {
-      method: "POST",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify({ scopeType, scopeId })
-    });
-
-    if (!response.ok) throw new Error(`Generation failed: ${response.statusText}`);
-    const brief = await response.json();
-    bizGeoStatus.textContent = "✓ Brief generated";
-    toast("Geo brief created");
-  } catch (error) {
-    console.error("generateGeoBrief:", error);
-    bizGeoStatus.textContent = `Error: ${error.message}`;
-  }
-}
-
-async function renderBizGeoTab(bizId) {
-  try {
-    const response = await fetch(`${apiBase()}/business-listings/${bizId}`, { headers: apiAuthHeaders() });
-    if (!response.ok) throw new Error("Failed to load business");
-    const biz = await response.json();
-
-    const geoContent = document.getElementById("bizGeoContent");
-    
-    if (!biz.geo_scope_id) {
-      geoContent.innerHTML = "<p class=\"empty\">No geo scope set. Update the business profile to set a geo scope.</p>";
-      return;
-    }
-
-    // Try to fetch geo profile for this business's scope
-    const geoResponse = await fetch(
-      `${apiBase()}/geo-profiles?scopeType=${biz.geo_scope_type}&scopeId=${biz.geo_scope_id}`,
-      { headers: apiAuthHeaders() }
-    );
-
-    let profileHtml = "<p class=\"empty\">No geo profile data yet. Run a geo scan.</p>";
-    if (geoResponse.ok) {
-      const data = await geoResponse.json();
-      if (data.items && data.items.length > 0) {
-        const profile = data.items[0];
-        profileHtml = `
-          <div class="biz-score-row">
-            <div class="biz-score-block">
-              <div class="biz-score-value">${profile.opportunity_count || 0}</div>
-              <div class="biz-score-label">Opportunities</div>
-            </div>
-            <div class="biz-score-block">
-              <div class="biz-score-value">${profile.meeting_count || 0}</div>
-              <div class="biz-score-label">Meetings</div>
-            </div>
-          </div>
-          <p style="font-size: 12px; margin: 10px 0">Scope: ${profile.scope_id} (${profile.scope_type})</p>
-          <p style="font-size: 12px; color: var(--muted)">Updated: ${new Date(profile.updated_at).toLocaleDateString()}</p>
-        `;
-      }
-    }
-
-    geoContent.innerHTML = profileHtml;
-  } catch (error) {
-    console.error("renderBizGeoTab:", error);
-    document.getElementById("bizGeoContent").innerHTML = `<p class="empty">Error loading geo data: ${error.message}</p>`;
-  }
-}
-
-// ============================================================================
-// BUSINESS HUB: Reviews
-// ============================================================================
-
-const reviewModal = document.getElementById("reviewModal");
-const reviewPlatform = document.getElementById("reviewPlatform");
-const reviewRating = document.getElementById("reviewRating");
-const reviewerName = document.getElementById("reviewerName");
-const reviewText = document.getElementById("reviewText");
-const saveReviewBtn = document.getElementById("saveReviewBtn");
-const cancelReviewBtn = document.getElementById("cancelReviewBtn");
-const addReviewBtn = document.getElementById("addReviewBtn");
-const reviewList = document.getElementById("reviewList");
-
-addReviewBtn.addEventListener("click", () => {
-  reviewPlatform.value = "Google";
-  reviewRating.value = "5";
-  reviewerName.value = "";
-  reviewText.value = "";
-  reviewModal.classList.remove("hidden");
-  reviewModal.setAttribute("aria-hidden", "false");
-  reviewerName.focus();
-});
-
-saveReviewBtn.addEventListener("click", () => saveReviewHandler());
-cancelReviewBtn.addEventListener("click", () => {
-  reviewModal.classList.add("hidden");
-  reviewModal.setAttribute("aria-hidden", "true");
-});
-
-async function loadReviews(bizId) {
-  try {
-    const response = await fetch(`${apiBase()}/business-listings/${bizId}/reviews`, { headers: apiAuthHeaders() });
-    if (!response.ok) throw new Error("Failed to load reviews");
-    const reviews = await response.json();
-    renderReviews(reviews);
-  } catch (error) {
-    console.error("loadReviews:", error);
-    reviewList.innerHTML = `<p class="empty">Error loading reviews</p>`;
-  }
-}
-
-function renderReviews(reviews) {
-  reviewList.innerHTML = "";
-  if (reviews.length === 0) {
-    reviewList.innerHTML = "<p class=\"empty\">No reviews yet.</p>";
-    return;
-  }
-
-  reviews.forEach((review) => {
-    const card = document.createElement("div");
-    card.className = "review-card";
-    card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: baseline">
-        <div style="font-weight: 600">${review.platform} Review</div>
-        <div class="review-rating">★ ${review.rating}/5</div>
-      </div>
-      <div style="font-size: 12px; color: var(--muted)">${review.reviewer_name}</div>
-      <div style="font-size: 13px; margin: 6px 0">${review.review_text}</div>
-      ${review.response_draft ? `<div class="review-response-draft">Draft: ${review.response_draft}</div>` : ""}
-      <div class="inline-actions" style="margin-top: 8px">
-        ${!review.response_draft ? `<button class="btn ghost" onclick="draftReviewResponse('${selectedBizId}', '${review.id}')">Draft Response</button>` : ""}
-        ${review.response_draft && review.response_status === "draft" ? `<button class="btn ghost" onclick="markResponseSent('${selectedBizId}', '${review.id}')">Mark Sent</button>` : ""}
-      </div>
-    `;
-    reviewList.appendChild(card);
-  });
-}
-
-async function saveReviewHandler() {
-  try {
-    if (!selectedBizId) throw new Error("No business selected");
-
-    const data = {
-      platform: reviewPlatform.value,
-      rating: parseInt(reviewRating.value, 10),
-      reviewer_name: reviewerName.value.trim(),
-      review_text: reviewText.value.trim()
-    };
-
-    if (!data.reviewer_name || !data.review_text) {
-      throw new Error("Reviewer name and review text are required");
-    }
-
-    const response = await fetch(`${apiBase()}/business-listings/${selectedBizId}/reviews`, {
-      method: "POST",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-
-    if (!response.ok) throw new Error(`Failed to save review: ${response.statusText}`);
-    toast("Review saved");
-    reviewModal.classList.add("hidden");
-    reviewModal.setAttribute("aria-hidden", "true");
-    await loadReviews(selectedBizId);
-  } catch (error) {
-    console.error("saveReviewHandler:", error);
-    toast(`Error: ${error.message}`);
-  }
-}
-
-async function draftReviewResponse(bizId, reviewId) {
-  try {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.textContent = "Drafting...";
-
-    const response = await fetch(`${apiBase()}/business-listings/${bizId}/reviews/${reviewId}/draft-response`, {
-      method: "POST",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify({})
-    });
-
-    if (!response.ok) throw new Error(`Failed to draft response: ${response.statusText}`);
-    toast("Response draft created");
-    await loadReviews(bizId);
-  } catch (error) {
-    console.error("draftReviewResponse:", error);
-    toast(`Error: ${error.message}`);
-    event.target.disabled = false;
-    event.target.textContent = "Draft Response";
-  }
-}
-
-async function markResponseSent(bizId, reviewId) {
-  try {
-    const response = await fetch(`${apiBase()}/business-listings/${bizId}/reviews/${reviewId}`, {
-      method: "PUT",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify({ response_status: "sent" })
-    });
-
-    if (!response.ok) throw new Error(`Failed to update review: ${response.statusText}`);
-    toast("Response marked as sent");
-    await loadReviews(bizId);
-  } catch (error) {
-    console.error("markResponseSent:", error);
-    toast(`Error: ${error.message}`);
-  }
-}
-
-// ============================================================================
-// BUSINESS HUB: Quotes
-// ============================================================================
-
-const quoteModal = document.getElementById("quoteModal");
-const quoteTitle = document.getElementById("quoteTitle");
-const quoteDescription = document.getElementById("quoteDescription");
-const quoteServiceClass = document.getElementById("quoteServiceClass");
-const quoteTotal = document.getElementById("quoteTotal");
-const quoteContactName = document.getElementById("quoteContactName");
-const quoteContactEmail = document.getElementById("quoteContactEmail");
-const saveQuoteBtn = document.getElementById("saveQuoteBtn");
-const cancelQuoteBtn = document.getElementById("cancelQuoteBtn");
-const addQuoteBtn = document.getElementById("addQuoteBtn");
-const quoteList = document.getElementById("quoteList");
-
-addQuoteBtn.addEventListener("click", () => {
-  quoteTitle.value = "";
-  quoteDescription.value = "";
-  quoteServiceClass.value = "quick_win_automation";
-  quoteTotal.value = "";
-  quoteContactName.value = "";
-  quoteContactEmail.value = "";
-  quoteModal.classList.remove("hidden");
-  quoteModal.setAttribute("aria-hidden", "false");
-  quoteTitle.focus();
-});
-
-saveQuoteBtn.addEventListener("click", saveQuoteHandler);
-cancelQuoteBtn.addEventListener("click", () => {
-  quoteModal.classList.add("hidden");
-  quoteModal.setAttribute("aria-hidden", "true");
-});
-
-async function loadQuotes(bizId) {
-  try {
-    const response = await fetch(`${apiBase()}/business-listings/${bizId}/quotes`, { headers: apiAuthHeaders() });
-    if (!response.ok) throw new Error("Failed to load quotes");
-    const quotes = await response.json();
-    renderQuotes(quotes);
-  } catch (error) {
-    console.error("loadQuotes:", error);
-    quoteList.innerHTML = `<p class="empty">Error loading quotes</p>`;
-  }
-}
-
-function renderQuotes(quotes) {
-  quoteList.innerHTML = "";
-  if (quotes.length === 0) {
-    quoteList.innerHTML = "<p class=\"empty\">No quotes yet.</p>";
-    return;
-  }
-
-  quotes.forEach((quote) => {
-    const card = document.createElement("div");
-    card.className = "quote-card";
-    const statusClass = quote.status.toLowerCase();
-    card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: baseline">
-        <div style="font-weight: 600">${quote.title}</div>
-        <span class="quote-status-pill ${statusClass}">${quote.status}</span>
-      </div>
-      <div style="font-size: 12px; color: var(--muted)">${quote.description}</div>
-      <div class="quote-total">$${quote.total_usd.toFixed(2)}</div>
-      <div style="font-size: 12px">Contact: ${quote.contact_name}</div>
-      <div class="inline-actions" style="margin-top: 8px">
-        ${quote.status === "draft" ? `<button class="btn ghost" onclick="sendQuote('${selectedBizId}', '${quote.id}')">Send</button>` : ""}
-        ${quote.status === "sent" ? `<button class="btn ghost" onclick="updateQuoteStatus('${selectedBizId}', '${quote.id}', 'accepted')">Mark Accepted</button>` : ""}
-      </div>
-    `;
-    quoteList.appendChild(card);
-  });
-}
-
-async function saveQuoteHandler() {
-  try {
-    if (!selectedBizId) throw new Error("No business selected");
-
-    const data = {
-      title: quoteTitle.value.trim(),
-      description: quoteDescription.value.trim(),
-      service_class: quoteServiceClass.value,
-      total_usd: parseFloat(quoteTotal.value),
-      contact_name: quoteContactName.value.trim(),
-      contact_email: quoteContactEmail.value.trim()
-    };
-
-    if (!data.title || !data.total_usd || !data.contact_name || !data.contact_email) {
-      throw new Error("All required fields must be filled");
-    }
-
-    const response = await fetch(`${apiBase()}/business-listings/${selectedBizId}/quotes`, {
-      method: "POST",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-
-    if (!response.ok) throw new Error(`Failed to save quote: ${response.statusText}`);
-    toast("Quote created");
-    quoteModal.classList.add("hidden");
-    quoteModal.setAttribute("aria-hidden", "true");
-    await loadQuotes(selectedBizId);
-  } catch (error) {
-    console.error("saveQuoteHandler:", error);
-    toast(`Error: ${error.message}`);
-  }
-}
-
-async function sendQuote(bizId, quoteId) {
-  try {
-    await updateQuoteStatus(bizId, quoteId, "sent");
-  } catch (error) {
-    console.error("sendQuote:", error);
-  }
-}
-
-async function updateQuoteStatus(bizId, quoteId, status) {
-  try {
-    const response = await fetch(`${apiBase()}/business-listings/${bizId}/quotes/${quoteId}`, {
-      method: "PUT",
-      headers: apiAuthHeaders(),
-      body: JSON.stringify({ status })
-    });
-
-    if (!response.ok) throw new Error(`Failed to update quote: ${response.statusText}`);
-    toast(`Quote status updated to ${status}`);
-    await loadQuotes(bizId);
-  } catch (error) {
-    console.error("updateQuoteStatus:", error);
-    toast(`Error: ${error.message}`);
-  }
-}
-
-// ============================================================================
-// BUSINESS HUB: AI Search
-// ============================================================================
-
-async function renderAiSearchTab(biz) {
-  try {
-    const aiSearchContent = document.getElementById("aiSearchContent");
-
-    // Fetch AI search profiles
-    const response = await fetch(`${apiBase()}/ai-search/business-profiles`, { headers: apiAuthHeaders() });
-    if (!response.ok) throw new Error("Failed to load AI search data");
-
-    const profiles = await response.json();
-    const profile = profiles.find((p) => p.id === biz.id);
-
-    if (!profile) {
-      aiSearchContent.innerHTML = `<p class="empty">This business is not enabled for AI Search.</p>`;
-      return;
-    }
-
-    // Build JSON-LD preview
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      name: profile.name,
-      description: profile.description,
-      url: profile.website,
-      telephone: profile.phone,
-      email: profile.email,
-      address: {
-        "@type": "PostalAddress",
-        streetAddress: profile.address,
-        addressLocality: profile.city,
-        addressRegion: profile.state,
-        postalCode: profile.zip_code
-      }
-    };
-
-    const html = `
-      <div class="ai-search-block">
-        <div>
-          <h3>AI Search Status</h3>
-          <p style="font-size: 12px; color: var(--muted)">
-            ${biz.ai_search_enabled ? "✓ Enabled for AI Search" : "✗ Not enabled"}
-          </p>
-        </div>
-        <div>
-          <h3>JSON-LD Preview</h3>
-          <pre class="json-ld-preview">${JSON.stringify(jsonLd, null, 2)}</pre>
-        </div>
-        <div style="font-size: 12px">
-          <p><strong>Fields indexed:</strong></p>
-          <ul style="margin: 4px 0; padding-left: 20px">
-            <li>Name: ${profile.name}</li>
-            <li>Category: ${profile.category || "Not set"}</li>
-            <li>City: ${profile.city}</li>
-            <li>Tags: ${(profile.tags || []).join(", ") || "None"}</li>
-          </ul>
-        </div>
-      </div>
-    `;
-
-    aiSearchContent.innerHTML = html;
-  } catch (error) {
-    console.error("renderAiSearchTab:", error);
-    document.getElementById("aiSearchContent").innerHTML = `<p class="empty">Error loading AI Search data: ${error.message}</p>`;
-  }
-}
-
-// ============================================================================
-// BUSINESS HUB: Search & Filters
-// ============================================================================
-
-const businessSearch = document.getElementById("businessSearch");
-businessSearch.addEventListener("input", (e) => {
-  const search = e.target.value.toLowerCase();
-  document.querySelectorAll(".business-card").forEach((card) => {
-    const text = card.textContent.toLowerCase();
-    card.style.display = text.includes(search) ? "" : "none";
-  });
 });
 
 // ============================================================================
-// Initialize Business Hub
+// Lifecycle
 // ============================================================================
 
-loadBusinesses();
-
+// Start app when DOM is ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeApp);
+} else {
+  initializeApp();
+}
