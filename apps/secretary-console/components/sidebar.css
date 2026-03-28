@@ -5,13 +5,13 @@
  */
 
 :root {
-  /* Sidebar colors */
-  --sidebar-bg: #1a1a1a;
-  --sidebar-text: #f8f3eb;
-  --sidebar-text-muted: rgba(248, 243, 235, 0.6);
-  --sidebar-link-hover-bg: rgba(255, 255, 255, 0.08);
-  --sidebar-link-active-bg: rgba(10, 93, 82, 0.15);
-  --sidebar-border: #2a2a2a;
+  /* Sidebar colors - using design system */
+  --sidebar-bg: #1A1F2E;
+  --sidebar-text: #F5F5F5;
+  --sidebar-text-muted: rgba(245, 245, 245, 0.6);
+  --sidebar-link-hover-bg: rgba(0, 102, 204, 0.1);
+  --sidebar-link-active-bg: rgba(0, 102, 204, 0.15);
+  --sidebar-border: rgba(0, 102, 204, 0.2);
 
   /* Sidebar dimensions */
   --sidebar-width: 220px;
@@ -113,19 +113,19 @@
 .sidebar-link.active {
   color: var(--sidebar-text);
   background: var(--sidebar-link-active-bg);
-  border-left-color: var(--accent);
+  border-left-color: var(--color-primary);
   padding-left: var(--sidebar-padding);
 }
 
 .sidebar-link:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
 
 .sidebar-link[aria-current="page"] {
   color: var(--sidebar-text);
   background: var(--sidebar-link-active-bg);
-  border-left-color: var(--accent);
+  border-left-color: var(--color-primary);
 }
 
 /* Reduce motion support */
@@ -225,10 +225,10 @@
   gap: 10px;
   width: 100%;
   padding: 10px 12px;
-  background: rgba(208, 92, 58, 0.15);
+  background: rgba(220, 53, 69, 0.15);
   color: var(--sidebar-text);
-  border: 1px solid rgba(208, 92, 58, 0.3);
-  border-radius: 8px;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
@@ -237,17 +237,17 @@
 }
 
 .btn-logout:hover {
-  background: rgba(208, 92, 58, 0.25);
-  border-color: rgba(208, 92, 58, 0.5);
+  background: rgba(220, 53, 69, 0.25);
+  border-color: rgba(220, 53, 69, 0.5);
 }
 
 .btn-logout:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--color-error);
   outline-offset: 2px;
 }
 
 .btn-logout:active {
-  background: rgba(208, 92, 58, 0.35);
+  background: rgba(220, 53, 69, 0.35);
 }
 
 .logout-icon {

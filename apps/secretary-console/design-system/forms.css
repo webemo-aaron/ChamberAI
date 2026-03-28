@@ -1,0 +1,507 @@
+/* ChamberAI Design System - Form Components */
+/* Version 1.0.0 */
+
+/* Form Container */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-group--horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Labels */
+label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+label.required::after {
+  content: " *";
+  color: var(--color-error);
+}
+
+/* Base Input Styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="search"],
+textarea,
+select {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  font-size: var(--font-size-base);
+  font-family: var(--font-body);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  box-sizing: border-box;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="number"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="url"]::placeholder,
+input[type="date"]::placeholder,
+input[type="time"]::placeholder,
+input[type="datetime-local"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* Focus State */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+input[type="search"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-50);
+  background-color: var(--color-bg-primary);
+}
+
+/* Disabled State */
+input:disabled,
+input:disabled::placeholder,
+textarea:disabled,
+textarea:disabled::placeholder,
+select:disabled {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Error State */
+input.error,
+textarea.error,
+select.error {
+  border-color: var(--color-error);
+  background-color: rgba(220, 53, 69, 0.02);
+}
+
+input.error:focus,
+textarea.error:focus,
+select.error:focus {
+  box-shadow: 0 0 0 3px var(--color-error-50);
+  border-color: var(--color-error);
+}
+
+/* Success State */
+input.success,
+textarea.success,
+select.success {
+  border-color: var(--color-success);
+  background-color: rgba(0, 204, 102, 0.02);
+}
+
+input.success:focus,
+textarea.success:focus,
+select.success:focus {
+  box-shadow: 0 0 0 3px var(--color-success-50);
+  border-color: var(--color-success);
+}
+
+/* Textarea Specific */
+textarea {
+  resize: vertical;
+  min-height: 120px;
+  max-height: 400px;
+}
+
+textarea.small {
+  min-height: 80px;
+}
+
+textarea.large {
+  min-height: 200px;
+}
+
+/* Select Specific */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%230A0E27' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 40px;
+}
+
+select::-webkit-scrollbar {
+  width: 8px;
+}
+
+select::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+select::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+/* Help Text & Error Messages */
+.help-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.error-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  margin-top: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.error-text::before {
+  content: "⚠";
+  font-weight: bold;
+}
+
+.success-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-success);
+  margin-top: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.success-text::before {
+  content: "✓";
+  font-weight: bold;
+}
+
+/* Checkbox */
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background-color: var(--color-bg-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.checkbox input[type="checkbox"]:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.checkbox input[type="checkbox"]:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.checkbox input[type="checkbox"]:checked::after {
+  content: "✓";
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.checkbox input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.checkbox input[type="checkbox"]:disabled {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+  cursor: not-allowed;
+}
+
+.checkbox label {
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+  font-size: var(--font-size-base);
+}
+
+/* Checkbox Error */
+.checkbox.error input[type="checkbox"] {
+  border-color: var(--color-error);
+}
+
+.checkbox.error label {
+  color: var(--color-error);
+}
+
+/* Radio Button */
+.radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.radio input[type="radio"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background-color: var(--color-bg-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.radio input[type="radio"]:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.radio input[type="radio"]:checked {
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 6px var(--color-primary);
+}
+
+.radio input[type="radio"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.radio input[type="radio"]:disabled {
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+  cursor: not-allowed;
+}
+
+.radio label {
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+  font-size: var(--font-size-base);
+}
+
+/* Radio Error */
+.radio.error input[type="radio"] {
+  border-color: var(--color-error);
+}
+
+.radio.error label {
+  color: var(--color-error);
+}
+
+/* Checkbox/Radio Groups */
+.checkbox-group,
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.checkbox-group--horizontal,
+.radio-group--horizontal {
+  flex-direction: row;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+/* Toggle Switch */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle input[type="checkbox"] {
+  appearance: none;
+  width: 44px;
+  height: 24px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--color-border);
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.18s ease;
+  flex-shrink: 0;
+}
+
+.toggle input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  left: 2px;
+  top: 2px;
+  transition: left 0.18s ease;
+}
+
+.toggle input[type="checkbox"]:checked {
+  background-color: var(--color-success);
+}
+
+.toggle input[type="checkbox"]:checked::after {
+  left: 22px;
+}
+
+.toggle input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.toggle label {
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* Input Field with Icon */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input {
+  width: 100%;
+}
+
+.input-wrapper--has-icon-left input {
+  padding-left: 40px;
+}
+
+.input-wrapper--has-icon-right input {
+  padding-right: 40px;
+}
+
+.input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.input-icon--left {
+  left: 0;
+}
+
+.input-icon--right {
+  right: 0;
+}
+
+.input-wrapper input:focus ~ .input-icon,
+.input-wrapper--has-icon-left input:focus ~ .input-icon--left,
+.input-wrapper--has-icon-right input:focus ~ .input-icon--right {
+  color: var(--color-primary);
+}
+
+/* Character Counter */
+.input-counter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.input-counter__current {
+  font-weight: bold;
+}
+
+.input-counter__max {
+  color: var(--color-text-tertiary);
+}
+
+textarea.limit-reached,
+textarea.limit-reached:focus {
+  border-color: var(--color-warning);
+}
+
+/* Input States - Loading */
+input.is-loading,
+textarea.is-loading,
+select.is-loading {
+  background-image: linear-gradient(90deg, transparent, rgba(0, 102, 204, 0.2), transparent);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .checkbox-group--horizontal,
+  .radio-group--horizontal {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+}

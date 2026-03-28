@@ -1,15 +1,22 @@
 :root {
-  --bg: #f2efe9;
-  --ink: #1a1a1a;
-  --muted: #5c5c5c;
-  --panel: #fdfbf6;
-  --accent: #0a5d52;
-  --accent-2: #d05c3a;
-  --pill: #e4dfd7;
-  --shadow: 0 20px 60px rgba(34, 34, 34, 0.12);
-  --radius: 18px;
+  /* Legacy variables (mapped to design system for backward compatibility) */
+  --bg: var(--color-bg-primary);
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --panel: var(--color-bg-secondary);
+  --accent: var(--color-primary);
+  --accent-2: var(--color-error);
+  --pill: var(--color-bg-tertiary);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --radius: 8px;
   --font-display: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
   --font-ui: "Avenir Next", "Gill Sans", "Futura", sans-serif;
+
+  /* ChamberAI Brand Tokens */
+  --sidebar-bg: #1A1F2E;
+  --sidebar-text: #F5F5F5;
+  --sidebar-accent: var(--color-primary);
+  --topbar-height: 56px;
 }
 
 * {
@@ -19,10 +26,8 @@
 body {
   margin: 0;
   font-family: var(--font-ui);
-  color: var(--ink);
-  background: radial-gradient(circle at top right, #f5d3b6 0%, transparent 45%),
-    radial-gradient(circle at 10% 20%, #b7d9d0 0%, transparent 50%),
-    linear-gradient(120deg, #f6f1e9 0%, #efe7dc 100%);
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -60,9 +65,9 @@ body {
   font-size: 28px;
   letter-spacing: 2px;
   padding: 12px 16px;
-  background: var(--ink);
-  color: #f8f3eb;
-  border-radius: 14px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-radius: 8px;
 }
 
 .brand-title {
@@ -89,21 +94,22 @@ body {
 }
 
 .api-config input {
-  border-radius: 12px;
-  border: 1px solid #d0c7bb;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
   padding: 8px 10px;
   width: 220px;
-  background: var(--panel);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
 }
 
 .api-popover {
   position: fixed;
   top: 72px;
   right: 40px;
-  background: var(--panel);
-  border: 1px solid #d0c7bb;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-2);
   z-index: 1001;
   min-width: 300px;
   max-width: 400px;
@@ -162,9 +168,11 @@ body {
 .popover-body input {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d0c7bb;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
   font-size: 13px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
 }
 
 .popover-actions {
@@ -191,10 +199,10 @@ body {
 }
 
 .panel {
-  background: var(--panel);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  border: 1px solid #e7ded2;
+  background: var(--color-bg-primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow-1);
+  border: 1px solid var(--color-border-light);
   padding: 22px;
   position: relative;
   overflow: hidden;

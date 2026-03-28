@@ -1,0 +1,179 @@
+/* ChamberAI Design System - Color Variables */
+/* Version 1.0.0 */
+
+:root {
+  /* PRIMARY PALETTE */
+
+  /* Blue - Trust, Intelligence, Professionalism */
+  --color-primary: #0066CC;
+  --color-primary-light: #3399FF;
+  --color-primary-lighter: #66CCFF;
+  --color-primary-lightest: #99E6FF;
+  --color-primary-dark: #004499;
+  --color-primary-darker: #003377;
+  --color-primary-darkest: #001A4D;
+  --color-primary-50: #F0F5FF;      /* Background tint */
+
+  /* Green - Success, Verification, Trust */
+  --color-success: #00CC66;
+  --color-success-light: #33DD99;
+  --color-success-lighter: #66EE99;
+  --color-success-lightest: #99FF99;
+  --color-success-dark: #009944;
+  --color-success-darker: #007733;
+  --color-success-darkest: #005522;
+  --color-success-50: #F0FFF5;      /* Background tint */
+
+  /* Purple - AI, Innovation, Premium */
+  --color-ai: #9933FF;
+  --color-ai-light: #BB66FF;
+  --color-ai-lighter: #DD99FF;
+  --color-ai-lightest: #EE99FF;
+  --color-ai-dark: #7722CC;
+  --color-ai-darker: #5511AA;
+  --color-ai-darkest: #330077;
+  --color-ai-50: #F9F0FF;           /* Background tint */
+
+  /* SEMANTIC COLORS */
+
+  /* Error / Danger - Destructive Actions, Errors */
+  --color-error: #DC3545;
+  --color-error-light: #E85D6C;
+  --color-error-lighter: #F08590;
+  --color-error-dark: #B71C1C;
+  --color-error-darker: #8B0000;
+  --color-error-50: #FFEBEE;        /* Background tint */
+
+  /* Warning / Caution - Attention Required */
+  --color-warning: #FF9800;
+  --color-warning-light: #FFB74D;
+  --color-warning-lighter: #FFD699;
+  --color-warning-dark: #E65100;
+  --color-warning-darker: #BF3600;
+  --color-warning-50: #FFF3E0;      /* Background tint */
+
+  /* Info - Informational Messages */
+  --color-info: #0099FF;
+  --color-info-light: #33BBFF;
+  --color-info-lighter: #66DDFF;
+  --color-info-dark: #0077DD;
+  --color-info-darker: #0055BB;
+  --color-info-50: #E3F2FD;         /* Background tint */
+
+  /* NEUTRAL COLORS */
+
+  /* Text */
+  --color-text-primary: #0A0E27;    /* Main text (90% black) */
+  --color-text-secondary: #5C5C5C;  /* Secondary text (60% black) */
+  --color-text-tertiary: #9A9A9A;   /* Tertiary text (40% black) */
+  --color-text-disabled: #CCCCCC;   /* Disabled text (20% black) */
+  --color-text-inverse: #FFFFFF;    /* Inverse text (on dark backgrounds) */
+
+  /* Backgrounds */
+  --color-bg-primary: #FFFFFF;      /* Main background */
+  --color-bg-secondary: #F7F8FA;    /* Secondary background (subtle) */
+  --color-bg-tertiary: #EFEFEF;     /* Tertiary background (strong) */
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);  /* Modal overlay */
+
+  /* Borders */
+  --color-border: #D0D0D0;           /* Standard border */
+  --color-border-light: #E8E8E8;     /* Light border */
+  --color-border-dark: #B0B0B0;      /* Dark border */
+
+  /* Aliases for common usage */
+  --color-blue: var(--color-primary);
+  --color-green: var(--color-success);
+  --color-purple: var(--color-ai);
+  --color-red: var(--color-error);
+  --color-orange: var(--color-warning);
+  --color-gray: var(--color-text-secondary);
+  --color-black: var(--color-text-primary);
+  --color-white: var(--color-text-inverse);
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Text inversions */
+    --color-text-primary: #F5F5F5;
+    --color-text-secondary: #B8B8B8;
+    --color-text-tertiary: #808080;
+    --color-text-disabled: #555555;
+    --color-text-inverse: #0A0E27;
+
+    /* Background inversions */
+    --color-bg-primary: #0F1419;
+    --color-bg-secondary: #1A1F2E;
+    --color-bg-tertiary: #2A2F3E;
+    --color-bg-overlay: rgba(0, 0, 0, 0.7);
+
+    /* Border adjustments */
+    --color-border: #404854;
+    --color-border-light: #555555;
+    --color-border-dark: #2A2F3E;
+
+    /* Color adjustments for dark mode */
+    --color-primary: #66AAFF;
+    --color-primary-light: #99CCFF;
+    --color-primary-dark: #0055BB;
+    --color-primary-50: #1A3D66;
+
+    --color-success: #33DD99;
+    --color-success-light: #66EE99;
+    --color-success-dark: #009944;
+    --color-success-50: #1A4D33;
+
+    --color-error: #FF6B6B;
+    --color-error-light: #FF9999;
+    --color-error-dark: #CC3333;
+    --color-error-50: #4D1919;
+  }
+}
+
+/* Utility Classes for Common Color Usage */
+
+/* Text Color Utilities */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-tertiary { color: var(--color-text-tertiary); }
+.text-disabled { color: var(--color-text-disabled); }
+.text-inverse { color: var(--color-text-inverse); }
+
+.text-blue { color: var(--color-primary); }
+.text-green { color: var(--color-success); }
+.text-purple { color: var(--color-ai); }
+.text-red { color: var(--color-error); }
+.text-orange { color: var(--color-warning); }
+
+/* Background Color Utilities */
+.bg-primary { background-color: var(--color-bg-primary); }
+.bg-secondary { background-color: var(--color-bg-secondary); }
+.bg-tertiary { background-color: var(--color-bg-tertiary); }
+
+.bg-blue { background-color: var(--color-primary); }
+.bg-green { background-color: var(--color-success); }
+.bg-purple { background-color: var(--color-ai); }
+.bg-red { background-color: var(--color-error); }
+.bg-orange { background-color: var(--color-warning); }
+
+.bg-blue-50 { background-color: var(--color-primary-50); }
+.bg-green-50 { background-color: var(--color-success-50); }
+.bg-purple-50 { background-color: var(--color-ai-50); }
+.bg-red-50 { background-color: var(--color-error-50); }
+.bg-orange-50 { background-color: var(--color-warning-50); }
+
+/* Border Color Utilities */
+.border-primary { border-color: var(--color-border); }
+.border-light { border-color: var(--color-border-light); }
+.border-dark { border-color: var(--color-border-dark); }
+
+.border-blue { border-color: var(--color-primary); }
+.border-green { border-color: var(--color-success); }
+.border-purple { border-color: var(--color-ai); }
+.border-red { border-color: var(--color-error); }
+
+/* Focus Ring (Accessibility) */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

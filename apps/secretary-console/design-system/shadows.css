@@ -1,0 +1,238 @@
+/* ChamberAI Design System - Shadows & Elevation */
+/* Version 1.0.0 */
+
+:root {
+  /* Shadow System */
+  --shadow-none: none;
+  --shadow-1: 0 2px 4px rgba(10, 14, 39, 0.08);
+  --shadow-2: 0 4px 8px rgba(10, 14, 39, 0.12);
+  --shadow-3: 0 8px 16px rgba(10, 14, 39, 0.16);
+  --shadow-4: 0 12px 24px rgba(10, 14, 39, 0.20);
+  --shadow-5: 0 20px 40px rgba(10, 14, 39, 0.28);
+  --shadow-6: 0 24px 48px rgba(10, 14, 39, 0.32);
+
+  /* Z-Index Scale */
+  --z-hide: -1;
+  --z-base: 0;
+  --z-dropdown: 20;
+  --z-sticky: 30;
+  --z-fixed: 40;
+  --z-popover: 50;
+  --z-tooltip: 100;
+  --z-notification: 120;
+  --z-modal-backdrop: 140;
+  --z-modal: 150;
+  --z-dialog: 160;
+
+  /* Border Radius */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+
+/* Shadow Utilities */
+
+.shadow-none { box-shadow: var(--shadow-none); }
+.shadow-1 { box-shadow: var(--shadow-1); }
+.shadow-2 { box-shadow: var(--shadow-2); }
+.shadow-3 { box-shadow: var(--shadow-3); }
+.shadow-4 { box-shadow: var(--shadow-4); }
+.shadow-5 { box-shadow: var(--shadow-5); }
+.shadow-6 { box-shadow: var(--shadow-6); }
+
+/* Hover Shadow Utilities */
+.hover\:shadow-1:hover { box-shadow: var(--shadow-1); }
+.hover\:shadow-2:hover { box-shadow: var(--shadow-2); }
+.hover\:shadow-3:hover { box-shadow: var(--shadow-3); }
+.hover\:shadow-4:hover { box-shadow: var(--shadow-4); }
+.hover\:shadow-5:hover { box-shadow: var(--shadow-5); }
+.hover\:shadow-6:hover { box-shadow: var(--shadow-6); }
+
+/* Inset Shadow */
+.shadow-inset {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Z-Index Utilities */
+
+.z-hide { z-index: var(--z-hide); }
+.z-base { z-index: var(--z-base); }
+.z-dropdown { z-index: var(--z-dropdown); }
+.z-sticky { z-index: var(--z-sticky); }
+.z-fixed { z-index: var(--z-fixed); }
+.z-popover { z-index: var(--z-popover); }
+.z-tooltip { z-index: var(--z-tooltip); }
+.z-notification { z-index: var(--z-notification); }
+.z-modal-backdrop { z-index: var(--z-modal-backdrop); }
+.z-modal { z-index: var(--z-modal); }
+.z-dialog { z-index: var(--z-dialog); }
+
+/* Border Radius Utilities */
+
+.rounded-none { border-radius: 0; }
+.rounded-xs { border-radius: var(--radius-xs); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Individual Corner Radius */
+
+.rounded-t-none { border-top-left-radius: 0; border-top-right-radius: 0; }
+.rounded-t-xs { border-top-left-radius: var(--radius-xs); border-top-right-radius: var(--radius-xs); }
+.rounded-t-sm { border-top-left-radius: var(--radius-sm); border-top-right-radius: var(--radius-sm); }
+.rounded-t-md { border-top-left-radius: var(--radius-md); border-top-right-radius: var(--radius-md); }
+.rounded-t-lg { border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg); }
+.rounded-t-xl { border-top-left-radius: var(--radius-xl); border-top-right-radius: var(--radius-xl); }
+
+.rounded-b-none { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.rounded-b-xs { border-bottom-left-radius: var(--radius-xs); border-bottom-right-radius: var(--radius-xs); }
+.rounded-b-sm { border-bottom-left-radius: var(--radius-sm); border-bottom-right-radius: var(--radius-sm); }
+.rounded-b-md { border-bottom-left-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md); }
+.rounded-b-lg { border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg); }
+.rounded-b-xl { border-bottom-left-radius: var(--radius-xl); border-bottom-right-radius: var(--radius-xl); }
+
+.rounded-l-none { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.rounded-l-xs { border-top-left-radius: var(--radius-xs); border-bottom-left-radius: var(--radius-xs); }
+.rounded-l-sm { border-top-left-radius: var(--radius-sm); border-bottom-left-radius: var(--radius-sm); }
+.rounded-l-md { border-top-left-radius: var(--radius-md); border-bottom-left-radius: var(--radius-md); }
+.rounded-l-lg { border-top-left-radius: var(--radius-lg); border-bottom-left-radius: var(--radius-lg); }
+.rounded-l-xl { border-top-left-radius: var(--radius-xl); border-bottom-left-radius: var(--radius-xl); }
+
+.rounded-r-none { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.rounded-r-xs { border-top-right-radius: var(--radius-xs); border-bottom-right-radius: var(--radius-xs); }
+.rounded-r-sm { border-top-right-radius: var(--radius-sm); border-bottom-right-radius: var(--radius-sm); }
+.rounded-r-md { border-top-right-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md); }
+.rounded-r-lg { border-top-right-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg); }
+.rounded-r-xl { border-top-right-radius: var(--radius-xl); border-bottom-right-radius: var(--radius-xl); }
+
+/* Elevation System */
+
+/* Base elevation - no shadow, no lift */
+.elevation-0 {
+  box-shadow: none;
+  position: relative;
+  z-index: var(--z-base);
+}
+
+/* Raised - subtle shadow, minimal lift */
+.elevation-1 {
+  box-shadow: var(--shadow-1);
+  position: relative;
+  z-index: var(--z-fixed);
+}
+
+/* Float - standard shadow, slight lift */
+.elevation-2 {
+  box-shadow: var(--shadow-2);
+  position: relative;
+  z-index: var(--z-sticky);
+}
+
+/* Elevated - medium shadow, more lift */
+.elevation-3 {
+  box-shadow: var(--shadow-3);
+  position: relative;
+  z-index: var(--z-popover);
+}
+
+/* Modal - large shadow, major lift */
+.elevation-4 {
+  box-shadow: var(--shadow-4);
+  position: relative;
+  z-index: var(--z-modal);
+}
+
+/* Top Modal - extra large shadow, maximum lift */
+.elevation-5 {
+  box-shadow: var(--shadow-5);
+  position: relative;
+  z-index: var(--z-modal);
+}
+
+/* System - extreme shadow, critical lift */
+.elevation-6 {
+  box-shadow: var(--shadow-6);
+  position: relative;
+  z-index: var(--z-dialog);
+}
+
+/* Transitions for shadow changes */
+.transition-shadow {
+  transition: box-shadow 0.18s ease;
+}
+
+/* Hover elevation effects */
+.hover\:elevation-1:hover {
+  box-shadow: var(--shadow-1);
+}
+
+.hover\:elevation-2:hover {
+  box-shadow: var(--shadow-2);
+}
+
+.hover\:elevation-3:hover {
+  box-shadow: var(--shadow-3);
+}
+
+.hover\:elevation-4:hover {
+  box-shadow: var(--shadow-4);
+}
+
+.hover\:elevation-5:hover {
+  box-shadow: var(--shadow-5);
+}
+
+.hover\:elevation-6:hover {
+  box-shadow: var(--shadow-6);
+}
+
+/* Card elevation preset */
+.card {
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  padding: var(--space-5);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-3);
+  transition: box-shadow 0.18s ease;
+}
+
+/* Modal elevation preset */
+.modal {
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-5);
+  z-index: var(--z-modal);
+}
+
+/* Dropdown elevation preset */
+.dropdown {
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-3);
+  z-index: var(--z-dropdown);
+}
+
+/* Tooltip elevation preset */
+.tooltip {
+  background-color: var(--color-text-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-3);
+  z-index: var(--z-tooltip);
+  color: var(--color-text-inverse);
+  padding: var(--space-2) var(--space-3);
+  font-size: 12px;
+}
+
+/* Responsive radius adjustments */
+@media (max-width: 640px) {
+  .rounded-lg-md { border-radius: var(--radius-md); }
+  .rounded-xl-lg { border-radius: var(--radius-lg); }
+}
