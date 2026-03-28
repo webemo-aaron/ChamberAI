@@ -30,6 +30,7 @@ import { loginHandler } from "./views/login/login.js";
 import { settingsHandler } from "./views/settings/settings-view.js";
 import { kioskHandler } from "./views/kiosk/kiosk-view.js";
 import { kioskConfigHandler } from "./views/kiosk/kiosk-config.js";
+import { businessHubHandler } from "./views/business-hub/business-hub-view.js";
 import { initKioskWidget } from "./components/kiosk-widget.js";
 import { initSidebar } from "./components/sidebar.js";
 import { initTopbar } from "./components/topbar.js";
@@ -266,10 +267,8 @@ async function meetingDetailHandler(params) {
  * Handle /business-hub route
  * @param {Object} params - Route parameters
  */
-async function businessHubHandler(params) {
-  // Phase 5: Move business hub rendering here
-  showToast("Loading business hub...");
-}
+// businessHubHandler is now imported from views/business-hub/business-hub-view.js
+// It is called via registerRoute() below
 
 // ============================================================================
 // Shell Chrome Event Handlers
