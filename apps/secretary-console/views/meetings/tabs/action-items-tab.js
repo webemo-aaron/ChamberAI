@@ -18,6 +18,9 @@ import { formatDate, escapeHtml } from "../utils/format.js";
 let currentActionItems = [];
 let currentMeetingId = null;
 
+// Module-level handler for closing action row menus on outside clicks
+let closeMenuHandler = null;
+
 /**
  * Render action items tab content
  * @param {HTMLElement} container - Tab panel container
@@ -206,12 +209,21 @@ function createActionRow(item) {
       menuBtn.setAttribute("aria-expanded", String(!menuPanel.classList.contains("hidden")));
     });
 
-    document.addEventListener("click", (event) => {
-      if (!row.contains(event.target)) {
-        menuPanel.classList.add("hidden");
-        menuBtn.setAttribute("aria-expanded", "false");
-      }
-    });
+    // Register module-level handler to close menus on outside clicks (once per tab lifecycle)
+    if (!closeMenuHandler) {
+      closeMenuHandler = (event) => {
+        // Close any open menus if clicked outside their rows
+        document.querySelectorAll(".row-action-menu-panel:not(.hidden)").forEach((panel) => {
+          const rowContainer = panel.closest(".meeting-item");
+          if (rowContainer && !rowContainer.contains(event.target)) {
+            panel.classList.add("hidden");
+            const btn = panel.closest(".row-action-menu")?.querySelector(".btn-row-menu");
+            if (btn) btn.setAttribute("aria-expanded", "false");
+          }
+        });
+      };
+      document.addEventListener("click", closeMenuHandler);
+    }
   }
 
   if (deleteBtn) {
@@ -508,5 +520,19 @@ function exportCsv(items) {
   URL.revokeObjectURL(url);
 
   showToast("Action items exported");
+}
+
+/**
+ * Cleanup function — removes the module-level document click listener and resets state.
+ * Called by meeting-detail.js on route change or meeting change.
+ * @export
+ */
+export function cleanup() {
+  if (closeMenuHandler) {
+    document.removeEventListener("click", closeMenuHandler);
+    closeMenuHandler = null;
+  }
+  currentActionItems = [];
+  currentMeetingId = null;
 }
 

@@ -360,3 +360,16 @@ async function uploadAudio(meetingId, file, zone, textarea) {
   }
 }
 
+/**
+ * Cleanup function — cancels auto-save timer and resets module state.
+ * Called by meeting-detail.js on route change or meeting change.
+ * @export
+ */
+export function cleanup() {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = null;
+  }
+  currentMeetingId = null;
+}
+

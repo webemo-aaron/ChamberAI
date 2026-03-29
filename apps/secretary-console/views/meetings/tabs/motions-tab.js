@@ -19,6 +19,9 @@ import { escapeHtml } from "../utils/format.js";
 let currentMotions = [];
 let currentMeetingId = null;
 
+// Module-level handler for closing motion row menus on outside clicks
+let closeMenuHandler = null;
+
 /**
  * Render motions tab content
  * @param {HTMLElement} container - Tab panel container
@@ -213,12 +216,21 @@ function createMotionItem(motion) {
       menuBtn.setAttribute("aria-expanded", String(!menuPanel.classList.contains("hidden")));
     });
 
-    document.addEventListener("click", (event) => {
-      if (!item.contains(event.target)) {
-        menuPanel.classList.add("hidden");
-        menuBtn.setAttribute("aria-expanded", "false");
-      }
-    });
+    // Register module-level handler to close menus on outside clicks (once per tab lifecycle)
+    if (!closeMenuHandler) {
+      closeMenuHandler = (event) => {
+        // Close any open menus if clicked outside their items
+        document.querySelectorAll(".motion-row-menu-panel:not(.hidden)").forEach((panel) => {
+          const motionContainer = panel.closest(".motion-item");
+          if (motionContainer && !motionContainer.contains(event.target)) {
+            panel.classList.add("hidden");
+            const btn = panel.closest(".motion-row-menu")?.querySelector(".btn-row-menu");
+            if (btn) btn.setAttribute("aria-expanded", "false");
+          }
+        });
+      };
+      document.addEventListener("click", closeMenuHandler);
+    }
   }
 
   return item;
@@ -331,5 +343,19 @@ async function refreshMotionsList(container) {
   } catch (error) {
     showToast(`Refresh failed: ${error.message}`, { type: "error" });
   }
+}
+
+/**
+ * Cleanup function — removes the module-level document click listener and resets state.
+ * Called by meeting-detail.js on route change or meeting change.
+ * @export
+ */
+export function cleanup() {
+  if (closeMenuHandler) {
+    document.removeEventListener("click", closeMenuHandler);
+    closeMenuHandler = null;
+  }
+  currentMotions = [];
+  currentMeetingId = null;
 }
 

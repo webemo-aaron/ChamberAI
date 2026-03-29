@@ -316,3 +316,12 @@ function copyToClipboard(text, message = "Copied to clipboard") {
     });
 }
 
+/**
+ * Cleanup function — resets module-level state.
+ * Called by meeting-detail.js on route change or meeting change.
+ * @export
+ */
+export function cleanup() {
+  currentMeetingId = null;
+  currentSummary = "";
+}

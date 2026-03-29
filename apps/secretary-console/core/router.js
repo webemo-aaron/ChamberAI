@@ -16,6 +16,9 @@ let currentRoute = {
 // Route change listeners
 const routeChangeListeners = [];
 
+// Pending cleanup callback from previous route handler
+let pendingCleanup = null;
+
 /**
  * Parses a query string into an object.
  * @param {string} queryString - The query string (without leading ?)
@@ -197,6 +200,12 @@ function processHash() {
   // Call the matched handler if found
   if (matchedRoute) {
     try {
+      // Call cleanup from previous route before handling new route
+      if (pendingCleanup) {
+        pendingCleanup();
+        pendingCleanup = null;
+      }
+
       const context = {
         router: {
           navigate,
@@ -204,6 +213,9 @@ function processHash() {
           onRouteChange,
         },
         pattern: matchedPattern,
+        onCleanup: (fn) => {
+          pendingCleanup = fn;
+        },
       };
       matchedRoute.handler(params, context);
     } catch (error) {

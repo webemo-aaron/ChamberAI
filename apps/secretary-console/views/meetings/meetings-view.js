@@ -11,17 +11,30 @@
  * Route: /meetings and /meetings/:id
  */
 
-import { request, showToast } from "../../core/api.js";
+import { request } from "../../core/api.js";
 import { navigate } from "../../core/router.js";
+import { showToast } from "../../core/toast.js";
 import { createMeetingList, renderMeetingsList } from "./meeting-list.js";
-import { createMeetingDetail, renderMeetingDetail } from "./meeting-detail.js";
+import {
+  createMeetingDetail,
+  renderMeetingDetail,
+  cleanup as cleanupMeetingDetail
+} from "./meeting-detail.js";
+import { attachPaneSplitter } from "../common/pane-splitter.js";
+import {
+  filterMeetingsByShowcaseCity,
+  getSelectedShowcaseCity,
+  setSelectedShowcaseCity
+} from "../common/showcase-city-context.js";
 
 // State management
 let currentMeetings = [];
 let currentMeeting = null;
+let allMeetings = [];
 let listContainer = null;
 let detailContainer = null;
 let unsubscribers = [];
+let removePaneSplitter = null;
 
 /**
  * Route handler for /meetings and /meetings/:id
@@ -51,11 +64,19 @@ export async function meetingsHandler(params, context) {
   listContainer = createMeetingList();
   layout.appendChild(listContainer);
 
+  const splitter = document.createElement("div");
+  splitter.className = "pane-splitter";
+  splitter.setAttribute("role", "separator");
+  splitter.setAttribute("aria-orientation", "vertical");
+  splitter.setAttribute("aria-label", "Resize meetings list panel");
+  layout.appendChild(splitter);
+
   // 4. Load meetings list
   try {
     showToast("Loading meetings...");
     const response = await request("/meetings", "GET");
-    currentMeetings = response.data || response || [];
+    allMeetings = response.data || response || [];
+    currentMeetings = filterMeetingsByShowcaseCity(allMeetings, getSelectedShowcaseCity());
     renderMeetingsList(listContainer, currentMeetings, params.id);
     showToast("Meetings loaded");
   } catch (error) {
@@ -83,6 +104,13 @@ export async function meetingsHandler(params, context) {
   }
 
   container.appendChild(layout);
+  removePaneSplitter = attachPaneSplitter(layout, {
+    storageKey: "camMeetingsListWidth",
+    variableName: "--meetings-list-width",
+    defaultWidth: 360,
+    minWidth: 320,
+    maxWidth: 520
+  });
 
   // 6. Wire list→detail communication
   const listUnsubscriber = listenForMeetingSelected(layout);
@@ -91,6 +119,9 @@ export async function meetingsHandler(params, context) {
   // 7. Wire refresh listener
   const refreshUnsubscriber = listenForRefreshRequested(layout);
   unsubscribers.push(refreshUnsubscriber);
+
+  const cityUnsubscriber = listenForShowcaseCityChanged(layout);
+  unsubscribers.push(cityUnsubscriber);
 
   // 8. Cleanup on route change
   context?.onCleanup?.(() => {
@@ -131,7 +162,8 @@ function listenForRefreshRequested(layout) {
     try {
       showToast("Refreshing meetings...");
       const response = await request("/meetings", "GET");
-      currentMeetings = response.data || response || [];
+      allMeetings = response.data || response || [];
+      currentMeetings = filterMeetingsByShowcaseCity(allMeetings, getSelectedShowcaseCity());
       renderMeetingsList(listContainer, currentMeetings);
       showToast("Meetings refreshed");
     } catch (error) {
@@ -146,10 +178,28 @@ function listenForRefreshRequested(layout) {
   };
 }
 
+function listenForShowcaseCityChanged(layout) {
+  const handler = (event) => {
+    const selectedCity = setSelectedShowcaseCity(event.detail?.cityId);
+    currentMeetings = filterMeetingsByShowcaseCity(allMeetings, selectedCity);
+    renderMeetingsList(listContainer, currentMeetings);
+    showToast(`Meetings scoped to ${selectedCity.label}`);
+  };
+
+  layout.addEventListener("showcase-city-changed", handler);
+
+  return () => {
+    layout.removeEventListener("showcase-city-changed", handler);
+  };
+}
+
 /**
  * Clean up resources on unmount
  */
 function cleanup() {
+  // Clean up meeting detail (tab modules, etc.)
+  cleanupMeetingDetail();
+
   // Remove all event listeners
   unsubscribers.forEach((unsub) => {
     try {
@@ -163,6 +213,9 @@ function cleanup() {
   // Clear state
   currentMeetings = [];
   currentMeeting = null;
+  allMeetings = [];
   listContainer = null;
   detailContainer = null;
+  removePaneSplitter?.();
+  removePaneSplitter = null;
 }

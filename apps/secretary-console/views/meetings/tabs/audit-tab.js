@@ -239,3 +239,12 @@ function applyFilters(filterBar, logContainer) {
   renderAuditLog(logContainer, filteredLog);
 }
 
+/**
+ * Cleanup function — resets module-level state.
+ * Called by meeting-detail.js on route change or meeting change.
+ * @export
+ */
+export function cleanup() {
+  auditLog = [];
+  filteredLog = [];
+}

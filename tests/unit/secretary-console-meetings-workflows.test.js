@@ -219,3 +219,50 @@ test("meetings view utilities are extracted and reused across files", () => {
   assert.match(actionsTabJs, /data-testid="quick-submit"/);
   assert.match(actionsTabJs, /data-testid="quick-cancel"/);
 });
+
+test("meetings view implements proper cleanup on route change", () => {
+  const routerJs = read("apps/secretary-console/core/router.js");
+  const meetingsViewJs = read("apps/secretary-console/views/meetings/meetings-view.js");
+  const meetingDetailJs = read(
+    "apps/secretary-console/views/meetings/meeting-detail.js"
+  );
+  const minutesTabJs = read(
+    "apps/secretary-console/views/meetings/tabs/minutes-tab.js"
+  );
+  const actionsTabJs = read(
+    "apps/secretary-console/views/meetings/tabs/action-items-tab.js"
+  );
+  const motionsTabJs = read(
+    "apps/secretary-console/views/meetings/tabs/motions-tab.js"
+  );
+  const auditTabJs = read(
+    "apps/secretary-console/views/meetings/tabs/audit-tab.js"
+  );
+  const summaryTabJs = read(
+    "apps/secretary-console/views/meetings/tabs/public-summary-tab.js"
+  );
+
+  // Verify router implements onCleanup support
+  assert.match(routerJs, /let pendingCleanup = null/);
+  assert.match(routerJs, /onCleanup: \(fn\) => \{/);
+  assert.match(routerJs, /if \(pendingCleanup\)/);
+
+  // Verify all tab modules export cleanup
+  assert.match(minutesTabJs, /export function cleanup\(\)/);
+  assert.match(actionsTabJs, /export function cleanup\(\)/);
+  assert.match(motionsTabJs, /export function cleanup\(\)/);
+  assert.match(auditTabJs, /export function cleanup\(\)/);
+  assert.match(summaryTabJs, /export function cleanup\(\)/);
+
+  // Verify meeting-detail exports cleanup and calls tab cleanups on meeting change
+  assert.match(meetingDetailJs, /export function cleanup\(\)/);
+  assert.match(meetingDetailJs, /mod\.cleanup\?\.\(\)/);
+  assert.match(meetingDetailJs, /loadedModules\.clear\(\)/);
+  assert.match(meetingDetailJs, /setAttribute\("data-loaded", "false"\)/);
+
+  // Verify meetings-view imports and calls cleanupMeetingDetail
+  assert.match(meetingsViewJs, /cleanup as cleanupMeetingDetail/);
+  assert.match(meetingsViewJs, /from "\.\/meeting-detail\.js"/);
+  assert.match(meetingsViewJs, /cleanupMeetingDetail\(\)/);
+});
+

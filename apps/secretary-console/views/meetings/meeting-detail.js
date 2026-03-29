@@ -124,6 +124,13 @@ export function renderMeetingDetail(container, meeting, selectedTab = "minutes")
     });
   });
 
+  container.addEventListener("meeting-tab-requested", async (event) => {
+    const requestedTab = event.detail?.tabId;
+    if (requestedTab) {
+      await switchTab(requestedTab, container);
+    }
+  });
+
   // Load initial tab
   switchTab(selectedTab, container);
 }
@@ -249,9 +256,42 @@ export function getActiveTab() {
  * @param {Object} meeting - Updated meeting data
  */
 export function updateMeeting(meeting) {
+  // If the meeting changed, clean up loaded modules and force re-render
+  if (currentMeeting?.id !== meeting?.id) {
+    // Call cleanup on all loaded tab modules
+    for (const [, mod] of loadedModules) {
+      mod.cleanup?.();
+    }
+    // Clear the module cache
+    loadedModules.clear();
+    // Reset data-loaded attributes so tabs re-render when switched
+    const container = document.querySelector(".meeting-detail-pane");
+    if (container) {
+      container.querySelectorAll(".detail-panel[data-loaded]").forEach((panel) => {
+        panel.setAttribute("data-loaded", "false");
+      });
+    }
+  }
+
   currentMeeting = meeting;
   const container = document.querySelector(".meeting-detail-pane");
   if (container) {
     updateMeetingDetailHeader(container, meeting);
   }
+}
+
+/**
+ * Cleanup function — calls cleanup on all loaded tab modules and clears state.
+ * Called by meetings-view.js during route teardown.
+ * @export
+ */
+export function cleanup() {
+  // Call cleanup on all loaded tab modules
+  for (const [, mod] of loadedModules) {
+    mod.cleanup?.();
+  }
+  // Clear the module cache
+  loadedModules.clear();
+  currentMeeting = null;
+  activeTab = "minutes";
 }
