@@ -22,6 +22,9 @@ let currentMeetingId = null;
 // Module-level handler for closing motion row menus on outside clicks
 let closeMenuHandler = null;
 
+// Module-level tracker for open modal
+let openModal = null;
+
 /**
  * Render motions tab content
  * @param {HTMLElement} container - Tab panel container
@@ -220,7 +223,7 @@ function createMotionItem(motion) {
     if (!closeMenuHandler) {
       closeMenuHandler = (event) => {
         // Close any open menus if clicked outside their items
-        document.querySelectorAll(".motion-row-menu-panel:not(.hidden)").forEach((panel) => {
+        document.querySelectorAll(".row-action-menu-panel:not(.hidden)").forEach((panel) => {
           const motionContainer = panel.closest(".motion-item");
           if (motionContainer && !motionContainer.contains(event.target)) {
             panel.classList.add("hidden");
@@ -296,12 +299,26 @@ function createMotionModal(meetingId, onSuccess) {
   const cancelBtn = modal.querySelector(".btn-cancel");
   const closeBtn = modal.querySelector(".btn-close");
 
+  // Define closeModal first so escapeHandler can reference it
   const closeModal = () => {
     modal.remove();
+    openModal = null;
+    document.removeEventListener("keydown", escapeHandler);
+  };
+
+  // Define escapeHandler with reference to closeModal
+  const escapeHandler = (e) => {
+    if (e.key === "Escape") closeModal();
   };
 
   cancelBtn.addEventListener("click", closeModal);
   closeBtn.addEventListener("click", closeModal);
+
+  // Wire backdrop click to close
+  modal.querySelector(".modal-overlay").addEventListener("click", closeModal);
+
+  // Wire Escape key to close
+  document.addEventListener("keydown", escapeHandler);
 
   saveBtn.addEventListener("click", async () => {
     const text = modal.querySelector("#motionText").value.trim();
@@ -328,6 +345,8 @@ function createMotionModal(meetingId, onSuccess) {
     }
   });
 
+  // Track modal globally for cleanup
+  openModal = modal;
   return modal;
 }
 
@@ -351,6 +370,10 @@ async function refreshMotionsList(container) {
  * @export
  */
 export function cleanup() {
+  if (openModal) {
+    openModal.remove();
+    openModal = null;
+  }
   if (closeMenuHandler) {
     document.removeEventListener("click", closeMenuHandler);
     closeMenuHandler = null;

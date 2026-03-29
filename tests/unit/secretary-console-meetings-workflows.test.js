@@ -264,5 +264,48 @@ test("meetings view implements proper cleanup on route change", () => {
   assert.match(meetingsViewJs, /cleanup as cleanupMeetingDetail/);
   assert.match(meetingsViewJs, /from "\.\/meeting-detail\.js"/);
   assert.match(meetingsViewJs, /cleanupMeetingDetail\(\)/);
+
+  // Verify modal tracking was added to Phase 5.3
+  assert.match(actionsTabJs, /let openModal = null/);
+  assert.match(motionsTabJs, /let openModal = null/);
+});
+
+test("action items and motions row menus use correct CSS selectors and modals clean up properly", () => {
+  const actionsTabJs = read(
+    "apps/secretary-console/views/meetings/tabs/action-items-tab.js"
+  );
+  const motionsTabJs = read(
+    "apps/secretary-console/views/meetings/tabs/motions-tab.js"
+  );
+  const headerJs = read(
+    "apps/secretary-console/views/meetings/meeting-detail-header.js"
+  );
+
+  // Verify selector fixes for closeMenuHandler
+  assert.match(actionsTabJs, /closest\("\.action-item-row"\)/);
+  assert.doesNotMatch(actionsTabJs, /closest\("\.meeting-item"\)/);
+  assert.match(motionsTabJs, /querySelectorAll\("\.row-action-menu-panel:not\(\.hidden\)"\)/);
+  assert.doesNotMatch(motionsTabJs, /querySelectorAll\("\.motion-row-menu-panel/);
+
+  // Verify modal tracking for cleanup
+  assert.match(actionsTabJs, /openModal = modal/);
+  assert.match(motionsTabJs, /openModal = modal/);
+
+  // Verify modals are removed in cleanup
+  assert.match(actionsTabJs, /openModal\.remove\(\)/);
+  assert.match(motionsTabJs, /openModal\.remove\(\)/);
+
+  // Verify backdrop click is wired
+  assert.match(actionsTabJs, /modal-overlay.*addEventListener.*click.*closeModal/);
+  assert.match(motionsTabJs, /modal-overlay.*addEventListener.*click.*closeModal/);
+
+  // Verify Escape key is wired
+  assert.match(actionsTabJs, /if \(e\.key === "Escape"\)/);
+  assert.match(motionsTabJs, /if \(e\.key === "Escape"\)/);
+
+  // Verify meeting-detail-header fixed { once: true } issue
+  assert.doesNotMatch(headerJs, /\{ once: true \}/);
+  assert.match(headerJs, /let outsideClickHandler = null/);
+  assert.match(headerJs, /setTimeout.*document\.addEventListener.*click.*outsideClickHandler/);
 });
 

@@ -160,9 +160,29 @@ function setupHeaderHandlers(header, meeting) {
   }
 
   if (moreBtn && actionMenu) {
+    // Track outside-click handler for the action menu
+    let outsideClickHandler = null;
+
     moreBtn.addEventListener("click", (event) => {
       event.stopPropagation();
       actionMenu.classList.toggle("hidden");
+
+      // Register or deregister outside-click handler based on menu state
+      if (!actionMenu.classList.contains("hidden")) {
+        // Menu just opened — register outside-click listener on next tick to skip this click
+        outsideClickHandler = (event) => {
+          if (!header.contains(event.target)) {
+            actionMenu.classList.add("hidden");
+            document.removeEventListener("click", outsideClickHandler);
+            outsideClickHandler = null;
+          }
+        };
+        setTimeout(() => document.addEventListener("click", outsideClickHandler), 0);
+      } else if (outsideClickHandler) {
+        // Menu closed via button click — remove stale listener
+        document.removeEventListener("click", outsideClickHandler);
+        outsideClickHandler = null;
+      }
     });
 
     actionMenu.querySelector('[data-action="copy-link"]')?.addEventListener("click", async () => {
@@ -173,6 +193,10 @@ function setupHeaderHandlers(header, meeting) {
         showToast("Failed to copy meeting link", { type: "error" });
       }
       actionMenu.classList.add("hidden");
+      if (outsideClickHandler) {
+        document.removeEventListener("click", outsideClickHandler);
+        outsideClickHandler = null;
+      }
     });
 
     actionMenu.querySelector('[data-action="open-summary"]')?.addEventListener("click", () => {
@@ -183,17 +207,11 @@ function setupHeaderHandlers(header, meeting) {
         })
       );
       actionMenu.classList.add("hidden");
+      if (outsideClickHandler) {
+        document.removeEventListener("click", outsideClickHandler);
+        outsideClickHandler = null;
+      }
     });
-
-    document.addEventListener(
-      "click",
-      (event) => {
-        if (!header.contains(event.target)) {
-          actionMenu.classList.add("hidden");
-        }
-      },
-      { once: true }
-    );
   }
 
   if (geoBtn) {

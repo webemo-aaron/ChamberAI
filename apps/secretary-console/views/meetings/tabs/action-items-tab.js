@@ -21,6 +21,9 @@ let currentMeetingId = null;
 // Module-level handler for closing action row menus on outside clicks
 let closeMenuHandler = null;
 
+// Module-level tracker for open modal
+let openModal = null;
+
 /**
  * Render action items tab content
  * @param {HTMLElement} container - Tab panel container
@@ -214,7 +217,7 @@ function createActionRow(item) {
       closeMenuHandler = (event) => {
         // Close any open menus if clicked outside their rows
         document.querySelectorAll(".row-action-menu-panel:not(.hidden)").forEach((panel) => {
-          const rowContainer = panel.closest(".meeting-item");
+          const rowContainer = panel.closest(".action-item-row");
           if (rowContainer && !rowContainer.contains(event.target)) {
             panel.classList.add("hidden");
             const btn = panel.closest(".row-action-menu")?.querySelector(".btn-row-menu");
@@ -306,12 +309,26 @@ function createAddActionModal(meetingId, onSuccess) {
   const cancelBtn = modal.querySelector(".btn-cancel");
   const closeBtn = modal.querySelector(".btn-close");
 
+  // Define closeModal first so escapeHandler can reference it
   const closeModal = () => {
     modal.remove();
+    openModal = null;
+    document.removeEventListener("keydown", escapeHandler);
+  };
+
+  // Define escapeHandler with reference to closeModal
+  const escapeHandler = (e) => {
+    if (e.key === "Escape") closeModal();
   };
 
   cancelBtn.addEventListener("click", closeModal);
   closeBtn.addEventListener("click", closeModal);
+
+  // Wire backdrop click to close
+  modal.querySelector(".modal-overlay").addEventListener("click", closeModal);
+
+  // Wire Escape key to close
+  document.addEventListener("keydown", escapeHandler);
 
   saveBtn.addEventListener("click", async () => {
     const description = modal.querySelector("#actionDescription").value.trim();
@@ -338,6 +355,8 @@ function createAddActionModal(meetingId, onSuccess) {
     }
   });
 
+  // Track modal globally for cleanup
+  openModal = modal;
   return modal;
 }
 
@@ -409,12 +428,26 @@ function createEditActionModal(item, onSuccess) {
   const cancelBtn = modal.querySelector(".btn-cancel");
   const closeBtn = modal.querySelector(".btn-close");
 
+  // Define closeModal first so escapeHandler can reference it
   const closeModal = () => {
     modal.remove();
+    openModal = null;
+    document.removeEventListener("keydown", escapeHandler);
+  };
+
+  // Define escapeHandler with reference to closeModal
+  const escapeHandler = (e) => {
+    if (e.key === "Escape") closeModal();
   };
 
   cancelBtn.addEventListener("click", closeModal);
   closeBtn.addEventListener("click", closeModal);
+
+  // Wire backdrop click to close
+  modal.querySelector(".modal-overlay").addEventListener("click", closeModal);
+
+  // Wire Escape key to close
+  document.addEventListener("keydown", escapeHandler);
 
   saveBtn.addEventListener("click", async () => {
     const description = modal.querySelector("#actionDescription").value.trim();
@@ -446,6 +479,8 @@ function createEditActionModal(item, onSuccess) {
     }
   });
 
+  // Track modal globally for cleanup
+  openModal = modal;
   return modal;
 }
 
@@ -528,6 +563,10 @@ function exportCsv(items) {
  * @export
  */
 export function cleanup() {
+  if (openModal) {
+    openModal.remove();
+    openModal = null;
+  }
   if (closeMenuHandler) {
     document.removeEventListener("click", closeMenuHandler);
     closeMenuHandler = null;
