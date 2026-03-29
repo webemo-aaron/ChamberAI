@@ -10,7 +10,9 @@
  * - Filter and sort
  */
 
-import { request, showToast } from "../../../core/api.js";
+import { fetchWithAuth, request } from "../../../core/api.js";
+import { showToast } from "../../../core/toast.js";
+import { formatDate, escapeHtml } from "../utils/format.js";
 
 // State
 let currentActionItems = [];
@@ -93,9 +95,13 @@ function createToolbar(meetingId) {
   toolbar.setAttribute("role", "toolbar");
 
   toolbar.innerHTML = `
-    <button class="btn btn-primary btn-add-action">➕ Add Item</button>
-    <button class="btn btn-secondary btn-import-csv">📥 Import CSV</button>
-    <button class="btn btn-secondary btn-export-csv">📥 Export CSV</button>
+    <div class="surface-primary-actions">
+      <button class="btn btn-primary btn-add-action">➕ Add Item</button>
+    </div>
+    <div class="surface-secondary-actions">
+      <button class="btn btn-secondary btn-import-csv">📥 Import CSV</button>
+      <button class="btn btn-secondary btn-export-csv">📤 Export CSV</button>
+    </div>
   `;
 
   return toolbar;
@@ -167,13 +173,20 @@ function createActionRow(item) {
     </div>
     <div class="col-actions" data-label="Actions">
       <button class="btn-icon btn-edit" title="Edit">✎</button>
-      <button class="btn-icon btn-delete" title="Delete">🗑</button>
+      <div class="row-action-menu">
+        <button class="btn-icon btn-row-menu" title="More actions" aria-label="More actions" aria-haspopup="menu" aria-expanded="false">⋯</button>
+        <div class="row-action-menu-panel hidden" role="menu">
+          <button class="row-action-menu-item btn-delete" title="Delete" role="menuitem">🗑 Delete</button>
+        </div>
+      </div>
     </div>
   `;
 
   // Wire edit/delete buttons
   const editBtn = row.querySelector(".btn-edit");
   const deleteBtn = row.querySelector(".btn-delete");
+  const menuBtn = row.querySelector(".btn-row-menu");
+  const menuPanel = row.querySelector(".row-action-menu-panel");
 
   if (editBtn) {
     editBtn.addEventListener("click", () => {
@@ -183,6 +196,21 @@ function createActionRow(item) {
       });
       document.body.appendChild(modal);
       modal.classList.add("visible");
+    });
+  }
+
+  if (menuBtn && menuPanel) {
+    menuBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      menuPanel.classList.toggle("hidden");
+      menuBtn.setAttribute("aria-expanded", String(!menuPanel.classList.contains("hidden")));
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!row.contains(event.target)) {
+        menuPanel.classList.add("hidden");
+        menuBtn.setAttribute("aria-expanded", "false");
+      }
     });
   }
 
@@ -255,8 +283,8 @@ function createAddActionModal(meetingId, onSuccess) {
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost btn-cancel">Cancel</button>
-        <button class="btn btn-primary btn-save">Save</button>
+        <button class="btn btn-ghost btn-cancel" data-testid="quick-cancel">Cancel</button>
+        <button class="btn btn-primary btn-save" data-testid="quick-submit">Save</button>
       </div>
     </div>
   `;
@@ -359,8 +387,8 @@ function createEditActionModal(item, onSuccess) {
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost btn-cancel">Cancel</button>
-        <button class="btn btn-primary btn-save">Save</button>
+        <button class="btn btn-ghost btn-cancel" data-testid="quick-cancel">Cancel</button>
+        <button class="btn btn-primary btn-save" data-testid="quick-submit">Save</button>
       </div>
     </div>
   `;
@@ -434,9 +462,11 @@ async function importCsv(meetingId, file, container) {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch(`/meetings/${meetingId}/actions/import-csv`, {
+    const response = await fetchWithAuth(`/meetings/${meetingId}/actions/import-csv`, {
       method: "POST",
       body: formData
+    }, {
+      suppressAlert: true
     });
 
     if (!response.ok) throw new Error("Import failed");
@@ -480,28 +510,3 @@ function exportCsv(items) {
   showToast("Action items exported");
 }
 
-/**
- * Helper: Format date
- * @param {String} dateStr - ISO date
- * @returns {String} Formatted date
- */
-function formatDate(dateStr) {
-  if (!dateStr) return "No date";
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US");
-  } catch {
-    return "Invalid date";
-  }
-}
-
-/**
- * Helper: Escape HTML
- * @param {String} text - Text to escape
- * @returns {String} Escaped text
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}

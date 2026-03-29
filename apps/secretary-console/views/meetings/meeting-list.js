@@ -13,12 +13,17 @@
  * - Responsive table view (scrollable on mobile)
  */
 
-import { showToast } from "../../core/api.js";
+import {
+  buildShowcaseCityOptions,
+  getSelectedShowcaseCity
+} from "../common/showcase-city-context.js";
+import { createMeetingRow } from "./components/meeting-row.js";
+import { applyMeetingsFilter } from "./utils/filter.js";
 
 // State
 let filteredMeetings = [];
 let searchTerm = "";
-let statusFilter = "all";
+let statusFilterState = "all";
 let selectedMeetingId = null;
 
 /**
@@ -66,6 +71,12 @@ export function createMeetingList() {
   filterContainer.setAttribute("role", "group");
   filterContainer.setAttribute("aria-label", "Filter meetings");
   filterContainer.innerHTML = `
+    <div class="filter-group">
+      <label for="showcaseCityFilter" class="filter-label">City:</label>
+      <select id="showcaseCityFilter" class="filter-select" aria-label="Filter by showcase city">
+        ${buildShowcaseCityOptions(getSelectedShowcaseCity().id)}
+      </select>
+    </div>
     <div class="filter-group">
       <label for="statusFilter" class="filter-label">Status:</label>
       <select id="statusFilter" class="filter-select" aria-label="Filter by status">
@@ -176,43 +187,6 @@ export function renderMeetingsList(container, meetings = [], selectedId = null) 
   if (countBadge) countBadge.textContent = meetings.length;
 }
 
-/**
- * Create single meeting row
- * @param {Object} meeting - Meeting data
- * @param {Boolean} isSelected - Is this meeting selected
- * @returns {HTMLElement} Row element
- */
-function createMeetingRow(meeting, isSelected = false) {
-  const row = document.createElement("div");
-  row.className = `meeting-item ${isSelected ? "selected" : ""}`;
-  row.setAttribute("role", "row");
-  row.setAttribute("tabindex", "0");
-  row.dataset.meetingId = meeting.id;
-
-  const location = meeting.location || "Untitled";
-  const date = formatDate(meeting.date || new Date().toISOString());
-  const status = meeting.status || "scheduled";
-  const attendees = meeting.attendeeCount || 0;
-
-  row.innerHTML = `
-    <div class="col-location" data-label="Location">${escapeHtml(location)}</div>
-    <div class="col-date" data-label="Date/Time">${escapeHtml(date)}</div>
-    <div class="col-status" data-label="Status">
-      <span class="badge badge-${status}">${status}</span>
-    </div>
-    <div class="col-attendees" data-label="Attendees">${attendees}</div>
-  `;
-
-  // Keyboard accessibility
-  row.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      row.click();
-    }
-  });
-
-  return row;
-}
 
 /**
  * Set up event handlers for search, filter, create, refresh
@@ -220,6 +194,7 @@ function createMeetingRow(meeting, isSelected = false) {
  */
 function setupListHandlers(container) {
   const searchInput = container.querySelector("#meetingSearch");
+  const cityFilter = container.querySelector("#showcaseCityFilter");
   const statusFilter = container.querySelector("#statusFilter");
   const createBtn = container.querySelector("#createMeetingBtn");
   const refreshBtn = container.querySelector("#refreshBtn");
@@ -233,7 +208,20 @@ function setupListHandlers(container) {
 
   if (statusFilter) {
     statusFilter.addEventListener("change", (e) => {
-      statusFilter.value = e.target.value;
+      statusFilterState = e.target.value;
+      applyFilters(container);
+    });
+  }
+
+  if (cityFilter) {
+    cityFilter.addEventListener("change", (e) => {
+      container.dispatchEvent(
+        new CustomEvent("showcase-city-changed", {
+          detail: { cityId: e.target.value },
+          bubbles: true
+        })
+      );
+      // Note: meetings-view.js:listenForShowcaseCityChanged already shows the toast
       applyFilters(container);
     });
   }
@@ -265,54 +253,15 @@ function setupListHandlers(container) {
  * @param {HTMLElement} container - List container
  */
 function applyFilters(container) {
-  let filtered = filteredMeetings;
-
-  // Apply search filter
-  if (searchTerm) {
-    filtered = filtered.filter((meeting) => {
-      const location = (meeting.location || "").toLowerCase();
-      const topic = (meeting.topic || "").toLowerCase();
-      return location.includes(searchTerm) || topic.includes(searchTerm);
-    });
-  }
-
-  // Apply status filter
   const statusSelect = container.querySelector("#statusFilter");
-  if (statusSelect && statusSelect.value !== "all") {
-    filtered = filtered.filter((m) => m.status === statusSelect.value);
-  }
+  const activeStatus = statusSelect?.value ?? statusFilterState;
+
+  const filtered = applyMeetingsFilter(filteredMeetings, {
+    search: searchTerm,
+    status: activeStatus
+  });
 
   // Re-render list
   renderMeetingsList(container, filtered, selectedMeetingId);
 }
 
-/**
- * Helper: Format date for display
- * @param {String} dateStr - ISO date string
- * @returns {String} Formatted date
- */
-function formatDate(dateStr) {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  } catch {
-    return "Invalid date";
-  }
-}
-
-/**
- * Helper: Escape HTML special characters
- * @param {String} text - Text to escape
- * @returns {String} Escaped text
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}

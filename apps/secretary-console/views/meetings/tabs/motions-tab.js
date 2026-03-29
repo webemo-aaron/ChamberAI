@@ -11,7 +11,9 @@
  * - Export results
  */
 
-import { request, showToast } from "../../../core/api.js";
+import { request } from "../../../core/api.js";
+import { showToast } from "../../../core/toast.js";
+import { escapeHtml } from "../utils/format.js";
 
 // State
 let currentMotions = [];
@@ -152,7 +154,12 @@ function createMotionItem(motion) {
         <button class="btn-vote btn-no" title="Vote no">👎</button>
         <button class="btn-vote btn-abstain" title="Abstain">🤷</button>
       ` : ""}
-      <button class="btn-icon btn-delete" title="Delete">🗑</button>
+      <div class="motion-row-menu">
+        <button class="btn-icon btn-row-menu" title="More actions" aria-label="More actions" aria-haspopup="menu" aria-expanded="false">⋯</button>
+        <div class="row-action-menu-panel hidden" role="menu">
+          <button class="row-action-menu-item btn-delete" title="Delete" role="menuitem">🗑 Delete</button>
+        </div>
+      </div>
     </div>
   `;
 
@@ -180,6 +187,8 @@ function createMotionItem(motion) {
 
   // Wire delete button
   const deleteBtn = item.querySelector(".btn-delete");
+  const menuBtn = item.querySelector(".btn-row-menu");
+  const menuPanel = item.querySelector(".row-action-menu-panel");
   if (deleteBtn) {
     deleteBtn.addEventListener("click", async () => {
       if (confirm(`Delete motion: "${motion.text}"?`)) {
@@ -193,6 +202,21 @@ function createMotionItem(motion) {
         } catch (error) {
           showToast(`Delete failed: ${error.message}`, { type: "error" });
         }
+      }
+    });
+  }
+
+  if (menuBtn && menuPanel) {
+    menuBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      menuPanel.classList.toggle("hidden");
+      menuBtn.setAttribute("aria-expanded", String(!menuPanel.classList.contains("hidden")));
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!item.contains(event.target)) {
+        menuPanel.classList.add("hidden");
+        menuBtn.setAttribute("aria-expanded", "false");
       }
     });
   }
@@ -309,13 +333,3 @@ async function refreshMotionsList(container) {
   }
 }
 
-/**
- * Helper: Escape HTML
- * @param {String} text - Text to escape
- * @returns {String} Escaped text
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}

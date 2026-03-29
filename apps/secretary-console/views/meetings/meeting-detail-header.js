@@ -6,7 +6,14 @@
  * Actions: export, edit, delete (admin only)
  */
 
-import { showToast } from "../../core/api.js";
+import { showToast } from "../../core/toast.js";
+import { navigate } from "../../core/router.js";
+import { buildMeetingExportText } from "./meeting-workflow-utils.js";
+import {
+  inferShowcaseCityFromMeeting,
+  setSelectedShowcaseCity
+} from "../common/showcase-city-context.js";
+import { formatDate, escapeHtml } from "./utils/format.js";
 
 /**
  * Create meeting detail header
@@ -24,6 +31,7 @@ export function createMeetingDetailHeader(meeting) {
   title.className = "detail-title";
   title.innerHTML = `
     <div class="title-content">
+      <span class="detail-eyebrow">Meeting Workspace</span>
       <h1>${escapeHtml(meeting.location || "Untitled Meeting")}</h1>
       <span class="badge badge-${meeting.status || "scheduled"}">
         ${meeting.status || "scheduled"}
@@ -32,44 +40,33 @@ export function createMeetingDetailHeader(meeting) {
   `;
   header.appendChild(title);
 
-  // Metadata row 1: Date, Time, Chair
-  const metaRow1 = document.createElement("div");
-  metaRow1.className = "detail-meta";
-  metaRow1.innerHTML = `
-    <span class="meta-item">
-      <span class="meta-label">Date:</span>
-      <span class="meta-value">${formatDate(meeting.date)}</span>
-    </span>
-    <span class="meta-item">
-      <span class="meta-label">Chair:</span>
-      <span class="meta-value">${escapeHtml(meeting.chair || "Unassigned")}</span>
-    </span>
-    <span class="meta-item">
-      <span class="meta-label">Secretary:</span>
-      <span class="meta-value">${escapeHtml(meeting.secretary || "Unassigned")}</span>
-    </span>
-  `;
-  header.appendChild(metaRow1);
-
-  // Metadata row 2: Tags, Attendees
-  const metaRow2 = document.createElement("div");
-  metaRow2.className = "detail-meta";
-
   const tags = (meeting.tags || []).length > 0
     ? meeting.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join("")
     : "<span class=\"meta-empty\">None</span>";
 
-  metaRow2.innerHTML = `
-    <span class="meta-item">
-      <span class="meta-label">Tags:</span>
+  const summaryGrid = document.createElement("div");
+  summaryGrid.className = "detail-summary-grid";
+  summaryGrid.innerHTML = `
+    <article class="detail-meta-card">
+      <span class="meta-label">Session</span>
+      <span class="meta-value">${formatDate(meeting.date, { weekday: "short" })}</span>
+    </article>
+    <article class="detail-meta-card">
+      <span class="meta-label">Leadership</span>
+      <span class="meta-value">${escapeHtml(meeting.chair || "Unassigned")}</span>
+      <span class="meta-subvalue">Secretary: ${escapeHtml(meeting.secretary || "Unassigned")}</span>
+    </article>
+    <article class="detail-meta-card">
+      <span class="meta-label">Participation</span>
+      <span class="meta-value">${meeting.attendeeCount || 0} attendees</span>
+      <span class="meta-subvalue">Tracked for approvals & follow-through</span>
+    </article>
+    <article class="detail-meta-card">
+      <span class="meta-label">Tags</span>
       <span class="meta-value">${tags}</span>
-    </span>
-    <span class="meta-item">
-      <span class="meta-label">Attendees:</span>
-      <span class="meta-value">${meeting.attendeeCount || 0}</span>
-    </span>
+    </article>
   `;
-  header.appendChild(metaRow2);
+  header.appendChild(summaryGrid);
 
   // Action buttons
   const actions = document.createElement("div");
@@ -80,9 +77,16 @@ export function createMeetingDetailHeader(meeting) {
     <button class="btn btn-secondary" id="exportMeetingBtn" title="Export meeting">
       📥 Export
     </button>
+    <button class="btn btn-secondary" id="geoMeetingBtn" title="Open Geo Intelligence">
+      Geo Intelligence
+    </button>
     <button class="btn btn-ghost" id="moreActionsBtn" title="More options">
       ⋯ More
     </button>
+    <div class="detail-action-menu hidden" id="meetingActionMenu" role="menu" aria-label="Meeting actions menu">
+      <button class="detail-action-menu-item" data-action="copy-link" role="menuitem">Copy Meeting Link</button>
+      <button class="detail-action-menu-item" data-action="open-summary" role="menuitem">Open Summary Tab</button>
+    </div>
   `;
   header.appendChild(actions);
 
@@ -137,52 +141,69 @@ export function updateMeetingDetailHeader(container, meeting) {
  */
 function setupHeaderHandlers(header, meeting) {
   const exportBtn = header.querySelector("#exportMeetingBtn");
+  const geoBtn = header.querySelector("#geoMeetingBtn");
   const moreBtn = header.querySelector("#moreActionsBtn");
+  const actionMenu = header.querySelector("#meetingActionMenu");
 
   if (exportBtn) {
     exportBtn.addEventListener("click", () => {
-      showToast("Export feature coming soon");
-      // TODO: Implement export modal
+      const content = buildMeetingExportText(meeting);
+      const blob = new Blob([content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${(meeting.location || "meeting").replace(/\s+/g, "-").toLowerCase()}-snapshot.txt`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("Meeting snapshot exported");
     });
   }
 
-  if (moreBtn) {
-    moreBtn.addEventListener("click", () => {
-      showToast("More actions menu coming soon");
-      // TODO: Implement more actions menu
+  if (moreBtn && actionMenu) {
+    moreBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      actionMenu.classList.toggle("hidden");
+    });
+
+    actionMenu.querySelector('[data-action="copy-link"]')?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}#/meetings/${meeting.id}`);
+        showToast("Meeting link copied");
+      } catch (error) {
+        showToast("Failed to copy meeting link", { type: "error" });
+      }
+      actionMenu.classList.add("hidden");
+    });
+
+    actionMenu.querySelector('[data-action="open-summary"]')?.addEventListener("click", () => {
+      header.dispatchEvent(
+        new CustomEvent("meeting-tab-requested", {
+          bubbles: true,
+          detail: { tabId: "public-summary" }
+        })
+      );
+      actionMenu.classList.add("hidden");
+    });
+
+    document.addEventListener(
+      "click",
+      (event) => {
+        if (!header.contains(event.target)) {
+          actionMenu.classList.add("hidden");
+        }
+      },
+      { once: true }
+    );
+  }
+
+  if (geoBtn) {
+    geoBtn.addEventListener("click", () => {
+      const inferredCity = inferShowcaseCityFromMeeting(meeting);
+      if (inferredCity) {
+        setSelectedShowcaseCity(inferredCity.id);
+      }
+      navigate("/geo-intelligence");
     });
   }
 }
 
-/**
- * Helper: Format date for display
- * @param {String} dateStr - ISO date string
- * @returns {String} Formatted date
- */
-function formatDate(dateStr) {
-  if (!dateStr) return "No date";
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  } catch {
-    return "Invalid date";
-  }
-}
-
-/**
- * Helper: Escape HTML special characters
- * @param {String} text - Text to escape
- * @returns {String} Escaped text
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}

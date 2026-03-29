@@ -12,7 +12,9 @@
  * - Word count display
  */
 
-import { request, showToast } from "../../../core/api.js";
+import { fetchWithAuth, request } from "../../../core/api.js";
+import { showToast } from "../../../core/toast.js";
+import { formatDate, escapeHtml } from "../utils/format.js";
 
 // State
 let currentMeetingId = null;
@@ -113,8 +115,12 @@ function createMinutesEditor(initialText = "") {
   toolbar.className = "editor-toolbar";
   toolbar.setAttribute("role", "toolbar");
   toolbar.innerHTML = `
-    <button class="btn btn-primary btn-save" title="Save minutes">💾 Save</button>
-    <button class="btn btn-ghost btn-preview" title="Preview">👁 Preview</button>
+    <div class="surface-primary-actions">
+      <button class="btn btn-primary btn-save" title="Save minutes">💾 Save Minutes</button>
+    </div>
+    <div class="surface-secondary-actions">
+      <button class="btn btn-ghost btn-preview" title="Preview">👁 Preview</button>
+    </div>
   `;
   container.appendChild(toolbar);
 
@@ -326,9 +332,11 @@ async function uploadAudio(meetingId, file, zone, textarea) {
 
     showToast("Uploading audio...");
 
-    const response = await fetch(`/meetings/${meetingId}/minutes/audio`, {
+    const response = await fetchWithAuth(`/meetings/${meetingId}/minutes/audio`, {
       method: "POST",
       body: formData
+    }, {
+      suppressAlert: true
     });
 
     if (!response.ok) {
@@ -352,34 +360,3 @@ async function uploadAudio(meetingId, file, zone, textarea) {
   }
 }
 
-/**
- * Helper: Format date for display
- * @param {String} dateStr - ISO date string
- * @returns {String} Formatted date
- */
-function formatDate(dateStr) {
-  if (!dateStr) return "Unknown date";
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  } catch {
-    return "Invalid date";
-  }
-}
-
-/**
- * Helper: Escape HTML special characters
- * @param {String} text - Text to escape
- * @returns {String} Escaped text
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}

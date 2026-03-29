@@ -11,7 +11,10 @@
  * - Share link button
  */
 
-import { request, showToast } from "../../../core/api.js";
+import { request } from "../../../core/api.js";
+import { showToast } from "../../../core/toast.js";
+import { buildMeetingSummaryDraft } from "../meeting-workflow-utils.js";
+import { escapeHtml } from "../utils/format.js";
 
 // State
 let currentMeetingId = null;
@@ -60,9 +63,26 @@ export async function render(container, meeting) {
 
     const draftBtn = toolbar.querySelector(".btn-draft");
     if (draftBtn) {
-      draftBtn.addEventListener("click", () => {
-        showToast("AI draft generation coming soon");
-        // TODO: Implement AI draft generation
+      draftBtn.addEventListener("click", async () => {
+        const textarea = editor.querySelector("textarea");
+        if (!textarea) {
+          return;
+        }
+
+        let minutesText = "";
+        try {
+          const response = await request(`/meetings/${meeting.id}/minutes`, "GET", null, {
+            suppressAlert: true
+          });
+          minutesText = response?.text || response?.data?.text || "";
+        } catch (error) {
+          console.debug("[Summary] Minutes unavailable for draft:", error.message);
+        }
+
+        const draft = buildMeetingSummaryDraft(meeting, minutesText);
+        textarea.value = draft;
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        showToast("Draft summary generated from meeting context");
       });
     }
 
@@ -147,9 +167,13 @@ function createSummaryToolbar() {
   toolbar.setAttribute("aria-label", "Summary actions");
 
   toolbar.innerHTML = `
-    <button class="btn btn-secondary btn-draft" title="Generate AI draft">✨ AI Draft</button>
-    <button class="btn btn-secondary btn-export" title="Export summary">📥 Export</button>
-    <button class="btn btn-secondary btn-share" title="Copy share link">🔗 Share</button>
+    <div class="surface-primary-actions">
+      <button class="btn btn-secondary btn-draft" title="Generate AI draft">✨ AI Draft</button>
+    </div>
+    <div class="surface-secondary-actions">
+      <button class="btn btn-secondary btn-export" title="Export summary">📥 Export</button>
+      <button class="btn btn-secondary btn-share" title="Copy share link">🔗 Share</button>
+    </div>
   `;
 
   return toolbar;
@@ -292,13 +316,3 @@ function copyToClipboard(text, message = "Copied to clipboard") {
     });
 }
 
-/**
- * Helper: Escape HTML
- * @param {String} text - Text to escape
- * @returns {String} Escaped text
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}

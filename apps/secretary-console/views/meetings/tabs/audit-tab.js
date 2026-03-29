@@ -10,7 +10,9 @@
  * - Filter by user
  */
 
-import { request, showToast } from "../../../core/api.js";
+import { request } from "../../../core/api.js";
+import { showToast } from "../../../core/toast.js";
+import { formatDate, escapeHtml } from "../utils/format.js";
 
 // State
 let auditLog = [];
@@ -237,35 +239,3 @@ function applyFilters(filterBar, logContainer) {
   renderAuditLog(logContainer, filteredLog);
 }
 
-/**
- * Helper: Format date
- * @param {String} dateStr - ISO date
- * @returns {String} Formatted date
- */
-function formatDate(dateStr) {
-  if (!dateStr) return "Unknown";
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    });
-  } catch {
-    return "Invalid date";
-  }
-}
-
-/**
- * Helper: Escape HTML
- * @param {String} text - Text to escape
- * @returns {String} Escaped text
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
