@@ -1,7 +1,67 @@
 import admin from "firebase-admin";
-import { initFirebaseAdminApp, initFirestore } from "../db/firestore.js";
+import { initFirebaseAdminApp, initFirestore, serverTimestamp } from "../db/firestore.js";
 import { normalizeEmail, parseEnvInviteAllowedSenders } from "../services/invite_email.js";
-import { orgCollection } from "../db/orgFirestore.js";
+import { orgCollection, resolveOrgId } from "../db/orgFirestore.js";
+import {
+  getSsoConfig,
+  shouldAutoProvision,
+  provisionSsoMember
+} from "../utils/sso-provisioning.js";
+
+/**
+ * Resolve orgId from subdomain slug
+ * Looks up subdomains/{slug} → { orgId }
+ * @param {FirebaseFirestore.Firestore} db - Firestore instance
+ * @param {string} host - Host header (e.g., "portland.chamberai.com")
+ * @returns {Promise<string|null>} - orgId or null if not found
+ */
+async function resolveOrgFromSubdomain(db, host) {
+  const slug = host?.split(".")[0];
+  if (!slug || slug === "www" || slug === "localhost") {
+    return null;
+  }
+  try {
+    const doc = await db.collection("subdomains").doc(slug).get();
+    return doc.exists ? doc.data()?.orgId : null;
+  } catch (error) {
+    console.error("Subdomain lookup failed:", error.message);
+    return null;
+  }
+}
+
+/**
+ * Middleware for unauthenticated routes (public kiosk)
+ * Resolves orgId from subdomain, sets req.publicOrgId
+ */
+export async function resolvePublicOrg(req, res, next) {
+  const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+  const db = initFirestore();
+  const orgId = await resolveOrgFromSubdomain(db, host);
+  req.publicOrgId = orgId; // may be null
+  next();
+}
+
+/**
+ * Middleware to enforce org isolation
+ * Ensures authenticated requests cannot access orgs other than their own
+ * Call after requireAuth to protect routes
+ */
+export function enforceOrgIsolation(req, res, next) {
+  if (!req.orgId || !req.user) {
+    return next(); // Public endpoint
+  }
+
+  // Check if request targets a specific org that differs from the user's org
+  const requestOrgId = req.params.orgId || req.query.orgId;
+  if (requestOrgId && requestOrgId !== req.orgId) {
+    return res.status(403).json({
+      error: "Not authorized for this organization",
+      message: "Your authentication token is for a different organization"
+    });
+  }
+
+  next();
+}
 
 export async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization || "";
@@ -23,7 +83,7 @@ export async function requireAuth(req, res, next) {
         email: mocked.email ?? demoEmail,
         role: mocked.role ?? "secretary"
       };
-      req.orgId = mocked.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
+      req.orgId = resolveOrgId(mocked.orgId);
       return next();
     }
     let decoded;
@@ -39,9 +99,10 @@ export async function requireAuth(req, res, next) {
     }
 
     // Extract orgId from custom claims, fallback to DEFAULT_ORG_ID env var
-    const orgId = decoded.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
+    const orgId = resolveOrgId(decoded.orgId);
     const email = normalizeEmail(decoded.email ?? demoEmail);
     const roleFromToken = decoded.role ?? "secretary";
+    const ssoProvider = decoded.firebase?.sign_in_provider || null;
     const enforceMembership = process.env.FIREBASE_REQUIRE_MEMBERSHIP !== "false";
     const bootstrapAdmins = parseEnvInviteAllowedSenders(process.env.AUTH_BOOTSTRAP_ADMINS);
 
@@ -58,7 +119,8 @@ export async function requireAuth(req, res, next) {
           req.user = {
             uid: decoded.uid,
             email,
-            role: membership.role ?? roleFromToken
+            role: membership.role ?? roleFromToken,
+            ssoProvider
           };
           req.orgId = orgId;
           return next();
@@ -75,17 +137,47 @@ export async function requireAuth(req, res, next) {
         req.user = {
           uid: decoded.uid,
           email,
-          role: "admin"
+          role: "admin",
+          ssoProvider
         };
         req.orgId = orgId;
         return next();
       }
+
+      // JIT provisioning for SSO users with allowed domains
+      if (ssoProvider) {
+        try {
+          const db = initFirestore();
+          const ssoConfig = await getSsoConfig(db, orgId);
+
+          if (ssoConfig?.enabled && shouldAutoProvision(email, ssoConfig.allowedDomains)) {
+            const role = ssoConfig.autoProvisionRole ?? "viewer";
+            await provisionSsoMember(db, orgId, email, role, ssoProvider);
+
+            req.user = {
+              uid: decoded.uid,
+              email,
+              role,
+              ssoProvider
+            };
+            req.orgId = orgId;
+            return next();
+          }
+        } catch (error) {
+          console.error("JIT provisioning failed", {
+            code: error?.code ?? null,
+            message: error?.message ?? null
+          });
+        }
+      }
+
       return res.status(403).json({ error: "User is not authorized for this chamber." });
     }
     req.user = {
       uid: decoded.uid,
       email,
-      role: roleFromToken
+      role: roleFromToken,
+      ssoProvider
     };
     req.orgId = orgId;
     return next();
@@ -93,7 +185,7 @@ export async function requireAuth(req, res, next) {
 
   // Dev fallback: no Firebase auth enabled
   req.user = { role: "secretary", email: demoEmail };
-  req.orgId = process.env.DEFAULT_ORG_ID ?? "default";
+  req.orgId = resolveOrgId();
   return next();
 }
 
