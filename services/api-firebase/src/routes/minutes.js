@@ -4,6 +4,7 @@ import { initFirestore, serverTimestamp } from "../db/firestore.js";
 import { orgCollection } from "../db/orgFirestore.js";
 import { requireRole } from "../middleware/rbac.js";
 import { requireTier } from "../middleware/requireTier.js";
+import { encryptField, decryptField } from "../services/encryption.js";
 
 const router = express.Router();
 
@@ -12,7 +13,12 @@ router.get("/meetings/:id/draft-minutes", async (req, res, next) => {
     const db = initFirestore();
     const doc = await orgCollection(db, req.orgId, "draftMinutes").doc(req.params.id).get();
     if (!doc.exists) return res.json(null);
-    res.json(doc.data());
+    const data = doc.data();
+    // Decrypt content field if encrypted
+    if (data && data.content) {
+      data.content = decryptField(data.content, req.orgId) ?? data.content;
+    }
+    res.json(data);
   } catch (error) {
     next(error);
   }
@@ -36,9 +42,12 @@ router.put("/meetings/:id/draft-minutes", requireRole("admin", "secretary"), asy
     }
 
     const nextVersion = currentVersion + 1;
+    const plainContent = req.body.content ?? "";
+    // Encrypt content before storing
+    const encryptedContent = encryptField(plainContent, req.orgId);
     const draft = {
       meeting_id: req.params.id,
-      content: req.body.content ?? "",
+      content: encryptedContent,
       minutes_version: nextVersion,
       updated_by: req.user?.email ?? "user",
       updated_at: serverTimestamp()
@@ -47,18 +56,22 @@ router.put("/meetings/:id/draft-minutes", requireRole("admin", "secretary"), asy
     await orgCollection(db, req.orgId, "draftMinuteVersions").add({
       meeting_id: req.params.id,
       version: nextVersion,
-      content: draft.content,
+      content: encryptedContent,
       actor: req.user?.email ?? "user",
       created_at: serverTimestamp()
     });
-    await orgCollection(db, req.orgId, "auditLogs").add({
+    await orgCollection(db, req.orgId, "audit_logs").add({
       meeting_id: req.params.id,
       event_type: "MINUTES_VERSION_SAVED",
       actor: req.user?.email ?? "user",
       timestamp: serverTimestamp(),
       details: { version: nextVersion }
     });
-    res.json(draft);
+    // Return decrypted content to caller
+    res.json({
+      ...draft,
+      content: plainContent
+    });
   } catch (error) {
     next(error);
   }
@@ -117,6 +130,7 @@ router.post("/meetings/:id/draft-minutes/rollback", requireRole("admin", "secret
     const current = await draftRef.get();
     const currentVersion = Number(current.data()?.minutes_version ?? 0);
     const nextVersion = currentVersion + 1;
+    // Target content may be encrypted, keep it as-is for storage
     const draft = {
       meeting_id: req.params.id,
       content: target.content ?? "",
@@ -134,14 +148,19 @@ router.post("/meetings/:id/draft-minutes/rollback", requireRole("admin", "secret
       rollback_from_version: targetVersion,
       created_at: serverTimestamp()
     });
-    await orgCollection(db, req.orgId, "auditLogs").add({
+    await orgCollection(db, req.orgId, "audit_logs").add({
       meeting_id: req.params.id,
       event_type: "MINUTES_ROLLBACK",
       actor: req.user?.email ?? "user",
       timestamp: serverTimestamp(),
       details: { from_version: targetVersion, to_version: nextVersion }
     });
-    res.json(draft);
+    // Return decrypted content to caller
+    const plainContent = decryptField(draft.content, req.orgId) ?? draft.content;
+    res.json({
+      ...draft,
+      content: plainContent
+    });
   } catch (error) {
     next(error);
   }
@@ -176,6 +195,10 @@ router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (re
 
       const meetingData = meeting.exists ? meeting.data() : {};
       const draftData = draft.exists ? draft.data() : {};
+      // Decrypt content for export
+      if (draftData && draftData.content) {
+        draftData.content = decryptField(draftData.content, req.orgId) ?? draftData.content;
+      }
       const actionsList = actions.docs.map((doc) => doc.data());
       const motionsList = motions.docs.map((doc) => doc.data());
 
@@ -288,7 +311,7 @@ router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (re
         "Content-Disposition": `attachment; filename="meeting-${req.params.id}.docx"`
       });
 
-      await orgCollection(db, req.orgId, "auditLogs").add({
+      await orgCollection(db, req.orgId, "audit_logs").add({
         meeting_id: req.params.id,
         event_type: "MINUTES_EXPORT",
         actor: req.user?.email ?? "user",
@@ -301,7 +324,7 @@ router.post("/meetings/:id/export", requireRole("admin", "secretary"), async (re
 
     // Standard export (PDF/Markdown)
     const file_uri = `exports/${req.params.id}/${Date.now()}.${format}`;
-    await orgCollection(db, req.orgId, "auditLogs").add({
+    await orgCollection(db, req.orgId, "audit_logs").add({
       meeting_id: req.params.id,
       event_type: "MINUTES_EXPORT",
       actor: req.user?.email ?? "user",

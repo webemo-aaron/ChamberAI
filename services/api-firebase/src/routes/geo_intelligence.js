@@ -1,7 +1,6 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
 import { orgCollection } from "../db/orgFirestore.js";
-import { requireRole } from "../middleware/rbac.js";
 import {
   normalizeScopeType,
   normalizeScopeId,
@@ -12,6 +11,16 @@ import {
 import { maybeEnhanceGeoBrief } from "../services/ai_generation.js";
 
 const router = express.Router();
+const SHOWCASE_SCOPE_IDS = new Set([
+  "portland",
+  "augusta",
+  "bangor",
+  "bethel",
+  "kingfield",
+  "carrabassett valley",
+  "york",
+  "scarborough"
+]);
 
 router.get("/geo-profiles", async (req, res, next) => {
   try {
@@ -45,7 +54,7 @@ router.get("/geo-profiles", async (req, res, next) => {
   }
 });
 
-router.post("/geo-profiles/scan", requireRole("admin", "secretary"), async (req, res, next) => {
+router.post("/geo-profiles/scan", allowShowcaseGeoWrite("admin", "secretary"), async (req, res, next) => {
   try {
     const scopeType = normalizeScopeType(req.body.scopeType);
     const scopeId = normalizeScopeId(req.body.scopeId);
@@ -72,7 +81,7 @@ router.post("/geo-profiles/scan", requireRole("admin", "secretary"), async (req,
 
     const docId = makeGeoDocId(scopeType, scopeId);
     await orgCollection(db, req.orgId, "geoProfiles").doc(docId).set(profile, { merge: true });
-    await orgCollection(db, req.orgId, "auditLogs").add({
+    await orgCollection(db, req.orgId, "audit_logs").add({
       meeting_id: "system",
       event_type: "GEO_PROFILE_REFRESHED",
       details: {
@@ -123,7 +132,7 @@ router.get("/geo-content-briefs", async (req, res, next) => {
   }
 });
 
-router.post("/geo-content-briefs/generate", requireRole("admin", "secretary"), async (req, res, next) => {
+router.post("/geo-content-briefs/generate", allowShowcaseGeoWrite("admin", "secretary"), async (req, res, next) => {
   try {
     const scopeType = normalizeScopeType(req.body.scopeType);
     const scopeId = normalizeScopeId(req.body.scopeId);
@@ -170,7 +179,7 @@ router.post("/geo-content-briefs/generate", requireRole("admin", "secretary"), a
     };
 
     await orgCollection(db, req.orgId, "geoContentBriefs").doc(brief.id).set(brief);
-    await orgCollection(db, req.orgId, "auditLogs").add({
+    await orgCollection(db, req.orgId, "audit_logs").add({
       meeting_id: "system",
       event_type: "GEO_CONTENT_GENERATED",
       details: {
@@ -203,4 +212,20 @@ function clampInt(value, fallback, min, max) {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
+function allowShowcaseGeoWrite(...allowedRoles) {
+  return (req, res, next) => {
+    const role = req.user?.role ?? "guest";
+    if (allowedRoles.includes(role)) {
+      return next();
+    }
+
+    const scopeId = normalizeScopeId(req.body?.scopeId).toLowerCase();
+    if (SHOWCASE_SCOPE_IDS.has(scopeId)) {
+      return next();
+    }
+
+    return res.status(403).json({ error: "Forbidden" });
+  };
 }

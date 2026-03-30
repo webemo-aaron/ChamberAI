@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/meetings/:id/audit-log", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await orgCollection(db, req.orgId, "auditLogs").where("meeting_id", "==", req.params.id).get();
+    const snapshot = await orgCollection(db, req.orgId, "audit_logs").where("meeting_id", "==", req.params.id).get();
     const logs = snapshot.docs.map((doc) => doc.data());
     res.json(logs);
   } catch (error) {

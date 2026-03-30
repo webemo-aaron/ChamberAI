@@ -303,7 +303,7 @@ router.post(
           );
 
           // Log to org audit
-          await orgCollection(db, resolvedOrgId, "auditLogs").add({
+          await orgCollection(db, resolvedOrgId, "audit_logs").add({
             event_type: "BILLING_SUBSCRIPTION_CREATED",
             actor: "stripe",
             timestamp: serverTimestamp(),
@@ -387,7 +387,7 @@ router.post(
             );
 
             // Log payment failure
-            await orgCollection(db, orgId, "auditLogs").add({
+            await orgCollection(db, orgId, "audit_logs").add({
               event_type: "BILLING_PAYMENT_FAILED",
               actor: "stripe",
               timestamp: serverTimestamp(),

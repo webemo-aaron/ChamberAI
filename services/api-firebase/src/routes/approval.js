@@ -64,7 +64,7 @@ router.post("/meetings/:id/approve", requireRole("admin", "secretary"), async (r
       },
       { merge: true }
     );
-    await orgCollection(db, req.orgId, "auditLogs").add({
+    await orgCollection(db, req.orgId, "audit_logs").add({
       meeting_id: req.params.id,
       event_type: "MINUTES_APPROVED",
       actor: req.user?.email ?? "user",
