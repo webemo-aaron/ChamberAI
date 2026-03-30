@@ -11,16 +11,75 @@
  * Route: /login
  */
 
-import { signInWithGoogle, setRole } from "../../core/auth.js";
+import { signInWithGoogle, signInWithSAML, signInWithOIDC, setRole } from "../../core/auth.js";
 import { showToast } from "../../core/toast.js";
 import { navigate } from "../../core/router.js";
+import { apiCall } from "../../core/api.js";
+
+/**
+ * Check if SSO is enabled for the current org
+ * @async
+ * @returns {Promise<Object|null>} SSO status object {enabled, provider, orgId} or null
+ */
+async function getSsoStatus() {
+  try {
+    // Get org slug from subdomain
+    const host = window.location.hostname;
+    const slug = host.split(".")[0];
+
+    if (!slug || slug === "localhost" || slug === "127.0.0.1") {
+      return null;
+    }
+
+    // Check SSO status from API
+    const response = await apiCall(`/api/sso/status`, {
+      method: "GET"
+    });
+
+    if (response?.enabled) {
+      return response;
+    }
+  } catch (error) {
+    // SSO check failed - fall back to non-SSO
+    console.debug("SSO status check failed:", error.message);
+  }
+
+  return null;
+}
+
+/**
+ * Render SSO button for the given provider
+ * @param {Object} ssoStatus - SSO status object {provider}
+ * @returns {HTMLElement} Button element for SSO sign-in
+ */
+function renderSsoButton(ssoStatus) {
+  const btn = document.createElement("button");
+  btn.className = "btn btn-primary";
+  btn.type = "button";
+  btn.setAttribute("aria-label", `Sign in with ${ssoStatus.provider}`);
+
+  // Determine button text and provider-specific logic
+  const providerMap = {
+    google_workspace: "Continue with Google Workspace",
+    azure_ad: "Continue with Azure AD",
+    okta: "Continue with Okta",
+    saml_custom: "Continue with Organization SSO",
+    oidc_custom: "Continue with Organization SSO"
+  };
+
+  btn.textContent = providerMap[ssoStatus.provider] || "Continue with SSO";
+  btn.id = `loginSSO_${ssoStatus.provider}`;
+
+  return btn;
+}
 
 /**
  * Render the full-page login card
  * Creates the HTML structure for the login page
+ * @param {Object|null} ssoStatus - Optional SSO status object
  * @returns {HTMLElement} The login page container
  */
-function renderLoginPage() {
+function renderLoginPage(ssoStatus = null) {
   // Create main login page container
   const loginPage = document.createElement("div");
   loginPage.className = "login-page";
@@ -36,6 +95,10 @@ function renderLoginPage() {
   const header = document.createElement("div");
   header.className = "login-header";
 
+  const eyebrow = document.createElement("span");
+  eyebrow.className = "login-eyebrow";
+  eyebrow.textContent = "Secretary Console";
+
   const brandMark = document.createElement("div");
   brandMark.className = "brand-mark-large";
   brandMark.textContent = "CAM";
@@ -44,22 +107,39 @@ function renderLoginPage() {
   const title = document.createElement("h1");
   title.id = "loginPageTitle";
   title.className = "login-title";
-  title.textContent = "Secretary Console";
+  title.textContent = "Welcome to ChamberAI";
 
   const subtitle = document.createElement("p");
   subtitle.className = "login-subtitle";
-  subtitle.textContent = "Governance-first minutes workflow";
+  subtitle.textContent =
+    "Board operations, member intelligence, and AI-assisted governance.";
 
+  const capabilityList = document.createElement("div");
+  capabilityList.className = "login-capabilities";
+  capabilityList.innerHTML = `
+    <span>Meetings intelligence</span>
+    <span>Member directory operations</span>
+    <span>Governed AI workflows</span>
+  `;
+
+  header.appendChild(eyebrow);
   header.appendChild(brandMark);
   header.appendChild(title);
   header.appendChild(subtitle);
+  header.appendChild(capabilityList);
+
+  // SSO button (if enabled)
+  let ssoBtn = null;
+  if (ssoStatus && ssoStatus.enabled) {
+    ssoBtn = renderSsoButton(ssoStatus);
+  }
 
   // Google Sign-In button
   const googleBtn = document.createElement("button");
   googleBtn.id = "loginGoogle";
   googleBtn.className = "btn btn-primary";
   googleBtn.type = "button";
-  googleBtn.textContent = "Continue with Google";
+  googleBtn.textContent = ssoBtn ? "Continue with Google" : "Continue with Google";
   googleBtn.setAttribute("aria-label", "Sign in with Google account");
 
   // Divider
@@ -80,13 +160,17 @@ function renderLoginPage() {
   demoSummary.className = "demo-summary";
   demoSummary.setAttribute("role", "button");
   demoSummary.setAttribute("tabindex", "0");
-  demoSummary.textContent = "Demo Access (for testing)";
+  demoSummary.textContent = "Demo Access";
 
   const demoDetails = document.createElement("details");
   demoDetails.appendChild(demoSummary);
 
   const demoForm = document.createElement("div");
   demoForm.className = "demo-form";
+
+  const demoNote = document.createElement("p");
+  demoNote.className = "demo-note";
+  demoNote.textContent = "Demo access is intended for local validation and responsive QA.";
 
   // Email input
   const emailLabel = document.createElement("label");
@@ -147,9 +231,10 @@ function renderLoginPage() {
   submitBtn.id = "loginSubmit";
   submitBtn.className = "btn btn-secondary";
   submitBtn.type = "button";
-  submitBtn.textContent = "Enter";
+  submitBtn.textContent = "Enter Workspace";
   submitBtn.setAttribute("aria-label", "Sign in with email and role");
 
+  demoForm.appendChild(demoNote);
   demoForm.appendChild(emailWrapper);
   demoForm.appendChild(roleWrapper);
   demoForm.appendChild(submitBtn);
@@ -159,6 +244,12 @@ function renderLoginPage() {
 
   // Assemble the login card
   loginCard.appendChild(header);
+
+  // Add SSO button first if enabled
+  if (ssoBtn) {
+    loginCard.appendChild(ssoBtn);
+  }
+
   loginCard.appendChild(googleBtn);
   loginCard.appendChild(divider);
   loginCard.appendChild(demoAccess);
@@ -173,8 +264,19 @@ function renderLoginPage() {
  * Set up event handlers for the login page
  * Attaches click/submit listeners to form controls
  * @param {Function} navigate - Router navigate function
+ * @param {Object|null} ssoStatus - Optional SSO status object
  */
-function setupEventHandlers(navigate) {
+function setupEventHandlers(navigate, ssoStatus = null) {
+  // SSO button handler
+  if (ssoStatus && ssoStatus.enabled) {
+    const ssoBtn = document.getElementById(`loginSSO_${ssoStatus.provider}`);
+    if (ssoBtn) {
+      ssoBtn.addEventListener("click", () =>
+        handleSsoSignIn(navigate, ssoStatus)
+      );
+    }
+  }
+
   const googleBtn = document.getElementById("loginGoogle");
   const submitBtn = document.getElementById("loginSubmit");
 
@@ -210,6 +312,39 @@ function setupEventHandlers(navigate) {
 }
 
 /**
+ * Handle SSO (SAML/OIDC) Sign-In flow
+ * Routes to appropriate provider (SAML or OIDC)
+ * @async
+ * @param {Function} navigate - Router navigate function
+ * @param {Object} ssoStatus - SSO status object {provider}
+ */
+async function handleSsoSignIn(navigate, ssoStatus) {
+  try {
+    let user;
+
+    // Route to appropriate SSO provider
+    if (ssoStatus.provider === "saml_custom") {
+      user = await signInWithSAML(ssoStatus.provider);
+    } else {
+      // OIDC providers: google_workspace, azure_ad, okta, oidc_custom
+      user = await signInWithOIDC(ssoStatus.provider);
+    }
+
+    showToast(`Signed in as ${user.displayName || user.email}`, {
+      type: "success"
+    });
+
+    // Navigate to dashboard after successful sign-in
+    navigate("/dashboard");
+  } catch (error) {
+    console.error("SSO sign-in failed:", error);
+    showToast("SSO sign-in failed. Try Google Sign-In instead.", {
+      type: "error"
+    });
+  }
+}
+
+/**
  * Handle Google Sign-In flow
  * Calls Firebase signInWithGoogle and navigates on success
  * @async
@@ -221,8 +356,8 @@ async function handleGoogleSignIn(navigate) {
     showToast(`Signed in as ${user.displayName || user.email}`, {
       type: "success"
     });
-    // Navigate to meetings after successful sign-in
-    navigate("/meetings");
+    // Navigate to dashboard after successful sign-in
+    navigate("/dashboard");
   } catch (error) {
     console.error("Google sign-in failed:", error);
     showToast("Google sign-in failed. Try demo access instead.", {
@@ -264,8 +399,8 @@ async function handleDemoSignIn(navigate) {
       type: "success"
     });
 
-    // Navigate to meetings after successful sign-in
-    navigate("/meetings");
+    // Navigate to dashboard after successful sign-in
+    navigate("/dashboard");
   } catch (error) {
     console.error("Demo sign-in failed:", error);
     showToast("Sign-in failed. Please try again.", {
@@ -286,10 +421,19 @@ export async function loginHandler(params, context) {
   // Get the main app container
   const meetingsView = document.getElementById("meetingsView");
   const businessHubView = document.getElementById("businessHubView");
+  const dashboardView = document.getElementById("dashboardView");
+  const utilityView = document.getElementById("utilityView");
+  const loginModal = document.getElementById("loginModal");
 
   // Hide both main views
   if (meetingsView) meetingsView.classList.add("hidden");
   if (businessHubView) businessHubView.classList.add("hidden");
+  if (dashboardView) dashboardView.classList.add("hidden");
+  if (utilityView) utilityView.classList.add("hidden");
+  if (loginModal) {
+    loginModal.classList.add("hidden");
+    loginModal.setAttribute("aria-hidden", "true");
+  }
 
   // Get or create login page container
   let loginContainer = document.getElementById("loginPageContainer");
@@ -299,11 +443,15 @@ export async function loginHandler(params, context) {
     document.body.insertBefore(loginContainer, document.querySelector(".shell"));
   }
 
+  // Check if SSO is enabled for this org
+  const ssoStatus = await getSsoStatus();
+
   // Clear and render login page
+  loginContainer.classList.remove("hidden");
   loginContainer.innerHTML = "";
-  const loginPage = renderLoginPage();
+  const loginPage = renderLoginPage(ssoStatus);
   loginContainer.appendChild(loginPage);
 
   // Set up event handlers with navigate function from context
-  setupEventHandlers(context.router.navigate);
+  setupEventHandlers(context.router.navigate, ssoStatus);
 }

@@ -211,6 +211,80 @@ export async function signInWithGoogle() {
 }
 
 /**
+ * Sign in with SAML provider
+ * @async
+ * @param {string} providerId - SAML provider ID (e.g., "saml.my-org")
+ * @returns {Promise<Object>} User object with email and displayName
+ * @throws {Error} If sign in fails or Firebase not initialized
+ */
+export async function signInWithSAML(providerId) {
+  if (!firebaseAuth || !signInWithPopupFn) {
+    throw new Error(
+      "Firebase not initialized. Cannot sign in with SAML."
+    );
+  }
+
+  try {
+    // Dynamically import SAML provider
+    const firebaseAuthModule = await import(
+      "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"
+    );
+
+    const samlProvider = new firebaseAuthModule.SAMLAuthProvider(providerId);
+    const result = await signInWithPopupFn(firebaseAuth, samlProvider);
+    const user = result.user;
+    const email = user.email || "";
+    const displayName = user.displayName || "";
+
+    // Determine role (use existing or secretary as default)
+    const role = currentRole || "secretary";
+    setRole(role, email, displayName);
+
+    return { email, displayName, role, provider: "saml" };
+  } catch (error) {
+    console.error("SAML sign-in failed:", error);
+    throw error;
+  }
+}
+
+/**
+ * Sign in with OIDC provider (Google Workspace, Azure AD, Okta, etc.)
+ * @async
+ * @param {string} providerId - OIDC provider ID (e.g., "oidc.google-workspace")
+ * @returns {Promise<Object>} User object with email and displayName
+ * @throws {Error} If sign in fails or Firebase not initialized
+ */
+export async function signInWithOIDC(providerId) {
+  if (!firebaseAuth || !signInWithPopupFn) {
+    throw new Error(
+      "Firebase not initialized. Cannot sign in with OIDC."
+    );
+  }
+
+  try {
+    // Dynamically import OAuth provider
+    const firebaseAuthModule = await import(
+      "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"
+    );
+
+    const oidcProvider = new firebaseAuthModule.OAuthProvider(providerId);
+    const result = await signInWithPopupFn(firebaseAuth, oidcProvider);
+    const user = result.user;
+    const email = user.email || "";
+    const displayName = user.displayName || "";
+
+    // Determine role (use existing or secretary as default)
+    const role = currentRole || "secretary";
+    setRole(role, email, displayName);
+
+    return { email, displayName, role, provider: "oidc" };
+  } catch (error) {
+    console.error("OIDC sign-in failed:", error);
+    throw error;
+  }
+}
+
+/**
  * Sign out current user
  * @async
  * @returns {Promise<void>}
