@@ -1,13 +1,18 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Fraunces:wght@400;600&display=swap");
 
 :root {
+  color-scheme: light;
   --bg: #f4f1ea;
   --ink: #1c1a16;
   --muted: #4f4a43;
   --accent: #e06b4f;
   --accent-dark: #b74f36;
+  --surface: #fffdf8;
+  --surface-soft: #fff6ea;
   --panel: #fff6ea;
   --border: #dccdbb;
+  --grid: rgba(28, 26, 22, 0.04);
+  --shadow: rgba(28, 26, 22, 0.08);
 }
 
 * {
@@ -28,8 +33,8 @@ body {
   background:
     radial-gradient(circle at 20% 10%, rgba(224, 107, 79, 0.18), transparent 45%),
     radial-gradient(circle at 80% 0%, rgba(28, 26, 22, 0.08), transparent 50%),
-    linear-gradient(90deg, rgba(28, 26, 22, 0.04) 1px, transparent 1px),
-    linear-gradient(rgba(28, 26, 22, 0.04) 1px, transparent 1px);
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px);
   background-size: auto, auto, 32px 32px, 32px 32px;
   pointer-events: none;
   z-index: -1;
@@ -132,7 +137,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 20px;
-  box-shadow: 0 20px 40px rgba(28, 26, 22, 0.08);
+  box-shadow: 0 20px 40px var(--shadow);
   animation: float-in 0.8s ease-out;
 }
 
@@ -147,7 +152,7 @@ h1 {
 }
 
 .pill {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   padding: 8px 12px;
   border-radius: 999px;
@@ -176,17 +181,52 @@ h1 {
 }
 
 .panel {
-  background: #fff;
+  background: var(--surface);
   padding: 18px;
   border-radius: 14px;
   border: 1px solid var(--border);
   font-size: 15px;
 }
 
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.doc-card {
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doc-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px var(--shadow);
+}
+
+.doc-card strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.doc-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .form {
   display: grid;
   gap: 16px;
-  background: #fff;
+  background: var(--surface);
   padding: 24px;
   border-radius: 16px;
   border: 1px solid var(--border);
@@ -226,7 +266,7 @@ h1 {
 }
 
 .highlight {
-  background: #fff1e4;
+  background: var(--surface-soft);
   padding: 30px;
   border-radius: 18px;
   border: 1px solid var(--border);
@@ -280,5 +320,26 @@ h1 {
     flex-direction: column;
     gap: 8px;
     padding: 20px 24px 30px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #121518;
+    --ink: #e6ebf0;
+    --muted: #a8b2bd;
+    --accent: #d66d55;
+    --accent-dark: #b85a45;
+    --surface: #1a2129;
+    --surface-soft: #1e2630;
+    --panel: #1d2530;
+    --border: #344150;
+    --grid: rgba(230, 235, 240, 0.06);
+    --shadow: rgba(0, 0, 0, 0.35);
+  }
+
+  body {
+    background: linear-gradient(180deg, #0f141a 0%, #141b23 100%);
   }
 }
