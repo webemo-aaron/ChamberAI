@@ -41,8 +41,17 @@ const server = http.createServer((req, res) => {
   }
 
   const isDocsPath = pathname.startsWith("/docs/");
-  const isPublicDocsShortcut =
-    pathname === "/viewer.html" || pathname === "/pilot-intake.html" || pathname === "/index-docs.html";
+  const docsShortcutRedirects = {
+    "/viewer.html": "/docs/viewer.html",
+    "/pilot-intake.html": "/docs/pilot-intake.html",
+    "/index-docs.html": "/docs/index.html"
+  };
+  if (docsShortcutRedirects[pathname]) {
+    res.writeHead(302, { Location: docsShortcutRedirects[pathname] });
+    res.end();
+    return;
+  }
+  const isPublicDocsShortcut = false;
   const baseRoot = isDocsPath || isPublicDocsShortcut ? docsRoot : appRoot;
   const normalizedPath = isDocsPath ? pathname.replace(/^\/docs/, "") : pathname;
   const requestedPath = isPublicDocsShortcut && pathname === "/index-docs.html" ? "/index.html" : normalizedPath;
