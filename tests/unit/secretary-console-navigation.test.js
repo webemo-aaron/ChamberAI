@@ -30,7 +30,7 @@ test("semantic navigation groups Overview, Operations & Growth, Admin, and Accou
 
   assert.deepEqual(
     sections[1].items.map((item) => item.id),
-    ["meetings", "settings", "analytics", "billing"]
+    ["meetings", "engagement", "campaigns", "settings", "analytics", "billing"]
   );
 
   assert.deepEqual(
@@ -81,7 +81,7 @@ test("mobile navigation is limited to primary destinations", () => {
 
   assert.deepEqual(
     items.map((item) => item.id),
-    ["dashboard", "business-hub", "meetings", "analytics", "settings"]
+    ["dashboard", "business-hub", "meetings", "engagement", "analytics"]
   );
 });
 

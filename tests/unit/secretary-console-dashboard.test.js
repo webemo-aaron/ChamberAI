@@ -16,7 +16,7 @@ test("dashboard model exposes the eight phase 0 sections", () => {
   assert.equal(model.welcome.title, "Welcome back, Alex");
   assert.equal(model.workspaceLanes.length, 3);
   assert.equal(model.stats.length, 4);
-  assert.equal(model.quickActions.length, 4);
+  assert.equal(model.quickActions.length, 5);
   assert.equal(model.featureCards.length, 4);
   assert.ok(model.activityFeed);
   assert.ok(model.calendar);

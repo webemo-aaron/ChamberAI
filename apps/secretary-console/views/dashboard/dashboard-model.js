@@ -295,10 +295,16 @@ export function buildDashboardModel({
       route: "/business-hub"
     },
     {
-      id: "go-settings",
-      label: "Plan Communications",
-      helper: "Channels, message templates, and notification preferences",
-      route: "/settings"
+      id: "run-engagement",
+      label: "Run Engagement",
+      helper: "Manage outreach queues, follow-ups, and response timing",
+      route: "/engagement"
+    },
+    {
+      id: "launch-campaign",
+      label: "Launch Campaigns",
+      helper: "Publish promotion waves for member businesses",
+      route: "/campaigns"
     }
   ];
 
@@ -339,15 +345,15 @@ export function buildDashboardModel({
           eyebrow: "Engagement AI",
           title: "Concierge Kiosk",
           description: "Support members and visitors with AI-guided answers and governed context.",
-          route: "/kiosk",
+          route: "/engagement",
           accent: "ai"
         }
       : {
-          id: "analytics",
+          id: "campaigns",
           eyebrow: "Growth Signals",
-          title: "Growth Analytics",
-          description: "Track visibility, engagement, and chamber impact over time.",
-          route: "/analytics"
+          title: "Campaign Pipeline",
+          description: "Plan and execute member promotion campaigns across chamber channels.",
+          route: "/campaigns"
         }
   ];
 

@@ -145,6 +145,32 @@ test("profile and preferences routes expose account-facing workspace actions", (
   );
 });
 
+test("engagement and campaigns routes expose cross-linked growth workflows", () => {
+  const engagement = buildUtilityRouteConfig("/engagement", {
+    role: "secretary",
+    tier: "Council",
+    email: "secretary@acme.com"
+  });
+  const campaigns = buildUtilityRouteConfig("/campaigns", {
+    role: "secretary",
+    tier: "Council",
+    email: "secretary@acme.com"
+  });
+
+  assert.equal(engagement.title, "Engagement");
+  assert.equal(campaigns.title, "Campaigns");
+  assert.ok(
+    engagement.cards.some((card) =>
+      card.actions?.some((action) => action.route === "/campaigns")
+    )
+  );
+  assert.ok(
+    campaigns.cards.some((card) =>
+      card.actions?.some((action) => action.route === "/engagement")
+    )
+  );
+});
+
 test("analytics route exposes live metrics, refresh action, and notices", () => {
   const config = buildAnalyticsRouteConfig(
     {
@@ -244,6 +270,15 @@ test("dashboard city change handler no longer recursively calls dashboardHandler
 
   assert.doesNotMatch(dashboardJs, /addEventListener\("change".*\n\s*await dashboardHandler\(\)/s);
   assert.match(dashboardJs, /addEventListener\("change".*render\(\)/s);
+});
+
+test("app registers engagement and campaigns utility routes", () => {
+  const appJs = read("apps/secretary-console/app.js");
+
+  assert.match(appJs, /registerRoute\("\/engagement"/);
+  assert.match(appJs, /registerRoute\("\/campaigns"/);
+  assert.match(appJs, /renderNamedUtilityRoute\("\/engagement"\)/);
+  assert.match(appJs, /renderNamedUtilityRoute\("\/campaigns"\)/);
 });
 
 test("settings-view includes Organization Profile tab (Phase 10)", () => {

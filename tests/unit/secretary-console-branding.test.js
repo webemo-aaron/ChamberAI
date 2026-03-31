@@ -41,6 +41,8 @@ test("topbar and login copy use ChamberAI branding language", () => {
 
 test("navigation titles stay user-facing and route-specific", () => {
   assert.equal(getNavigationTitle("/dashboard"), "Overview");
+  assert.equal(getNavigationTitle("/engagement"), "Engagement");
+  assert.equal(getNavigationTitle("/campaigns"), "Campaigns");
   assert.equal(getNavigationTitle("/analytics"), "Growth Analytics");
   assert.equal(getNavigationTitle("/business-hub/123"), "Business Hub");
   assert.equal(getNavigationTitle("/admin/stripe"), "Stripe Admin");

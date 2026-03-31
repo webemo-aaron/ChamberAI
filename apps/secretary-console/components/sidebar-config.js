@@ -71,6 +71,23 @@ const navigationSections = [
         mobile: true
       },
       {
+        id: "engagement",
+        icon: "💬",
+        label: "Engagement",
+        route: "/engagement",
+        minRole: "guest",
+        testId: "sidebar-link-engagement",
+        mobile: true
+      },
+      {
+        id: "campaigns",
+        icon: "📣",
+        label: "Campaigns",
+        route: "/campaigns",
+        minRole: "guest",
+        testId: "sidebar-link-campaigns"
+      },
+      {
         id: "settings",
         icon: "⚙",
         label: "Communications",
@@ -190,7 +207,7 @@ export function getNavigationSections({ role = "guest", tier = "Free" } = {}) {
 }
 
 export function getMobileNavigationItems(context = {}) {
-  const order = ["dashboard", "business-hub", "meetings", "analytics", "settings"];
+  const order = ["dashboard", "business-hub", "meetings", "engagement", "analytics", "settings"];
 
   return getNavigationSections(context)
     .flatMap((section) => section.items)
@@ -206,6 +223,8 @@ export function getDefaultRouteForRole() {
       "/dashboard",
       "/meetings",
       "/business-hub",
+      "/engagement",
+      "/campaigns",
       "/analytics",
       "/billing",
       "/settings"

@@ -42,6 +42,90 @@ export function buildUtilityRouteConfig(route, context = {}) {
   };
 
   switch (route) {
+    case "/engagement":
+      return {
+        eyebrow: "Engagement",
+        title: "Engagement",
+        description:
+          "Coordinate chamber outreach, follow-up cadence, and response workflows for local businesses.",
+        spotlight: {
+          title: "Relationship activation lane",
+          description:
+            "Move open conversations forward with clear owners, templates, and AI-assisted response support.",
+          pills: [`${tier} tier`, `${formatRole(role)} role`]
+        },
+        cards: [
+          {
+            title: "Outreach Queue",
+            description: "Prioritized business follow-ups with owner and due-date clarity.",
+            metrics: [
+              { label: "Open Follow-ups", value: "12" },
+              { label: "Due Today", value: "4" },
+              { label: "Response SLA", value: "1.2d" }
+            ]
+          },
+          {
+            title: "Communication Templates",
+            description: "Reusable outreach blocks for referrals, promotions, and customer responses.",
+            metrics: [
+              { label: "Active Templates", value: "8" },
+              { label: "Channels", value: "Email / Kiosk" },
+              { label: "AI Assist", value: "Enabled" }
+            ]
+          },
+          {
+            title: "Next Moves",
+            description: "Launch campaigns or review growth analytics for impact tracking.",
+            actions: [
+              { label: "Open Campaigns", route: "/campaigns" },
+              { label: "Open Growth Analytics", route: "/analytics" }
+            ]
+          }
+        ]
+      };
+
+    case "/campaigns":
+      return {
+        eyebrow: "Growth",
+        title: "Campaigns",
+        description:
+          "Plan, launch, and track member promotion campaigns tied to chamber engagement outcomes.",
+        spotlight: {
+          title: "Promotion pipeline",
+          description:
+            "Organize campaign waves by city, business segment, and communication channel.",
+          pills: ["Visibility growth", `${tier} tier`]
+        },
+        cards: [
+          {
+            title: "Campaign Pipeline",
+            description: "Current campaign draft, launch, and completed stages.",
+            metrics: [
+              { label: "Draft", value: "3" },
+              { label: "Active", value: "5" },
+              { label: "Completed", value: "11" }
+            ]
+          },
+          {
+            title: "Audience Segments",
+            description: "Target by city, category, and relationship status.",
+            metrics: [
+              { label: "Segments", value: "9" },
+              { label: "Top City", value: "Portland, ME" },
+              { label: "Eligible Businesses", value: "24" }
+            ]
+          },
+          {
+            title: "Activation Links",
+            description: "Run engagement operations or review campaign performance.",
+            actions: [
+              { label: "Open Engagement", route: "/engagement" },
+              { label: "Open Growth Analytics", route: "/analytics" }
+            ]
+          }
+        ]
+      };
+
     case "/analytics":
       return {
         eyebrow: "Operations",

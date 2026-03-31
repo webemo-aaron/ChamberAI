@@ -425,6 +425,20 @@ async function initializeApp() {
     activateView(utilityView);
     analyticsHandler(params, context);
   });
+  registerRoute("/engagement", () => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    renderNamedUtilityRoute("/engagement");
+  });
+  registerRoute("/campaigns", () => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    renderNamedUtilityRoute("/campaigns");
+  });
   registerRoute("/billing", (params, context) => {
     if (!getCurrentRole()) {
       navigate("/login");
