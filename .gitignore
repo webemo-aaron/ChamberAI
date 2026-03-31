@@ -8,3 +8,5 @@ firestore-debug.log
 !.env.hybrid.example
 !.env.gcp.vercel.example
 .worktrees/
+*.Zone.Identifier
+test-results/.last-run.json
