@@ -1,0 +1,375 @@
+{
+  "first_wave": [
+    "Portland, ME",
+    "Bangor, ME",
+    "Augusta, ME",
+    "Scarborough, ME"
+  ],
+  "cities": [
+    {
+      "name": "Portland, ME",
+      "scope_type": "city",
+      "scope_id": "Portland",
+      "slug": "portland-me",
+      "chamber_label": "Portland Regional Chamber",
+      "population_band": "metro",
+      "economic_themes": ["tourism", "restaurants", "professional services", "waterfront commerce"],
+      "key_industries": ["hospitality", "legal", "healthcare", "retail", "events"],
+      "municipal_priorities": ["downtown activation", "small business retention", "visitor experience"],
+      "meeting_scenarios": [
+        {
+          "location": "Portland Waterfront Growth Session",
+          "chair_name": "Dana Harbor",
+          "secretary_name": "Alex Mercer",
+          "tags": ["portland", "tourism", "events", "small-business"],
+          "minutes": "The chamber reviewed waterfront traffic patterns, merchant support requests, and event promotion timelines.",
+          "action_items": [
+            { "description": "Launch spring visitor merchant toolkit", "owner_name": "Member Success", "due_date": "2026-04-14", "status": "OPEN" },
+            { "description": "Coordinate restaurant week partner outreach", "owner_name": "Events Team", "due_date": "2026-04-20", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Approve waterfront merchant outreach campaign", "mover_name": "Dana Harbor", "seconder_name": "Alex Mercer", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Portland chamber leaders aligned on a waterfront growth campaign focused on merchant outreach, tourism messaging, and spring event coordination."
+        },
+        {
+          "location": "Portland Chamber Operations Review",
+          "chair_name": "Monica Fields",
+          "secretary_name": "Alex Mercer",
+          "tags": ["portland", "operations", "membership", "analytics"],
+          "minutes": "Leaders reviewed member engagement signals, onboarding latency, and sponsor fulfillment readiness.",
+          "action_items": [
+            { "description": "Publish member onboarding scorecard", "owner_name": "Operations", "due_date": "2026-04-18", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Adopt Q2 member response SLA", "mover_name": "Monica Fields", "seconder_name": "Alex Mercer", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "The Portland chamber approved new response standards and operational reporting to improve member onboarding and sponsor delivery."
+        },
+        {
+          "location": "Portland Economic Development Roundtable",
+          "chair_name": "Jordan Pike",
+          "secretary_name": "Alex Mercer",
+          "tags": ["portland", "economic-development", "workforce", "retail"],
+          "minutes": "Participants discussed workforce needs, corridor leasing pressure, and local retailer support opportunities.",
+          "action_items": [
+            { "description": "Prepare retailer vacancy briefing", "owner_name": "Advocacy", "due_date": "2026-04-25", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Support downtown retailer readiness initiative", "mover_name": "Jordan Pike", "seconder_name": "Alex Mercer", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Portland stakeholders prioritized retailer readiness and workforce coordination to support downtown business stability."
+        }
+      ],
+      "geo_existing_details": [
+        "Hospitality operators need faster lead follow-up and reservation messaging",
+        "Downtown merchants need review response and event promotion automation",
+        "Professional services firms want proposal drafting and intake workflows"
+      ]
+    },
+    {
+      "name": "Augusta, ME",
+      "scope_type": "city",
+      "scope_id": "Augusta",
+      "slug": "augusta-me",
+      "chamber_label": "Augusta Downtown Alliance",
+      "population_band": "capital",
+      "economic_themes": ["government", "professional services", "downtown revitalization"],
+      "key_industries": ["public sector", "legal", "finance", "healthcare"],
+      "municipal_priorities": ["civic access", "downtown traffic", "business retention"],
+      "meeting_scenarios": [
+        {
+          "location": "Augusta Civic Access Workshop",
+          "chair_name": "Taylor Knox",
+          "secretary_name": "Morgan Reed",
+          "tags": ["augusta", "civic", "government", "operations"],
+          "minutes": "The group reviewed constituent intake bottlenecks, meeting follow-up gaps, and downtown foot traffic messaging.",
+          "action_items": [
+            { "description": "Draft civic intake automation pilot scope", "owner_name": "Programs", "due_date": "2026-04-16", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Approve civic intake pilot planning", "mover_name": "Taylor Knox", "seconder_name": "Morgan Reed", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Augusta leaders approved a pilot to improve civic intake workflows and strengthen business communication around downtown access."
+        },
+        {
+          "location": "Augusta Chamber Policy Briefing",
+          "chair_name": "Taylor Knox",
+          "secretary_name": "Morgan Reed",
+          "tags": ["augusta", "policy", "board", "member-services"],
+          "minutes": "Board members aligned on policy communication, renewal outreach, and member service transparency.",
+          "action_items": [
+            { "description": "Publish policy-update distribution calendar", "owner_name": "Communications", "due_date": "2026-04-21", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Adopt board policy communications calendar", "mover_name": "Taylor Knox", "seconder_name": "Morgan Reed", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "The Augusta chamber approved a clearer policy communications calendar and renewed focus on member-service consistency."
+        },
+        {
+          "location": "Augusta Main Street Revitalization Session",
+          "chair_name": "Chris Malloy",
+          "secretary_name": "Morgan Reed",
+          "tags": ["augusta", "downtown", "retail", "events"],
+          "minutes": "Members reviewed storefront activation ideas, event scheduling, and merchant marketing needs.",
+          "action_items": [
+            { "description": "Assemble downtown merchant campaign brief", "owner_name": "Main Street Team", "due_date": "2026-04-24", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Support downtown storefront activation plan", "mover_name": "Chris Malloy", "seconder_name": "Morgan Reed", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Augusta business leaders advanced a downtown activation plan centered on merchant visibility and coordinated event promotion."
+        }
+      ],
+      "geo_existing_details": [
+        "Public-facing organizations need intake and follow-up automation",
+        "Downtown merchants need event scheduling coordination",
+        "Professional offices want meeting summary and proposal support"
+      ]
+    },
+    {
+      "name": "Bangor, ME",
+      "scope_type": "city",
+      "scope_id": "Bangor",
+      "slug": "bangor-me",
+      "chamber_label": "Bangor Region Chamber",
+      "population_band": "regional",
+      "economic_themes": ["regional business growth", "healthcare", "events", "logistics"],
+      "key_industries": ["healthcare", "transportation", "retail", "business services"],
+      "municipal_priorities": ["regional coordination", "business recruitment", "event traffic"],
+      "meeting_scenarios": [
+        {
+          "location": "Bangor Regional Growth Council",
+          "chair_name": "Erin Locke",
+          "secretary_name": "Sam Doyle",
+          "tags": ["bangor", "regional", "growth", "recruitment"],
+          "minutes": "The chamber reviewed regional employer needs, cross-community referrals, and recruitment messaging.",
+          "action_items": [
+            { "description": "Prepare regional employer intake packet", "owner_name": "Business Development", "due_date": "2026-04-17", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Adopt regional employer outreach plan", "mover_name": "Erin Locke", "seconder_name": "Sam Doyle", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Bangor chamber leaders approved a coordinated employer outreach plan to support regional recruitment and business referrals."
+        },
+        {
+          "location": "Bangor Event Readiness Review",
+          "chair_name": "Nina Cross",
+          "secretary_name": "Sam Doyle",
+          "tags": ["bangor", "events", "tourism", "hospitality"],
+          "minutes": "Teams aligned on event visitor flows, sponsor support, and downtown hospitality coordination.",
+          "action_items": [
+            { "description": "Launch event-weekend business messaging pack", "owner_name": "Visitor Services", "due_date": "2026-04-19", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Approve event readiness merchant support plan", "mover_name": "Nina Cross", "seconder_name": "Sam Doyle", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Bangor stakeholders approved a readiness plan for event-driven visitor traffic, sponsor visibility, and hospitality support."
+        },
+        {
+          "location": "Bangor Chamber Operations Sync",
+          "chair_name": "Erin Locke",
+          "secretary_name": "Sam Doyle",
+          "tags": ["bangor", "operations", "membership", "analytics"],
+          "minutes": "The operations team reviewed renewals, member response times, and board reporting quality.",
+          "action_items": [
+            { "description": "Publish member renewal risk dashboard", "owner_name": "Operations", "due_date": "2026-04-23", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Adopt monthly renewal analytics review", "mover_name": "Erin Locke", "seconder_name": "Sam Doyle", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "The Bangor chamber formalized a monthly analytics review to improve retention visibility and member response performance."
+        }
+      ],
+      "geo_existing_details": [
+        "Regional employers need intake and referral automation",
+        "Event-facing businesses need visitor messaging and review response workflows",
+        "Chamber operators want analytics-driven renewal tracking"
+      ]
+    },
+    {
+      "name": "Bethel, ME",
+      "scope_type": "town",
+      "scope_id": "Bethel",
+      "slug": "bethel-me",
+      "chamber_label": "Bethel Area Chamber",
+      "population_band": "small-town",
+      "economic_themes": ["tourism", "outdoor recreation", "lodging"],
+      "key_industries": ["hospitality", "retail", "guides", "food service"],
+      "municipal_priorities": ["visitor experience", "seasonal staffing", "main street support"],
+      "meeting_scenarios": [
+        {
+          "location": "Bethel Tourism Coordination Meeting",
+          "chair_name": "Abby Snow",
+          "secretary_name": "Jules Hart",
+          "tags": ["bethel", "tourism", "lodging", "events"],
+          "minutes": "Participants reviewed visitor messaging and lodging partner coordination for the next tourism window.",
+          "action_items": [
+            { "description": "Draft visitor lodging FAQ workflow", "owner_name": "Visitor Center", "due_date": "2026-04-15", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Approve seasonal visitor communications plan", "mover_name": "Abby Snow", "seconder_name": "Jules Hart", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Bethel tourism partners aligned on seasonal visitor communications and coordinated lodging support."
+        }
+      ],
+      "geo_existing_details": [
+        "Lodging operators need visitor messaging automation",
+        "Seasonal businesses need review response support"
+      ]
+    },
+    {
+      "name": "Kingfield, ME",
+      "scope_type": "town",
+      "scope_id": "Kingfield",
+      "slug": "kingfield-me",
+      "chamber_label": "Kingfield Business Association",
+      "population_band": "rural",
+      "economic_themes": ["outdoor economy", "main street commerce"],
+      "key_industries": ["lodging", "cafes", "guides", "retail"],
+      "municipal_priorities": ["small business support", "seasonal retention"],
+      "meeting_scenarios": [
+        {
+          "location": "Kingfield Small Business Coordination",
+          "chair_name": "Mia Brooks",
+          "secretary_name": "Jamie Ford",
+          "tags": ["kingfield", "small-business", "tourism", "operations"],
+          "minutes": "Local operators reviewed staffing constraints and visitor communication needs.",
+          "action_items": [
+            { "description": "Create small business lead-response template pack", "owner_name": "Association Ops", "due_date": "2026-04-16", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Adopt rural business messaging initiative", "mover_name": "Mia Brooks", "seconder_name": "Jamie Ford", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Kingfield operators approved a shared messaging initiative to help small businesses respond faster during peak travel periods."
+        }
+      ],
+      "geo_existing_details": [
+        "Small operators need lead-response templates",
+        "Tourism businesses need quick inquiry handling"
+      ]
+    },
+    {
+      "name": "Carrabassett Valley, ME",
+      "scope_type": "town",
+      "scope_id": "Carrabassett Valley",
+      "slug": "carrabassett-valley-me",
+      "chamber_label": "Carrabassett Valley Resort Alliance",
+      "population_band": "destination",
+      "economic_themes": ["ski economy", "destination marketing", "hospitality"],
+      "key_industries": ["resort operations", "lodging", "food service", "events"],
+      "municipal_priorities": ["visitor throughput", "seasonal operations", "destination support"],
+      "meeting_scenarios": [
+        {
+          "location": "Carrabassett Destination Ops Review",
+          "chair_name": "Leah Frost",
+          "secretary_name": "Casey North",
+          "tags": ["carrabassett", "destination", "hospitality", "ski"],
+          "minutes": "Destination operators aligned on peak-season messaging and guest response expectations.",
+          "action_items": [
+            { "description": "Prepare destination guest-response templates", "owner_name": "Guest Services", "due_date": "2026-04-17", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Approve peak-season guest messaging standards", "mover_name": "Leah Frost", "seconder_name": "Casey North", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Carrabassett Valley operators aligned on destination guest messaging to improve response speed during peak visitor periods."
+        }
+      ],
+      "geo_existing_details": [
+        "Destination operators need guest-response automation",
+        "Hospitality teams need review response and itinerary support"
+      ]
+    },
+    {
+      "name": "York, ME",
+      "scope_type": "town",
+      "scope_id": "York",
+      "slug": "york-me",
+      "chamber_label": "York Region Chamber",
+      "population_band": "coastal",
+      "economic_themes": ["tourism", "hospitality", "coastal retail"],
+      "key_industries": ["lodging", "restaurants", "retail", "visitor services"],
+      "municipal_priorities": ["visitor support", "merchant visibility", "seasonal demand"],
+      "meeting_scenarios": [
+        {
+          "location": "York Coastal Visitor Readiness Session",
+          "chair_name": "Priya Gale",
+          "secretary_name": "Drew Lane",
+          "tags": ["york", "tourism", "coastal", "hospitality"],
+          "minutes": "Participants reviewed visitor FAQs, merchant referrals, and peak-season review response needs.",
+          "action_items": [
+            { "description": "Publish coastal visitor FAQ workflow", "owner_name": "Chamber Programs", "due_date": "2026-04-19", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Approve visitor support campaign", "mover_name": "Priya Gale", "seconder_name": "Drew Lane", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "York business leaders approved a visitor-support campaign focused on common questions, merchant visibility, and peak-season responsiveness."
+        }
+      ],
+      "geo_existing_details": [
+        "Visitor-facing businesses need FAQ automation",
+        "Coastal merchants need review response and referral workflows"
+      ]
+    },
+    {
+      "name": "Scarborough, ME",
+      "scope_type": "town",
+      "scope_id": "Scarborough",
+      "slug": "scarborough-me",
+      "chamber_label": "Scarborough Community Chamber",
+      "population_band": "growth-corridor",
+      "economic_themes": ["service businesses", "growth corridor", "retail"],
+      "key_industries": ["healthcare", "professional services", "retail", "home services"],
+      "municipal_priorities": ["service business visibility", "growth management", "member retention"],
+      "meeting_scenarios": [
+        {
+          "location": "Scarborough Service Growth Review",
+          "chair_name": "Olivia Kent",
+          "secretary_name": "Mason Lee",
+          "tags": ["scarborough", "services", "growth", "retention"],
+          "minutes": "Service providers reviewed intake delays, referral handoffs, and member growth support opportunities.",
+          "action_items": [
+            { "description": "Create service-business intake automation brief", "owner_name": "Programs", "due_date": "2026-04-18", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Approve service-business acceleration initiative", "mover_name": "Olivia Kent", "seconder_name": "Mason Lee", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Scarborough leaders approved a service-business acceleration initiative focused on intake speed, referrals, and member growth."
+        },
+        {
+          "location": "Scarborough Chamber Analytics Review",
+          "chair_name": "Olivia Kent",
+          "secretary_name": "Mason Lee",
+          "tags": ["scarborough", "analytics", "operations", "membership"],
+          "minutes": "The chamber reviewed engagement metrics, member drop-off signals, and quarterly reporting improvements.",
+          "action_items": [
+            { "description": "Publish quarterly member health report", "owner_name": "Operations", "due_date": "2026-04-22", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Adopt member health dashboard reporting cadence", "mover_name": "Olivia Kent", "seconder_name": "Mason Lee", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Scarborough chamber leaders adopted a reporting cadence to improve visibility into member health and service responsiveness."
+        },
+        {
+          "location": "Scarborough Retail Corridor Session",
+          "chair_name": "Mason Lee",
+          "secretary_name": "Olivia Kent",
+          "tags": ["scarborough", "retail", "corridor", "events"],
+          "minutes": "Retail operators reviewed corridor promotion, event tie-ins, and merchant review workflows.",
+          "action_items": [
+            { "description": "Draft corridor retailer response kit", "owner_name": "Communications", "due_date": "2026-04-26", "status": "OPEN" }
+          ],
+          "motions": [
+            { "text": "Support retail corridor promotion strategy", "mover_name": "Mason Lee", "seconder_name": "Olivia Kent", "vote_method": "voice", "outcome": "Passed" }
+          ],
+          "public_summary": "Scarborough retailers aligned on a corridor promotion strategy and support materials for review response and event marketing."
+        }
+      ],
+      "geo_existing_details": [
+        "Service firms need faster intake and scheduling automation",
+        "Retail operators need review response and event promotion workflows",
+        "Chamber staff want analytics-backed member retention support"
+      ]
+    }
+  ]
+}

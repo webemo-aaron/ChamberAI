@@ -10,3 +10,4 @@ firestore-debug.log
 .worktrees/
 *.Zone.Identifier
 test-results/.last-run.json
+data/showcase/persistent/business-store.json

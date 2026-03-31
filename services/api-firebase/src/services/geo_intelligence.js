@@ -65,12 +65,98 @@ export function inferDemandGapTags(topTags) {
   return Array.from(inferred).slice(0, 5);
 }
 
-export function inferProviderSupplyTags(existingDetails) {
-  if (!existingDetails.length) return ["automation_setup", "operations_enablement"];
-  return existingDetails
+export function inferProviderSupplyTags(existingDetails, topCategories = []) {
+  if (!existingDetails.length && topCategories.length === 0) {
+    return ["automation_setup", "operations_enablement"];
+  }
+
+  const normalizedCategories = topCategories.map((category) => category.toLowerCase()).filter(Boolean);
+  if (normalizedCategories.length > 0) {
+    return Array.from(new Set(normalizedCategories)).slice(0, 6);
+  }
+  const tokens = existingDetails
     .flatMap((line) => line.toLowerCase().split(/[^a-z0-9]+/g))
     .filter(Boolean)
-    .slice(0, 6);
+    .filter((token) => !["businesses", "business", "meeting", "meetings", "recent", "footprint", "top", "categories", "topics", "in", "me"].includes(token))
+    .filter((token) => !/^\d+$/.test(token));
+
+  return Array.from(new Set([...normalizedCategories, ...tokens])).slice(0, 6);
+}
+
+export function extractTopCategories(existingDetails) {
+  const line = existingDetails.find((entry) => entry.toLowerCase().startsWith("top business categories:"));
+  if (!line) {
+    return [];
+  }
+
+  const raw = line.split(":").slice(1).join(":");
+  return raw
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
+export function extractMeetingFootprint(existingDetails) {
+  const line = existingDetails.find((entry) => entry.toLowerCase().startsWith("recent meeting footprint:"));
+  if (!line) {
+    return 0;
+  }
+
+  const numeric = Number.parseInt(line.replace(/[^\d]/g, ""), 10);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+export function inferMeetingDensity(meetingCount, meetingFootprint) {
+  const combined = Number(meetingCount || 0) + Number(meetingFootprint || 0);
+  if (combined >= 5) return "active";
+  if (combined >= 2) return "emerging";
+  return "light";
+}
+
+export function inferNarrativeTheme(topTags, topCategories, scopeLabel = "") {
+  const scores = {
+    tourism: 0,
+    civic: 0,
+    growth: 0,
+    operations: 0
+  };
+
+  const themeMatchers = {
+    tourism: /(tourism|visitor|hospitality|outdoor recreation|events|destination|restaurants|lodging|coastal|ski)/,
+    civic: /(government|civic|policy|budget|finance|municipal|council)/,
+    growth: /(growth|service|services|professional|regional|marketing|real estate|employers|business services|healthcare)/,
+    operations: /(operations|workflow|automation|intake|scheduling|member services)/
+  };
+
+  const scoreTokens = (values, weight) => {
+    values.forEach((value) => {
+      const token = String(value ?? "").toLowerCase();
+      Object.entries(themeMatchers).forEach(([theme, matcher]) => {
+        if (matcher.test(token)) {
+          scores[theme] += weight;
+        }
+      });
+    });
+  };
+
+  scoreTokens(topTags, 3);
+  scoreTokens(topCategories, 1);
+  scoreTokens([scopeLabel], 1);
+
+  const ranked = Object.entries(scores)
+    .sort((left, right) => right[1] - left[1] || themePriority(left[0]) - themePriority(right[0]));
+
+  return ranked[0][1] > 0 ? ranked[0][0] : "operations";
+}
+
+function themePriority(theme) {
+  return {
+    civic: 0,
+    growth: 1,
+    tourism: 2,
+    operations: 3
+  }[theme] ?? 4;
 }
 
 export function inferTopUseCases(profile) {
@@ -97,6 +183,10 @@ export function buildGeoProfile(input = {}) {
   const matchingMeetings = findMeetingsForScope(meetings, scopeId);
   const topTags = summarizeTopTags(matchingMeetings);
   const nowIso = String(input.nowIso ?? new Date().toISOString());
+  const topCategories = extractTopCategories(existingDetails);
+  const meetingFootprint = extractMeetingFootprint(existingDetails);
+  const meetingDensity = inferMeetingDensity(matchingMeetings.length, meetingFootprint);
+  const narrativeTheme = inferNarrativeTheme(topTags, topCategories, input.scopeLabel ?? scopeId);
 
   const businessDensityScore = clampScore(existingDetails.length * 12 + matchingMeetings.length * 8);
   const aiReadinessScore = clampScore(20 + existingDetails.length * 10 + topTags.length * 6);
@@ -109,12 +199,15 @@ export function buildGeoProfile(input = {}) {
     signals: {
       meeting_count: matchingMeetings.length,
       existing_detail_count: existingDetails.length,
-      top_tags: topTags
+      top_tags: topTags,
+      top_categories: topCategories,
+      meeting_density: meetingDensity,
+      narrative_theme: narrativeTheme
     },
     business_density_score: businessDensityScore,
     ai_readiness_score: aiReadinessScore,
     demand_gap_tags: inferDemandGapTags(topTags),
-    provider_supply_tags: inferProviderSupplyTags(existingDetails),
+    provider_supply_tags: inferProviderSupplyTags(existingDetails, topCategories),
     updated_at: nowIso
   };
 }
@@ -127,6 +220,20 @@ export function buildGeoContentBrief(input = {}) {
   const nowIso = String(input.nowIso ?? new Date().toISOString());
   const topUseCases = inferTopUseCases(profile);
   const scopeLabel = profile.scope_label || profile.scope_id;
+  const narrativeTheme = profile.signals?.narrative_theme || "operations";
+  const topCategories = profile.signals?.top_categories || [];
+  const narrativeLead =
+    narrativeTheme === "tourism"
+      ? "tourism-led"
+      : narrativeTheme === "civic"
+        ? "civic-operations"
+        : narrativeTheme === "growth"
+          ? "growth-oriented"
+          : "operations-led";
+  const categoryPhrase =
+    topCategories.length > 0
+      ? ` across ${topCategories.join(" and ")}`
+      : "";
 
   return {
     id: makeId("geo_brief"),
@@ -134,10 +241,10 @@ export function buildGeoContentBrief(input = {}) {
     scope_type: profile.scope_type,
     scope_id: profile.scope_id,
     top_use_cases: topUseCases,
-    opportunity_summary: `${scopeLabel} (${profile.scope_type}) shows strong opportunity for quick-win AI projects in ${topUseCases
+    opportunity_summary: `${scopeLabel} (${profile.scope_type}) shows ${narrativeLead} opportunity${categoryPhrase} for quick-win AI projects in ${topUseCases
       .slice(0, 2)
       .join(" and ")}.`,
-    outreach_draft: `Local business owners in ${scopeLabel} (${profile.scope_type}) can gain measurable time and revenue by launching chamber-guided AI workflows now. Reply to join the next implementation sprint.`,
+    outreach_draft: `Local business owners in ${scopeLabel} (${profile.scope_type}) can become more visitor-ready and operationally responsive by launching chamber-guided AI workflows now. Reply to join the next implementation sprint.`,
     generated_at: nowIso
   };
 }

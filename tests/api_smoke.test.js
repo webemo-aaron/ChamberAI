@@ -58,7 +58,7 @@ async function invoke(handler, path, options = {}) {
   if (res.body) {
     body = JSON.parse(res.body);
   }
-  return { status: res.statusCode, body };
+  return { status: res.statusCode, body, headers: res.headers };
 }
 
 test("API smoke: create meeting, upload audio, process, approve, audit, retention", async () => {
@@ -209,4 +209,195 @@ test("API smoke: geo profile scan and content brief generation", async () => {
   assert.equal(pagedRes.body.limit, 1);
   assert.ok(Array.isArray(pagedRes.body.items));
   assert.ok(pagedRes.body.items.length <= 1);
+});
+
+test("API smoke: business listings endpoints support local business hub flows", async () => {
+  const { handler } = createServer();
+
+  const listRes = await invoke(handler, "/business-listings", { method: "GET" });
+  assert.equal(listRes.status, 200);
+  assert.ok(Array.isArray(listRes.body.data));
+  assert.ok(listRes.body.data.length >= 1);
+
+  const businessId = listRes.body.data[0].id;
+
+  const detailRes = await invoke(handler, `/business-listings/${businessId}`, { method: "GET" });
+  assert.equal(detailRes.status, 200);
+  assert.equal(detailRes.body.id, businessId);
+
+  const reviewsRes = await invoke(handler, `/business-listings/${businessId}/reviews`, { method: "GET" });
+  assert.equal(reviewsRes.status, 200);
+  assert.ok(Array.isArray(reviewsRes.body.data));
+
+  const responseRes = await invoke(handler, `/business-listings/${businessId}/reviews/${reviewsRes.body.data[0].id}/draft-response`, {
+    method: "POST",
+    body: JSON.stringify({ response: "Thanks for the feedback." })
+  });
+  assert.equal(responseRes.status, 200);
+  assert.equal(responseRes.body.response_status, "draft");
+
+  const quotesRes = await invoke(handler, `/business-listings/${businessId}/quotes`, { method: "GET" });
+  assert.equal(quotesRes.status, 200);
+  assert.ok(Array.isArray(quotesRes.body.data));
+
+  const quoteCreateRes = await invoke(handler, `/business-listings/${businessId}/quotes`, {
+    method: "POST",
+    body: JSON.stringify({
+      title: "Automation Discovery Sprint",
+      service_class: "quick_win_automation",
+      total_usd: 2400,
+      contact_name: "Jordan Smith",
+      contact_email: "jordan@example.com"
+    })
+  });
+  assert.equal(quoteCreateRes.status, 201);
+  assert.equal(quoteCreateRes.body.status, "draft");
+
+  const quoteUpdateRes = await invoke(handler, `/business-listings/${businessId}/quotes/${quoteCreateRes.body.id}`, {
+    method: "PUT",
+    body: JSON.stringify({ status: "sent" })
+  });
+  assert.equal(quoteUpdateRes.status, 200);
+  assert.equal(quoteUpdateRes.body.status, "sent");
+
+  const createBusinessRes = await invoke(handler, "/business-listings", {
+    method: "POST",
+    body: JSON.stringify({
+      id: "biz_import_1",
+      name: "Imported Chamber Business",
+      category: "Professional Services",
+      businessType: "service_provider",
+      description: "Imported from showcase data.",
+      city: "Portland",
+      state: "ME",
+      geo_scope_type: "city",
+      geo_scope_id: "Portland",
+      ai_search_enabled: true
+    })
+  });
+  assert.equal(createBusinessRes.status, 201);
+  assert.equal(createBusinessRes.body.id, "biz_import_1");
+
+  const importedDetailRes = await invoke(handler, "/business-listings/biz_import_1", { method: "GET" });
+  assert.equal(importedDetailRes.status, 200);
+  assert.equal(importedDetailRes.body.name, "Imported Chamber Business");
+
+  const updateBusinessRes = await invoke(handler, "/business-listings", {
+    method: "POST",
+    body: JSON.stringify({
+      id: "biz_import_1",
+      name: "Imported Chamber Business",
+      category: "Professional Services",
+      businessType: "service_provider",
+      description: "Imported from showcase data with a refreshed description.",
+      city: "Portland",
+      state: "ME",
+      geo_scope_type: "city",
+      geo_scope_id: "Portland",
+      ai_search_enabled: true,
+      source: {
+        sync_run_id: "sync_portland_2",
+        iteration: 2
+      }
+    })
+  });
+  assert.equal(updateBusinessRes.status, 201);
+  assert.equal(updateBusinessRes.body.version, 2);
+
+  const versionsRes = await invoke(handler, "/business-listings/biz_import_1/versions", { method: "GET" });
+  assert.equal(versionsRes.status, 200);
+  assert.equal(versionsRes.body.data.length, 2);
+  assert.equal(versionsRes.body.data.at(-1).version, 2);
+
+  const importedReviewRes = await invoke(handler, "/business-listings/biz_import_1/reviews", {
+    method: "POST",
+    body: JSON.stringify({
+      id: "review_biz_import_1_seed_1",
+      platform: "Google",
+      rating: 5,
+      reviewer_name: "Jordan Smith",
+      review_text: "Imported review text.",
+      createdAt: "2026-03-10T15:00:00.000Z"
+    })
+  });
+  assert.equal(importedReviewRes.status, 201);
+  assert.equal(importedReviewRes.body.id, "review_biz_import_1_seed_1");
+  assert.equal(importedReviewRes.body.author, "Jordan Smith");
+
+  const importedReviewsListRes = await invoke(handler, "/business-listings/biz_import_1/reviews", {
+    method: "GET"
+  });
+  assert.equal(importedReviewsListRes.status, 200);
+  assert.equal(
+    importedReviewsListRes.body.data.filter((review) => review.id === "review_biz_import_1_seed_1").length,
+    1
+  );
+
+  const importedQuoteRes = await invoke(handler, "/business-listings/biz_import_1/quotes", {
+    method: "POST",
+    body: JSON.stringify({
+      id: "quote_biz_import_1_seed_1",
+      title: "Workflow Sprint",
+      serviceNeeded: "Workflow Sprint",
+      total_usd: 2400,
+      contact_name: "Jordan Smith",
+      contact_email: "jordan@example.com",
+      budget: "$2,000-$3,000",
+      timeline: "Within 30 days",
+      status: "pending"
+    })
+  });
+  assert.equal(importedQuoteRes.status, 201);
+  assert.equal(importedQuoteRes.body.id, "quote_biz_import_1_seed_1");
+  assert.equal(importedQuoteRes.body.serviceNeeded, "Workflow Sprint");
+
+  const importedQuoteUpdateRes = await invoke(handler, "/business-listings/biz_import_1/quotes", {
+    method: "POST",
+    body: JSON.stringify({
+      id: "quote_biz_import_1_seed_1",
+      title: "Workflow Sprint",
+      serviceNeeded: "Workflow Sprint",
+      total_usd: 2600,
+      contact_name: "Jordan Smith",
+      contact_email: "jordan@example.com",
+      budget: "$2,500-$3,500",
+      timeline: "Within 30 days",
+      status: "pending"
+    })
+  });
+  assert.equal(importedQuoteUpdateRes.status, 200);
+  assert.equal(importedQuoteUpdateRes.body.total_usd, 2600);
+
+  const importedQuotesListRes = await invoke(handler, "/business-listings/biz_import_1/quotes", {
+    method: "GET"
+  });
+  assert.equal(importedQuotesListRes.status, 200);
+  assert.equal(
+    importedQuotesListRes.body.data.filter((quote) => quote.id === "quote_biz_import_1_seed_1").length,
+    1
+  );
+
+  const syncRunsRes = await invoke(handler, "/business-sync-runs", { method: "GET" });
+  assert.equal(syncRunsRes.status, 200);
+  assert.ok(Array.isArray(syncRunsRes.body.data));
+  assert.ok(syncRunsRes.body.data.some((run) => run.id === "sync_portland_2"));
+});
+
+test("API smoke: options requests expose CORS headers required by the secretary console", async () => {
+  const { handler } = createServer();
+
+  const optionsRes = await invoke(handler, "/business-listings", {
+    method: "OPTIONS"
+  });
+
+  assert.equal(optionsRes.status, 204);
+  assert.equal(optionsRes.body, null);
+  assert.equal(
+    optionsRes.headers["Access-Control-Allow-Headers"],
+    "Content-Type, Authorization, x-demo-email, X-Org-Id"
+  );
+  assert.equal(
+    optionsRes.headers["Access-Control-Allow-Methods"],
+    "GET,POST,PUT,DELETE,OPTIONS"
+  );
 });

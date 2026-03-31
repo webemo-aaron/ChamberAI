@@ -1,0 +1,315 @@
+{
+  "generated_at": "2026-03-28",
+  "strategy": {
+    "priority_order": [
+      "official_chamber_directory",
+      "official_chamber_site",
+      "municipal_business_or_economic_development_pages",
+      "downtown_alliance_or_regional_business_association",
+      "tourism_or_destination_guide",
+      "legacy_or_fallback_directory"
+    ],
+    "field_targets": [
+      "business_name",
+      "category",
+      "description",
+      "street_address",
+      "city",
+      "state",
+      "zip",
+      "phone",
+      "email",
+      "website",
+      "member_since",
+      "hours",
+      "social_links"
+    ],
+    "notes": [
+      "Use official chamber member directories as the highest-confidence source.",
+      "Filter regional chamber directories by city before import.",
+      "Use municipal and economic development pages to backfill missing categories, local context, and business-support metadata.",
+      "Use regional associations where towns do not have a standalone chamber directory."
+    ]
+  },
+  "cities": [
+    {
+      "name": "Portland, ME",
+      "coverage_model": "regional_chamber_filtered_by_city",
+      "primary_sources": [
+        {
+          "type": "official_chamber_site",
+          "label": "Portland Regional Chamber of Commerce",
+          "url": "https://www.portlandregion.com/"
+        },
+        {
+          "type": "official_chamber_directory",
+          "label": "Portland Regional Chamber Membership Directory",
+          "url": "https://web.portlandregion.com/search"
+        }
+      ],
+      "secondary_sources": [
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "City of Portland Business",
+          "url": "https://www.portlandmaine.gov/35/Business"
+        },
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Housing & Economic Development",
+          "url": "https://www.portlandmaine.gov/249/Housing-Economic-Development"
+        },
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Office of Economic Opportunity",
+          "url": "https://www.portlandmaine.gov/282/Office-of-Economic-Opportunity"
+        }
+      ],
+      "available_fields": ["business_name", "address", "phone", "website", "member_since", "category", "search_filters"],
+      "caveats": [
+        "Portland Regional Chamber is multi-city, so imported records must be filtered to Portland."
+      ]
+    },
+    {
+      "name": "Augusta, ME",
+      "coverage_model": "standalone_chamber_with_category_pages",
+      "primary_sources": [
+        {
+          "type": "official_chamber_site",
+          "label": "Kennebec Valley Chamber of Commerce",
+          "url": "https://www.augustamaine.com/"
+        },
+        {
+          "type": "official_chamber_directory",
+          "label": "Our Members",
+          "url": "https://www.augustamaine.com/our-members"
+        }
+      ],
+      "secondary_sources": [
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Bureau of Economic Development",
+          "url": "https://www.augustamaine.gov/economic-development"
+        },
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Local Partners",
+          "url": "https://www.augustamaine.gov/index.php?section=local-partners"
+        }
+      ],
+      "available_fields": ["business_name", "category", "mailing_address", "physical_address", "phone", "fax", "website", "email", "social_links", "description"],
+      "caveats": [
+        "Coverage is spread across category pages and chamber profile pages, so extraction should follow category listings recursively."
+      ]
+    },
+    {
+      "name": "Bangor, ME",
+      "coverage_model": "regional_chamber_plus_downtown_directory",
+      "primary_sources": [
+        {
+          "type": "official_chamber_site",
+          "label": "Bangor Region Chamber of Commerce",
+          "url": "https://www.bangorregion.com/"
+        },
+        {
+          "type": "official_chamber_directory",
+          "label": "Bangor Region Member Directory",
+          "url": "https://www.bangorregion.com/member-directory/"
+        }
+      ],
+      "secondary_sources": [
+        {
+          "type": "downtown_alliance_or_regional_business_association",
+          "label": "Downtown Bangor Business Directory",
+          "url": "https://downtownbangor.com/business-directory/"
+        },
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Bangor Community & Economic Development",
+          "url": "https://www.bangormaine.gov/193/Community-Economic-Development"
+        },
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Business Assistance",
+          "url": "https://www.bangormaine.gov/264/Business-Assistance"
+        }
+      ],
+      "available_fields": ["business_name", "category", "address", "phone", "email", "website", "description", "logo"],
+      "caveats": [
+        "The chamber member-directory landing page appears thin in crawl results; Downtown Bangor is the stronger extraction source for detailed local business records."
+      ]
+    },
+    {
+      "name": "Bethel, ME",
+      "coverage_model": "standalone_chamber_directory",
+      "primary_sources": [
+        {
+          "type": "official_chamber_site",
+          "label": "Bethel Area Chamber of Commerce",
+          "url": "https://www.bethelmaine.com/"
+        },
+        {
+          "type": "official_chamber_directory",
+          "label": "Bethel Business Directory Search",
+          "url": "https://business.bethelmaine.com/members"
+        }
+      ],
+      "secondary_sources": [
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Town of Bethel",
+          "url": "https://bethelmaine.org/"
+        },
+        {
+          "type": "tourism_or_destination_guide",
+          "label": "What to Do",
+          "url": "https://www.bethelmaine.com/what-to-do/"
+        },
+        {
+          "type": "tourism_or_destination_guide",
+          "label": "Where to Shop",
+          "url": "https://www.bethelmaine.com/where-to-shop/"
+        }
+      ],
+      "available_fields": ["business_name", "description", "address", "phone", "website", "member_tier", "category"],
+      "caveats": [
+        "GrowthZone member pages are partially crawlable; recursive category and alphabetical traversal will be needed for better coverage."
+      ]
+    },
+    {
+      "name": "Kingfield, ME",
+      "coverage_model": "regional_association_plus_municipal",
+      "primary_sources": [
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Town of Kingfield",
+          "url": "https://www.kingfield.me/"
+        },
+        {
+          "type": "downtown_alliance_or_regional_business_association",
+          "label": "Maine's Northwestern Mountains / FABA",
+          "url": "https://www.mainesnorthwesternmountains.com/"
+        },
+        {
+          "type": "tourism_or_destination_guide",
+          "label": "Kingfield Guide",
+          "url": "https://www.mainesnorthwesternmountains.com/guides/kingfield"
+        }
+      ],
+      "secondary_sources": [
+        {
+          "type": "legacy_or_fallback_directory",
+          "label": "Legacy Kingfield Directory",
+          "url": "https://kingfieldme.org/business-directory/"
+        }
+      ],
+      "available_fields": ["business_name", "category", "mailing_address", "location", "phone", "website", "email", "description", "hours"],
+      "caveats": [
+        "No current standalone chamber directory found.",
+        "Municipal directory is marked coming soon, so regional association data is the best live source."
+      ]
+    },
+    {
+      "name": "Carrabassett Valley, ME",
+      "coverage_model": "regional_association_plus_municipal",
+      "primary_sources": [
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Town of Carrabassett Valley",
+          "url": "https://www.carrabassettvalley.gov/"
+        },
+        {
+          "type": "downtown_alliance_or_regional_business_association",
+          "label": "Maine's Northwestern Mountains / FABA",
+          "url": "https://www.mainesnorthwesternmountains.com/"
+        },
+        {
+          "type": "tourism_or_destination_guide",
+          "label": "Carrabassett Valley Guide",
+          "url": "https://www.mainesnorthwesternmountains.com/guides/carrabassett-valley"
+        }
+      ],
+      "secondary_sources": [
+        {
+          "type": "downtown_alliance_or_regional_business_association",
+          "label": "FABA Directory Category Example",
+          "url": "https://www.mainesnorthwesternmountains.com/directory/category/snowmobiling"
+        }
+      ],
+      "available_fields": ["business_name", "category", "mailing_address", "location", "phone", "website", "email", "description", "hours"],
+      "caveats": [
+        "No standalone chamber directory found.",
+        "Regional directory will skew toward tourism and destination businesses."
+      ]
+    },
+    {
+      "name": "York, ME",
+      "coverage_model": "regional_chamber_filtered_by_city",
+      "primary_sources": [
+        {
+          "type": "official_chamber_site",
+          "label": "York Region Chamber of Commerce",
+          "url": "https://www.yorkme.org/"
+        },
+        {
+          "type": "official_chamber_directory",
+          "label": "York Chamber Member Directory",
+          "url": "https://www.yorkme.org/directory/"
+        }
+      ],
+      "secondary_sources": [
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Business Personal Property Tax",
+          "url": "https://www.yorkmaine.org/662/Business-Personal-Property-Tax"
+        },
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Code Enforcement",
+          "url": "https://www.yorkmaine.org/149/Code-Enforcement"
+        }
+      ],
+      "available_fields": ["business_name", "category", "address", "city", "state", "zip", "phone", "website"],
+      "caveats": [
+        "The chamber serves multiple communities, so York-only filtering is required."
+      ]
+    },
+    {
+      "name": "Scarborough, ME",
+      "coverage_model": "community_chamber_plus_regional_directory",
+      "primary_sources": [
+        {
+          "type": "official_chamber_site",
+          "label": "Scarborough Community Chamber of Commerce",
+          "url": "https://scarboroughcommunitychamber.com/"
+        },
+        {
+          "type": "official_chamber_directory",
+          "label": "Portland Regional Chamber Membership Directory",
+          "url": "https://web.portlandregion.com/search"
+        }
+      ],
+      "secondary_sources": [
+        {
+          "type": "municipal_business_or_economic_development_pages",
+          "label": "Town of Scarborough Business",
+          "url": "https://www.scarboroughmaine.org/business"
+        },
+        {
+          "type": "downtown_alliance_or_regional_business_association",
+          "label": "SEDCO Network",
+          "url": "https://sedcomaine.com/network/"
+        },
+        {
+          "type": "legacy_or_fallback_directory",
+          "label": "Scarborough Crossroads Chamber",
+          "url": "https://www.scarboroughcrossroads.org/chamber/"
+        }
+      ],
+      "available_fields": ["business_name", "address", "phone", "website", "profile_text", "category"],
+      "caveats": [
+        "The current Scarborough chamber site is informational rather than a public directory.",
+        "Regional and legacy sources are needed for actual business extraction."
+      ]
+    }
+  ]
+}

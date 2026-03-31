@@ -282,7 +282,7 @@ test("Firebase auth mock role matrix enforces geo intelligence endpoint access",
       },
       body: JSON.stringify({ scopeType: "city", scopeId: "Bethel" })
     });
-    assert.equal(guestScan.status, 403);
+    assert.equal(guestScan.status, 200);
 
     const adminScan = await fetch(`${base}/geo-profiles/scan`, {
       method: "POST",
@@ -324,7 +324,17 @@ test("Firebase auth mock role matrix enforces geo intelligence endpoint access",
       },
       body: JSON.stringify({ scopeType: "city", scopeId: "Bethel" })
     });
-    assert.equal(guestGenerate.status, 403);
+    assert.equal(guestGenerate.status, 200);
+
+    const nonShowcaseGuestGenerate = await fetch(`${base}/geo-content-briefs/generate`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer guest-token",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ scopeType: "city", scopeId: "Lewiston" })
+    });
+    assert.equal(nonShowcaseGuestGenerate.status, 403);
 
     const listProfiles = await fetch(`${base}/geo-profiles?scopeType=city&scopeId=Bethel`, {
       headers: {
