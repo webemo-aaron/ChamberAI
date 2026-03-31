@@ -6,6 +6,7 @@
     <title>ChamberAI Platform</title>
     <meta name="description" content="AI-powered chamber platform to help local businesses advertise, build relationships, and communicate with customers and nearby businesses." />
     <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   </head>
   <body>
     <div class="bg-grid"></div>
@@ -84,6 +85,68 @@
           <div class="panel">Businesses gain stronger local visibility and demand capture</div>
           <div class="panel">Members build stronger relationships across nearby businesses and customers</div>
           <div class="panel">Chambers run communication and governance from one trusted platform</div>
+        </div>
+      </section>
+
+      <section id="playbooks" class="section">
+        <h2>Customer and user playbooks</h2>
+        <p>Use these role-based tracks to implement ChamberAI with clear outcomes and measurable success criteria.</p>
+        <div class="grid">
+          <div class="panel">
+            <strong>Chamber Staff</strong>
+            <p>Run engagement campaigns, track follow-through, and publish governance-safe communications.</p>
+          </div>
+          <div class="panel">
+            <strong>Business Owners</strong>
+            <p>Promote offerings, respond to leads faster, and strengthen trusted local relationships.</p>
+          </div>
+          <div class="panel">
+            <strong>Community + Partners</strong>
+            <p>Discover verified local businesses and create higher-quality referral and partnership loops.</p>
+          </div>
+        </div>
+        <div class="diagram-wrap">
+          <h3>Journey and outcomes map</h3>
+          <div class="mermaid">
+flowchart TD
+  U1[Chamber Staff]
+  U2[Business Owners]
+  U3[Customers + Partners]
+
+  P1[Engagement + Campaigns]
+  P2[Business Hub + Reviews + Quotes]
+  P3[Governance + Analytics Insights]
+
+  O1[Higher business visibility]
+  O2[Faster response and follow-through]
+  O3[Stronger local relationships]
+  O4[Measurable chamber ROI]
+
+  U1 --> P1 --> O2
+  U1 --> P3 --> O4
+  U2 --> P2 --> O1
+  U2 --> P1 --> O3
+  U3 --> P2 --> O3
+          </div>
+        </div>
+        <div class="diagram-wrap">
+          <h3>Success criteria scorecard</h3>
+          <div class="mermaid">
+flowchart LR
+  S1[Adoption]
+  S2[Campaign launch velocity]
+  S3[Lead response time]
+  S4[Referral activity]
+  S5[Governance consistency]
+
+  KPI[Mission KPI Scorecard]
+
+  S1 --> KPI
+  S2 --> KPI
+  S3 --> KPI
+  S4 --> KPI
+  S5 --> KPI
+          </div>
         </div>
       </section>
 
@@ -192,5 +255,19 @@
         <a href="mailto:aaron@mahoosuc.solutions">aaron@mahoosuc.solutions</a>
       </div>
     </footer>
+    <script>
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+      function renderMermaid() {
+        if (!window.mermaid) return;
+        window.mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "loose",
+          theme: prefersDark.matches ? "dark" : "default"
+        });
+        window.mermaid.run({ nodes: document.querySelectorAll(".mermaid") });
+      }
+      renderMermaid();
+      prefersDark.addEventListener("change", () => window.location.reload());
+    </script>
   </body>
 </html>
