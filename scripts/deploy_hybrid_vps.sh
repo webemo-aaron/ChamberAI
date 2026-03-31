@@ -20,7 +20,7 @@ echo "== Build remaining hybrid stack images =="
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" build
 
 echo "== Verify API image integrity =="
-"$(dirname "$0")/verify_api_image_integrity.sh" "chamberofcommerceai-api:local"
+bash "$(dirname "$0")/verify_api_image_integrity.sh" "chamberofcommerceai-api:local"
 
 echo "== Start hybrid stack =="
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d
