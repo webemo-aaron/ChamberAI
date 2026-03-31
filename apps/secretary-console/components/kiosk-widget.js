@@ -154,7 +154,9 @@ class KioskWidget {
       }
 
       // Get billing status from API
-      const status = await request("GET", "/billing/status", {}, null);
+      const status = await request("/billing/status", "GET", null, {
+        suppressAlert: true
+      });
 
       const proOrHigher = ["pro", "council", "network"].includes(status.tier);
       const hasAddon = status.addons && status.addons.includes("kiosk_addon");
@@ -368,7 +370,9 @@ class KioskWidget {
    */
   async checkTierStatus() {
     try {
-      const status = await request("GET", "/billing/status", {}, null);
+      const status = await request("/billing/status", "GET", null, {
+        suppressAlert: true
+      });
       const proOrHigher = ["pro", "council", "network"].includes(status.tier);
       const hasAddon = status.addons && status.addons.includes("kiosk_addon");
 
@@ -394,4 +398,3 @@ class KioskWidget {
     return `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 }
-

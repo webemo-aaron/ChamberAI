@@ -115,7 +115,7 @@ export function initKioskChat(container, options = {}) {
 
       try {
         // Send message to API
-        const response = await request("POST", "/api/kiosk/chat", {
+        const response = await request("/api/kiosk/chat", "POST", {
           message
         });
 

@@ -14,7 +14,7 @@
 
 import { fetchWithAuth, request } from "../../../core/api.js";
 import { showToast } from "../../../core/toast.js";
-import { formatDate, escapeHtml } from "../utils/format.js";
+import { formatDate, escapeHtml } from "../../common/format.js";
 
 // State
 let currentMeetingId = null;

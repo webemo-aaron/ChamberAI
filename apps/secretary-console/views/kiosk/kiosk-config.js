@@ -34,7 +34,7 @@ export async function kioskConfigHandler(params, context) {
     // Load current configuration
     let kioskConfig;
     try {
-      kioskConfig = await request("GET", "/api/kiosk/config");
+      kioskConfig = await request("/api/kiosk/config", "GET");
     } catch (error) {
       showToast("Failed to load kiosk configuration", "error");
       console.error("Failed to load config:", error);
@@ -220,6 +220,37 @@ export async function kioskConfigHandler(params, context) {
                       max="50"
                     />
                   </div>
+
+                  <div style="border-top: 1px solid #e2e8f0; margin: 1.5rem 0; padding-top: 1.5rem;">
+                    <h4 style="margin: 0 0 1rem 0; font-size: 0.95rem; font-weight: 600;">Semantic Search (RAG)</h4>
+                    <div class="form-group">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="ragEnabledCheckbox" name="contextConfig.ragEnabled" />
+                        <span>Enable RAG</span>
+                      </label>
+                      <p class="field-description">Use embedding-based semantic search to find relevant context for queries</p>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="ragTopKInput">Top Results (K)</label>
+                      <input
+                        type="number"
+                        id="ragTopKInput"
+                        name="contextConfig.ragTopK"
+                        class="form-input"
+                        min="1"
+                        max="20"
+                      />
+                      <p class="field-description">Number of semantically similar documents to retrieve per query</p>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                      <button type="button" id="rebuildIndexBtn" class="btn btn-secondary" style="margin-right: 0.75rem;">
+                        Rebuild Search Index
+                      </button>
+                      <span id="indexStatus" style="font-size: 0.875rem; color: #64748b;"></span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Rate Limits Tab -->
@@ -307,6 +338,8 @@ function initializeForm(config) {
   document.getElementById("meetingsLimitInput").value = contextConfig.meetingsLimit ?? 5;
   document.getElementById("motionsLimitInput").value = contextConfig.motionsLimit ?? 10;
   document.getElementById("actionItemsLimitInput").value = contextConfig.actionItemsLimit ?? 10;
+  document.getElementById("ragEnabledCheckbox").checked = contextConfig.ragEnabled ?? false;
+  document.getElementById("ragTopKInput").value = contextConfig.ragTopK ?? 5;
 
   const rateLimit = config.rateLimit ?? {};
   document.getElementById("chamberMaxInput").value = rateLimit.chamberMaxPerMinute ?? 10;
@@ -355,6 +388,7 @@ function setupFormHandlers(container, kioskConfig) {
   const form = container.querySelector("#kioskConfigForm");
   const testBtn = container.querySelector("#testProviderBtn");
   const previewBtn = container.querySelector("#previewBtn");
+  const rebuildBtn = container.querySelector("#rebuildIndexBtn");
   const providerTypeSelect = container.querySelector("#providerTypeSelect");
 
   // Provider type change handler
@@ -365,6 +399,32 @@ function setupFormHandlers(container, kioskConfig) {
     testBtn.addEventListener("click", async () => {
       const config = serializeForm(form);
       await testProvider(config);
+    });
+  }
+
+  // Rebuild index button
+  if (rebuildBtn) {
+    rebuildBtn.addEventListener("click", async () => {
+      rebuildBtn.disabled = true;
+      const statusEl = container.querySelector("#indexStatus");
+      if (statusEl) statusEl.textContent = "Rebuilding...";
+
+      try {
+        const result = await request("/api/kiosk/index", "POST", {});
+        if (result.success) {
+          if (statusEl) statusEl.textContent = `Indexed ${result.documentsIndexed} documents`;
+          showToast("Search index rebuilt successfully");
+        } else {
+          if (statusEl) statusEl.textContent = "Rebuild failed";
+          showToast("Index rebuild failed — check provider config", "error");
+        }
+      } catch (error) {
+        console.error("Index rebuild error:", error);
+        if (statusEl) statusEl.textContent = "Rebuild failed";
+        showToast(`Index rebuild failed: ${error.message}`, "error");
+      } finally {
+        rebuildBtn.disabled = false;
+      }
     });
   }
 
@@ -423,7 +483,9 @@ function serializeForm(form) {
       tokenLimit: parseInt(formData.get("contextConfig.tokenLimit"), 10),
       meetingsLimit: parseInt(formData.get("contextConfig.meetingsLimit"), 10),
       motionsLimit: parseInt(formData.get("contextConfig.motionsLimit"), 10),
-      actionItemsLimit: parseInt(formData.get("contextConfig.actionItemsLimit"), 10)
+      actionItemsLimit: parseInt(formData.get("contextConfig.actionItemsLimit"), 10),
+      ragEnabled: formData.get("contextConfig.ragEnabled") === "on",
+      ragTopK: parseInt(formData.get("contextConfig.ragTopK") || "5", 10)
     },
     rateLimit: {
       chamberMaxPerMinute: parseInt(formData.get("rateLimit.chamberMaxPerMinute"), 10),
@@ -452,7 +514,7 @@ async function testProvider(config) {
     testBtn.textContent = "Testing...";
 
     // Call API to test (create a test config without saving)
-    const response = await request("POST", "/api/kiosk/test-provider", {
+    const response = await request("/api/kiosk/test-provider", "POST", {
       type: config.aiProvider.type,
       model: config.aiProvider.model,
       apiKey: config.aiProvider.apiKey,
@@ -489,7 +551,7 @@ async function saveConfiguration(config) {
       delete config.aiProvider.endpoint;
     }
 
-    const response = await request("POST", "/api/kiosk/config", config);
+    const response = await request("/api/kiosk/config", "POST", config);
 
     showToast("Kiosk configuration saved successfully");
   } catch (error) {

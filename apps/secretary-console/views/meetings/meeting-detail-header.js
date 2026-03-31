@@ -13,7 +13,7 @@ import {
   inferShowcaseCityFromMeeting,
   setSelectedShowcaseCity
 } from "../common/showcase-city-context.js";
-import { formatDate, escapeHtml } from "./utils/format.js";
+import { formatDate, escapeHtml } from "../common/format.js";
 
 /**
  * Create meeting detail header

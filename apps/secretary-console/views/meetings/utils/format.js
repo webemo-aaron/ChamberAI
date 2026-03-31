@@ -1,40 +1,8 @@
 /**
- * Format utilities for meetings view
+ * Format utilities — re-exported from views/common/format.js
  *
- * Shared formatting functions used across meetings, tabs, and headers.
- * Eliminates duplication (was previously copy-pasted into 8 files).
+ * This file is a compatibility shim. The canonical location is now views/common/format.js.
+ * (Phase 6: moved to common/ alongside pane-splitter.js and showcase-city-context.js)
  */
 
-/**
- * Format ISO date string for display
- * @param {String} dateStr - ISO date string
- * @param {Object} options - Intl.DateTimeFormat options (default: month/day/year/hour/minute)
- * @returns {String} Formatted date or "Invalid date" if parsing fails
- */
-export function formatDate(dateStr, options = {}) {
-  const defaultOptions = {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  };
-
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleString("en-US", { ...defaultOptions, ...options });
-  } catch {
-    return "Invalid date";
-  }
-}
-
-/**
- * Escape HTML special characters using the browser's DOM parser
- * @param {String} text - Text to escape
- * @returns {String} HTML-escaped text
- */
-export function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
+export { formatDate, escapeHtml } from "../../common/format.js";

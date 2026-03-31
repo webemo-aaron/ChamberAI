@@ -1,12 +1,14 @@
 import express from "express";
 import { initFirestore, serverTimestamp } from "../db/firestore.js";
-import { orgCollection } from "../db/orgFirestore.js";
-import { requireAuth } from "../middleware/auth.js";
+import { orgCollection, orgRef } from "../db/orgFirestore.js";
+import { requireAuth, resolvePublicOrg } from "../middleware/auth.js";
 import { requireRole } from "../middleware/rbac.js";
 import { requireKioskTier, rateLimit, requirePrivateMode } from "../middleware/requireKioskTier.js";
 import { decryptApiKey, sanitizeMessage, sanitizeHtml } from "../services/kiosk-encryption.js";
+import { encryptField, decryptField } from "../services/encryption.js";
 import { createProvider } from "../services/kiosk-providers.js";
 import { buildContext } from "../services/kiosk-context.js";
+import { buildRagContext, rebuildEmbeddingIndex } from "../services/kiosk-embeddings.js";
 
 const router = express.Router();
 
@@ -51,7 +53,9 @@ router.get("/api/kiosk/config", requireAuth, requireKioskTier(), async (req, res
         tokenLimit: kioskConfig.contextConfig?.tokenLimit ?? 8000,
         meetingsLimit: kioskConfig.contextConfig?.meetingsLimit ?? 5,
         motionsLimit: kioskConfig.contextConfig?.motionsLimit ?? 10,
-        actionItemsLimit: kioskConfig.contextConfig?.actionItemsLimit ?? 10
+        actionItemsLimit: kioskConfig.contextConfig?.actionItemsLimit ?? 10,
+        ragEnabled: kioskConfig.contextConfig?.ragEnabled ?? false,
+        ragTopK: kioskConfig.contextConfig?.ragTopK ?? 5
       },
       rateLimit: {
         chamberMaxPerMinute: kioskConfig.rateLimit?.chamberMaxPerMinute ?? 10,
@@ -200,14 +204,34 @@ router.post("/api/kiosk/chat", requireAuth, requireKioskTier(), rateLimit(10, 5)
       dataScope = "private";
     }
 
-    // Build context from organization data
-    const contextData = await buildContext(db, orgId, {
-      tokenLimit: kioskConfig.contextConfig?.tokenLimit ?? 8000,
-      meetingsLimit: kioskConfig.contextConfig?.meetingsLimit ?? 5,
-      motionsLimit: kioskConfig.contextConfig?.motionsLimit ?? 10,
-      actionItemsLimit: kioskConfig.contextConfig?.actionItemsLimit ?? 10,
-      dataScope
-    });
+    // Determine if RAG is enabled and available
+    const ragEnabled = kioskConfig.contextConfig?.ragEnabled === true;
+    const hasEmbeddingKey = decryptedConfig.apiKey && decryptedConfig.type === "openai";
+
+    // Build context: use RAG if enabled, otherwise fall back to recency
+    let contextData;
+    if (ragEnabled && hasEmbeddingKey) {
+      try {
+        contextData = await buildRagContext(db, orgId, kioskConfig.contextConfig, sanitizedMessage, decryptedConfig.apiKey);
+      } catch (err) {
+        console.warn("RAG context build failed, falling back to recency:", err.message);
+        contextData = await buildContext(db, orgId, {
+          tokenLimit: kioskConfig.contextConfig?.tokenLimit ?? 8000,
+          meetingsLimit: kioskConfig.contextConfig?.meetingsLimit ?? 5,
+          motionsLimit: kioskConfig.contextConfig?.motionsLimit ?? 10,
+          actionItemsLimit: kioskConfig.contextConfig?.actionItemsLimit ?? 10,
+          dataScope
+        });
+      }
+    } else {
+      contextData = await buildContext(db, orgId, {
+        tokenLimit: kioskConfig.contextConfig?.tokenLimit ?? 8000,
+        meetingsLimit: kioskConfig.contextConfig?.meetingsLimit ?? 5,
+        motionsLimit: kioskConfig.contextConfig?.motionsLimit ?? 10,
+        actionItemsLimit: kioskConfig.contextConfig?.actionItemsLimit ?? 10,
+        dataScope
+      });
+    }
 
     // Sanitize user message
     const sanitizedMessage = sanitizeMessage(message);
@@ -258,13 +282,15 @@ router.post("/api/kiosk/chat", requireAuth, requireKioskTier(), rateLimit(10, 5)
     // Generate follow-up suggestions (simple heuristics)
     const followUps = generateFollowUps(sanitizedMessage, aiResponse.response);
 
-    // Save chat history
+    // Save chat history with encrypted message and response
+    const encryptedMessage = encryptField(sanitizedMessage, orgId);
+    const encryptedResponse = encryptField(sanitizeHtml(aiResponse.response), orgId);
     await orgCollection(db, orgId, "kiosk_chats").add({
       timestamp: serverTimestamp(),
       userId: req.user?.email ?? "anonymous",
       userRole: req.user?.role ?? "unknown",
-      message: sanitizedMessage,
-      response: sanitizeHtml(aiResponse.response),
+      message: encryptedMessage,
+      response: encryptedResponse,
       tokensUsed: aiResponse.tokensUsed,
       provider: aiResponse.metadata?.provider,
       model: aiResponse.metadata?.model
@@ -279,7 +305,8 @@ router.post("/api/kiosk/chat", requireAuth, requireKioskTier(), rateLimit(10, 5)
         provider: aiResponse.metadata?.provider,
         model: aiResponse.metadata?.model,
         contextTokens: contextData.estimatedTokens,
-        dataScope
+        dataScope,
+        ragUsed: contextData.ragUsed ?? false
       }
     });
   } catch (error) {
@@ -352,8 +379,8 @@ router.post("/api/kiosk/history", requireAuth, requireRole("admin"), async (req,
         timestamp: data.timestamp,
         userId: data.userId,
         userRole: data.userRole,
-        message: data.message,
-        response: data.response,
+        message: decryptField(data.message, orgId) ?? data.message,
+        response: decryptField(data.response, orgId) ?? data.response,
         tokensUsed: data.tokensUsed,
         provider: data.provider,
         model: data.model
@@ -418,5 +445,75 @@ function generateFollowUps(message, response) {
   // Limit to 3 suggestions
   return followUps.slice(0, 3);
 }
+
+/**
+ * POST /api/kiosk/index
+ * Rebuild the embedding index for RAG
+ * Triggers full re-indexing of all documents
+ * Requires admin role
+ */
+router.post("/api/kiosk/index", requireAuth, requireRole("admin"), async (req, res, next) => {
+  try {
+    const db = initFirestore();
+    const orgId = req.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
+
+    // Fetch kiosk config to get dataScope
+    const settingsDoc = await orgCollection(db, orgId, "settings").doc("system").get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : {};
+    const kioskConfig = settings.kioskConfig ?? {};
+    const dataScope = kioskConfig.dataScope ?? "public";
+
+    // Get API key if available (for OpenAI embeddings)
+    let apiKey = null;
+    const providerConfig = kioskConfig.aiProvider ?? {};
+    if (providerConfig.encryptedApiKey) {
+      try {
+        const encryptionPassword = `${orgId}-kiosk-${process.env.ENCRYPTION_SEED ?? "default"}`;
+        apiKey = decryptApiKey(providerConfig.encryptedApiKey, encryptionPassword);
+      } catch (error) {
+        console.error("Failed to decrypt API key for indexing:", error.message);
+        return res.status(500).json({
+          error: "Indexing failed",
+          message: "Could not access API credentials"
+        });
+      }
+    }
+
+    // Rebuild embedding index
+    const result = await rebuildEmbeddingIndex(db, orgId, apiKey, dataScope);
+
+    return res.json({
+      success: true,
+      message: `Indexed ${result.documentsIndexed} documents`,
+      documentsIndexed: result.documentsIndexed,
+      timeMs: result.timeMs || 0
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/kiosk/public-config
+ * Fetch public kiosk config and org branding for unauthenticated clients
+ * Uses subdomain to resolve orgId
+ * Returns: { orgId, branding: { displayName, logoUrl, kioskSystemPromptOverride } }
+ */
+router.get("/api/kiosk/public-config", resolvePublicOrg, async (req, res, next) => {
+  try {
+    const orgId = req.publicOrgId;
+    if (!orgId) {
+      return res.json({ orgId: null, branding: null });
+    }
+
+    const db = initFirestore();
+    const orgDoc = await orgRef(db, orgId).get();
+    const branding = orgDoc.exists ? (orgDoc.data()?.branding ?? {}) : {};
+
+    return res.json({ orgId, branding });
+  } catch (error) {
+    next(error);
+  }
+});
 
 export default router;

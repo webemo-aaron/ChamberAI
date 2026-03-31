@@ -112,6 +112,95 @@ export async function fetchOpenActionItems(db, orgId, limit = 10) {
 }
 
 /**
+ * Fetch all public business listings for embedding
+ * @param {FirebaseFirestore.Firestore} db - Firestore instance
+ * @param {string} orgId - Organization ID
+ * @returns {Promise<Array>} - Array of business listing summaries
+ */
+export async function fetchAllBusinessListings(db, orgId) {
+  try {
+    const snapshot = await orgCollection(db, orgId, "business_listings").get();
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name ?? "Unnamed Business",
+        city: data.city ?? "Unknown",
+        description: data.description ?? ""
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching business listings:", error.message);
+    return [];
+  }
+}
+
+/**
+ * Fetch all indexable documents for RAG embedding
+ * Used by kiosk-embeddings.js to build the embedding cache
+ * @param {FirebaseFirestore.Firestore} db - Firestore instance
+ * @param {string} orgId - Organization ID
+ * @param {string} dataScope - 'public' or 'private'
+ * @returns {Promise<Array>} - Array of documents with { id, type, rawData }
+ */
+export async function fetchAllIndexableDocuments(db, orgId, dataScope = "public") {
+  const documents = [];
+
+  try {
+    // Always fetch meetings
+    const meetingsSnapshot = await orgCollection(db, orgId, "meetings").get();
+    meetingsSnapshot.docs.forEach((doc) => {
+      documents.push({
+        id: doc.id,
+        type: "meeting",
+        rawData: doc.data()
+      });
+    });
+
+    // Always fetch business listings (public)
+    const businessSnapshot = await orgCollection(db, orgId, "business_listings").get();
+    businessSnapshot.docs.forEach((doc) => {
+      documents.push({
+        id: doc.id,
+        type: "business_listing",
+        rawData: doc.data()
+      });
+    });
+
+    // Private scope: fetch motions and action items
+    if (dataScope === "private") {
+      const motionsSnapshot = await orgCollection(db, orgId, "motions")
+        .where("status", "in", ["approved", "pending"])
+        .get();
+      motionsSnapshot.docs.forEach((doc) => {
+        documents.push({
+          id: doc.id,
+          type: "motion",
+          rawData: doc.data()
+        });
+      });
+
+      const actionItemsSnapshot = await orgCollection(db, orgId, "action_items")
+        .where("status", "!=", "completed")
+        .get();
+      actionItemsSnapshot.docs.forEach((doc) => {
+        documents.push({
+          id: doc.id,
+          type: "action_item",
+          rawData: doc.data()
+        });
+      });
+    }
+
+    return documents;
+  } catch (error) {
+    console.error("Error fetching all indexable documents:", error.message);
+    return [];
+  }
+}
+
+/**
  * Build context for AI Kiosk from organizational data
  * Fetches recent meetings, approved motions, and open action items
  * Returns formatted context string + sources + estimated token count

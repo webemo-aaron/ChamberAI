@@ -30,7 +30,7 @@ export async function kioskHandler(params, context) {
     // Load kiosk configuration
     let kioskConfig;
     try {
-      kioskConfig = await request("GET", "/api/kiosk/config");
+      kioskConfig = await request("/api/kiosk/config", "GET");
     } catch (error) {
       showToast("Failed to load kiosk configuration", "error");
       console.error("Failed to load kiosk config:", error);

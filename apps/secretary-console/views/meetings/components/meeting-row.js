@@ -8,7 +8,7 @@
  * Preserves data-meeting-id attribute for E2E tests.
  */
 
-import { formatDate, escapeHtml } from "../utils/format.js";
+import { formatDate, escapeHtml } from "../../common/format.js";
 
 /**
  * Create a single meeting row element

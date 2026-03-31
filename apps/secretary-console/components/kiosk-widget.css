@@ -8,18 +8,18 @@
 
 /* CSS Custom Properties for Dark Mode Support */
 :root {
-  --widget-bubble-bg-from: #3b82f6;
-  --widget-bubble-bg-to: #2563eb;
-  --widget-bubble-icon-color: #ffffff;
-  --widget-online-indicator-color: #10b981;
-  --widget-window-bg: #ffffff;
-  --widget-header-bg: #f8fafc;
-  --widget-border-color: #e2e8f0;
-  --widget-title-color: #1e293b;
-  --widget-text-secondary: #64748b;
-  --widget-hover-bg: #eef2f5;
-  --widget-close-hover-bg: #fee2e2;
-  --widget-close-color: #dc2626;
+  --widget-bubble-bg-from: var(--color-primary);
+  --widget-bubble-bg-to: var(--color-primary-dark);
+  --widget-bubble-icon-color: var(--color-text-inverse);
+  --widget-online-indicator-color: var(--color-success);
+  --widget-window-bg: var(--color-bg-primary);
+  --widget-header-bg: var(--color-bg-secondary);
+  --widget-border-color: var(--color-border-light);
+  --widget-title-color: var(--color-text-primary);
+  --widget-text-secondary: var(--color-text-secondary);
+  --widget-hover-bg: var(--color-bg-tertiary);
+  --widget-close-hover-bg: var(--color-error-50);
+  --widget-close-color: var(--color-error);
   --widget-shadow: rgba(0, 0, 0, 0.15);
   --widget-shadow-hover: rgba(0, 0, 0, 0.2);
 }

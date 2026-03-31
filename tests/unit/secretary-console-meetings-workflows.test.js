@@ -125,7 +125,7 @@ test("meetings list supports showcase city switching for seeded live demos", () 
 });
 
 test("meetings view utilities are extracted and reused across files", () => {
-  const formatJs = read("apps/secretary-console/views/meetings/utils/format.js");
+  const formatJs = read("apps/secretary-console/views/common/format.js");
   const filterJs = read("apps/secretary-console/views/meetings/utils/filter.js");
   const meetingRowJs = read(
     "apps/secretary-console/views/meetings/components/meeting-row.js"
@@ -153,14 +153,14 @@ test("meetings view utilities are extracted and reused across files", () => {
     "apps/secretary-console/views/meetings/tabs/public-summary-tab.js"
   );
 
-  // Verify utilities exist and export expected functions
+  // Verify utilities exist in canonical location (views/common/format.js) and export expected functions
   assert.match(formatJs, /export function formatDate/);
   assert.match(formatJs, /export function escapeHtml/);
   assert.match(filterJs, /export function filterBySearch/);
   assert.match(filterJs, /export function filterByStatus/);
   assert.match(filterJs, /export function applyMeetingsFilter/);
   assert.match(meetingRowJs, /export function createMeetingRow/);
-  assert.match(meetingRowJs, /from "\.\.\/utils\/format\.js"/);
+  assert.match(meetingRowJs, /from "\.\.\/\.\.\/common\/format\.js"/);
 
   // Verify meeting-list imports from utils and components
   assert.match(listJs, /import.*createMeetingRow.*from "\.\/components\/meeting-row/);
@@ -170,16 +170,16 @@ test("meetings view utilities are extracted and reused across files", () => {
   assert.doesNotMatch(listJs, /function escapeHtml\(text\)/);
   assert.doesNotMatch(listJs, /function createMeetingRow\(/);
 
-  // Verify header imports formatDate and escapeHtml
+  // Verify header imports formatDate and escapeHtml from common
   assert.match(
     headerJs,
-    /import.*formatDate.*escapeHtml.*from "\.\/utils\/format\.js"/
+    /import.*formatDate.*escapeHtml.*from "\.\.\/common\/format\.js"/
   );
 
-  // Verify workflow-utils imports formatDate
-  assert.match(workflowUtilsJs, /import.*formatDate.*from "\.\/utils\/format\.js"/);
+  // Verify workflow-utils imports formatDate from common
+  assert.match(workflowUtilsJs, /import.*formatDate.*from "\.\.\/common\/format\.js"/);
 
-  // Verify all tabs import from utils/format.js and don't define duplicates
+  // Verify all tabs import from common/format.js and don't define duplicates
   for (const [name, content] of [
     ["minutes-tab", minutesTabJs],
     ["action-items-tab", actionsTabJs],
@@ -189,8 +189,8 @@ test("meetings view utilities are extracted and reused across files", () => {
   ]) {
     assert.match(
       content,
-      /from "\.\.\/utils\/format\.js"/,
-      `${name} should import from utils/format.js`
+      /from "\.\.\/\.\.\/common\/format\.js"/,
+      `${name} should import from common/format.js`
     );
     // Check that local definitions are removed
     if (name === "minutes-tab" || name === "action-items-tab") {

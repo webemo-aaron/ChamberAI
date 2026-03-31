@@ -14,7 +14,7 @@
 import { request } from "../../../core/api.js";
 import { showToast } from "../../../core/toast.js";
 import { buildMeetingSummaryDraft } from "../meeting-workflow-utils.js";
-import { escapeHtml } from "../utils/format.js";
+import { escapeHtml } from "../../common/format.js";
 
 // State
 let currentMeetingId = null;

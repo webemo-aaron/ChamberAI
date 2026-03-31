@@ -1,4 +1,4 @@
-import { formatDate } from "./utils/format.js";
+import { formatDate } from "../common/format.js";
 
 export function buildMeetingSummaryDraft(meeting = {}, minutesText = "") {
   const parts = [];

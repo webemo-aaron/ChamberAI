@@ -54,9 +54,60 @@ router.post("/meetings", requireRole("admin", "secretary"), requireTierOrDemo, a
 router.get("/meetings", async (req, res, next) => {
   try {
     const db = initFirestore();
-    const snapshot = await orgCollection(db, req.orgId, "meetings").get();
+
+    // Pagination and delta sync support
+    const limitParam = Number(req.query.limit) || 50;
+    const offsetParam = Number(req.query.offset) || 0;
+    const sinceParam = req.query.since;  // ISO8601 or epoch timestamp
+
+    // Validate pagination params
+    const limit = Math.min(Math.max(limitParam, 1), 100);  // 1-100 range
+    const offset = Math.max(offsetParam, 0);
+
+    // Build query
+    let query = orgCollection(db, req.orgId, "meetings").orderBy("updated_at", "desc");
+
+    // Apply delta sync filter if provided
+    if (sinceParam) {
+      try {
+        const sinceDate = new Date(sinceParam);
+        query = query.where("updated_at", ">", sinceDate);
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid since parameter (must be ISO8601 or timestamp)" });
+      }
+    }
+
+    // Get total count
+    const countSnapshot = await query.count().get();
+    const total = countSnapshot.data().count;
+
+    // Fetch paginated results
+    const snapshot = await query.offset(offset).limit(limit).get();
     const meetings = snapshot.docs.map((doc) => doc.data());
-    res.json(meetings);
+
+    // Compute next cursor for pagination
+    let nextCursor = null;
+    if (offset + meetings.length < total) {
+      nextCursor = offset + meetings.length;
+    }
+
+    // Compute next_since for delta sync
+    let nextSince = null;
+    if (meetings.length > 0) {
+      const lastMeeting = meetings[meetings.length - 1];
+      if (lastMeeting.updated_at) {
+        nextSince = lastMeeting.updated_at.toISOString?.() || lastMeeting.updated_at;
+      }
+    }
+
+    res.json({
+      meetings,
+      total,
+      limit,
+      offset,
+      next_cursor: nextCursor,
+      next_since: nextSince
+    });
   } catch (error) {
     next(error);
   }
