@@ -81,6 +81,22 @@
       </nav>
     </header>
 
+    <div class="layout-shell">
+      <aside class="left-rail">
+        <h2>Docs Navigator</h2>
+        <p>Browse product and ops docs</p>
+        <nav class="rail-nav">
+          <a href="./index.html">Landing</a>
+          <a href="./viewer.html?doc=INDEX.md" class="active">Docs Viewer</a>
+          <a href="./viewer.html?doc=USER_GUIDE.md">User Guide</a>
+          <a href="./viewer.html?doc=PRODUCT_INFO.md">Product Info</a>
+          <a href="./viewer.html?doc=RUNBOOKS.md">Runbooks</a>
+          <a href="./viewer.html?doc=RELEASE_CHECKLIST.md">Release Checklist</a>
+          <a href="./viewer.html?doc=plans/2026-03-31-ai-chamber-product-implementation-map.md">User Stories & Success Criteria Map</a>
+          <a href="./pilot-intake.html">Pilot Intake</a>
+        </nav>
+      </aside>
+      <div class="layout-content">
     <main class="doc-shell">
       <section class="section">
         <h1 id="docTitle">Documentation</h1>
@@ -89,8 +105,14 @@
             <option value="INDEX.md">Docs Index</option>
             <option value="USER_GUIDE.md">User Guide</option>
             <option value="PRODUCT_INFO.md">Product Info</option>
+            <option value="ARCHITECTURE.md">Architecture</option>
+            <option value="mission-vision.md">Mission + Vision</option>
             <option value="IMPLEMENTATION_REVIEW_2026-02-25.md">Implementation Review</option>
-            <option value="DEPLOYMENT_GCP_VERCEL_LOW_COST.md">GCP + Vercel Deployment</option>
+            <option value="HETZNER_SETUP.md">Hetzner Deployment Guide</option>
+            <option value="HETZNER_MCP_OPERATIONS.md">Hetzner Ops Runbook</option>
+            <option value="DEPLOYMENT_GCP_VERCEL_LOW_COST.md">GCP + Vercel Deployment (Alternate)</option>
+            <option value="DASHBOARD_AND_IA_DESIGN.md">Dashboard + IA Design</option>
+            <option value="community-posts.md">Community Posts Draft</option>
             <option value="RELEASE_CHECKLIST.md">Release Checklist</option>
           </select>
           <input id="docInput" type="text" placeholder="Custom markdown path, e.g. roadmap.md" />
@@ -109,13 +131,15 @@
         <strong>Quick Links</strong>
         <a href="./viewer.html?doc=USER_GUIDE.md">User Guide</a>
         <a href="./viewer.html?doc=INDEX.md">Docs Index</a>
-        <a href="./viewer.html?doc=plans/2026-03-31-ai-chamber-product-implementation-map.md">Mermaid Maps</a>
+        <a href="./viewer.html?doc=plans/2026-03-31-ai-chamber-product-implementation-map.md">User Stories & Success Criteria Map</a>
       </div>
       <div class="footer-col">
         <strong>Contact</strong>
         <a href="mailto:aaron@mahoosuc.solutions">aaron@mahoosuc.solutions</a>
       </div>
     </footer>
+      </div>
+    </div>
 
     <script>
       const params = new URLSearchParams(window.location.search);
@@ -143,6 +167,20 @@
           diagram.className = "mermaid";
           diagram.textContent = code.textContent || "";
           code.parentElement.replaceWith(diagram);
+        });
+      }
+
+      function rewriteMarkdownLinks(root) {
+        const anchors = root.querySelectorAll("a[href]");
+        anchors.forEach((anchor) => {
+          const href = anchor.getAttribute("href");
+          if (!href) return;
+          if (href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:")) return;
+          if (href.startsWith("#")) return;
+          const [docPath, fragment] = href.split("#");
+          if (!docPath || !docPath.toLowerCase().endsWith(".md")) return;
+          const target = `./viewer.html?doc=${encodeURIComponent(docPath)}`;
+          anchor.setAttribute("href", fragment ? `${target}#${fragment}` : target);
         });
       }
 
@@ -188,6 +226,7 @@
         const markdown = await response.text();
         docTitle.textContent = humanTitle(safePath);
         docContent.innerHTML = marked.parse(markdown);
+        rewriteMarkdownLinks(docContent);
         await renderMermaid(docContent);
         history.replaceState({}, "", `?doc=${encodeURIComponent(safePath)}`);
       }

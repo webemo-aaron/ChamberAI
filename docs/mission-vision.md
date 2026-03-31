@@ -10,7 +10,7 @@ A single, interoperable platform where Chambers collaborate instead of competing
 
 ## Why Now
 
-Local businesses face global competition and fragmented marketing channels. Chambers are already trusted institutions, but they lack a unified digital platform that connects communities. ChamberOfCommerceAI aims to close that gap.
+Local businesses face global competition and fragmented marketing channels. Chambers are already trusted institutions, but they lack a unified digital platform that connects communities. ChamberAI aims to close that gap.
 
 ## What We’re Building
 

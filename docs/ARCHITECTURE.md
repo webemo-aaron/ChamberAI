@@ -1,11 +1,11 @@
-# ChamberOfCommerceAI Architecture
+# ChamberAI Architecture
 
 **Audience**: Developers and self-hosters
 **Scope**: Free (self-hosted) tier
 
 ## Overview
 
-ChamberOfCommerceAI is a web-based operations workspace backed by an API and worker service. The
+ChamberAI is a web-based operations workspace backed by an API and worker service. The
 self-hosted stack is designed to run locally with the Firebase Emulator Suite and
 can be switched to real Firebase services for production.
 

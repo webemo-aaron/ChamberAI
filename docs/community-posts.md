@@ -2,10 +2,10 @@
 
 ## Welcome Post (Pinned)
 
-Title: Welcome to ChamberOfCommerceAI
+Title: Welcome to ChamberAI
 
 Body:
-ChamberOfCommerceAI is a community-driven platform built to help Chambers across the U.S. collaborate on local commerce. The goal is simple: let’s band together so businesses and customers are fully served with trusted recommendations and reviews of local businesses.
+ChamberAI is a community-driven platform built to help Chambers across the U.S. collaborate on local commerce. The goal is simple: let’s band together so businesses and customers are fully served with trusted recommendations and reviews of local businesses.
 
 Created by **Aaron Bentley**, AI Solution Architect and Founder of **Mahoosuc Solutions**, and an architect serving on the executive board of the **Bethel, Maine Chamber of Commerce**.
 

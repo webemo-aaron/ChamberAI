@@ -105,7 +105,7 @@ ssh -i ~/.ssh/id_rsa root@192.0.2.100
 ```bash
 mkdir -p /opt
 cd /opt
-git clone https://github.com/yourusername/ChamberAI.git
+git clone https://github.com/webemo-aaron/ChamberAI.git
 cd ChamberAI
 ```
 
@@ -452,7 +452,7 @@ For issues:
 1. Check logs: `docker compose -f docker-compose.hybrid.yml logs -f`
 2. Verify health: `./scripts/verify_hybrid_stack.sh .env.hybrid`
 3. Test connectivity: `curl -v https://api.chamber.example.com/health`
-4. Review GitHub Issues: https://github.com/yourusername/ChamberAI/issues
+4. Review GitHub Issues: https://github.com/webemo-aaron/ChamberAI/issues
 
 ## Additional Resources
 

@@ -17,6 +17,7 @@
         <a href="#vision">Vision</a>
         <a href="#how">How It Works</a>
         <a href="#benefits">Benefits</a>
+        <a href="#playbooks">Playbooks</a>
         <a href="#documentation">Documentation</a>
         <a href="#diagrams">Diagrams</a>
         <a href="./viewer.html?doc=INDEX.md">Docs</a>
@@ -24,6 +25,23 @@
       </nav>
     </header>
 
+    <div class="layout-shell">
+      <aside class="left-rail">
+        <h2>ChamberAI</h2>
+        <p>Platform navigation</p>
+        <nav class="rail-nav">
+          <a href="./index.html" class="active">Landing</a>
+          <a href="./index.html#product">Product</a>
+          <a href="./index.html#playbooks">Playbooks</a>
+          <a href="./index.html#documentation">Docs Library</a>
+          <a href="./index.html#diagrams">Diagrams</a>
+          <a href="./viewer.html?doc=USER_GUIDE.md">User Guide</a>
+          <a href="./viewer.html?doc=INDEX.md">Docs Index</a>
+          <a href="./viewer.html?doc=plans/2026-03-31-ai-chamber-product-implementation-map.md">Implementation Map</a>
+          <a href="./pilot-intake.html">Pilot Intake</a>
+        </nav>
+      </aside>
+      <div class="layout-content">
     <main>
       <section id="product" class="hero">
         <div class="hero-content">
@@ -169,11 +187,11 @@ flowchart LR
             <p>System boundaries, services, and operating model.</p>
           </a>
           <a class="doc-card" href="./viewer.html?doc=HETZNER_SETUP.md">
-            <strong>Deployment Guide</strong>
+            <strong>Hetzner Deployment Guide</strong>
             <p>Provisioning and release instructions for the Hetzner environment.</p>
           </a>
           <a class="doc-card" href="./viewer.html?doc=HETZNER_MCP_OPERATIONS.md">
-            <strong>Ops Runbook</strong>
+            <strong>Hetzner Ops Runbook</strong>
             <p>Preflight, release, rollback, and control-plane operations.</p>
           </a>
           <a class="doc-card" href="./viewer.html?doc=RELEASE_CHECKLIST.md">
@@ -213,7 +231,7 @@ flowchart LR
         <div class="cta-row">
           <a class="btn primary" href="mailto:aaron@mahoosuc.solutions">Contact Aaron</a>
           <a class="btn ghost" href="./pilot-intake.html">Pilot intake form</a>
-          <a class="btn ghost" href="./viewer.html?doc=community-posts.md">Get involved on GitHub</a>
+          <a class="btn ghost" href="./viewer.html?doc=community-posts.md">Read community posts draft</a>
           <a class="btn ghost" href="./viewer.html?doc=USER_GUIDE.md">View User Guide</a>
         </div>
       </section>
@@ -248,13 +266,15 @@ flowchart LR
         <strong>Documentation</strong>
         <a href="./viewer.html?doc=USER_GUIDE.md">User Guide</a>
         <a href="./viewer.html?doc=INDEX.md">Docs Index</a>
-        <a href="./viewer.html?doc=plans/2026-03-31-ai-chamber-product-implementation-map.md">Mermaid Maps</a>
+        <a href="./viewer.html?doc=plans/2026-03-31-ai-chamber-product-implementation-map.md">User Stories & Success Criteria Map</a>
       </div>
       <div class="footer-col">
         <strong>Contact</strong>
         <a href="mailto:aaron@mahoosuc.solutions">aaron@mahoosuc.solutions</a>
       </div>
     </footer>
+      </div>
+    </div>
     <script>
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
       function renderMermaid() {
