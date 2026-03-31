@@ -18,18 +18,18 @@ test("topbar and login copy use ChamberAI branding language", () => {
   assert.match(indexHtml, />Operational intelligence for chamber teams<\/div>/);
   assert.match(indexHtml, />Connection Control<\/h3>/);
   assert.match(indexHtml, /Point the console at your active ChamberAI API environment\./);
-  assert.match(loginJs, /title\.textContent = "Welcome to ChamberAI"/);
+  assert.match(loginJs, /title\.textContent = "Enter ChamberAI"/);
   assert.match(
     loginJs,
-    /subtitle\.textContent =\s*"Board operations, member intelligence, and AI-assisted governance\.";/
+    /subtitle\.textContent =\s*"Sign in to the control center for chamber teams, board workflows, and governed AI operations\.";/
   );
   assert.match(
     loginJs,
-    /eyebrow\.textContent = "Secretary Console"/
+    /eyebrow\.textContent = "Workspace Access"/
   );
   assert.match(
     loginJs,
-    /demoNote\.textContent = "Demo access is intended for local validation and responsive QA\."/
+    /demoNote\.textContent = "Demo access is intended for local validation, responsive QA, and workflow review\."/
   );
 });
 

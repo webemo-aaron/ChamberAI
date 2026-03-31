@@ -83,9 +83,45 @@ function renderLoginPage(ssoStatus = null) {
   loginPage.className = "login-page";
   loginPage.setAttribute("role", "main");
 
+  const loginStage = document.createElement("div");
+  loginStage.className = "login-stage";
+
+  const contextPanel = document.createElement("section");
+  contextPanel.className = "login-context-panel";
+  contextPanel.innerHTML = `
+    <div class="login-context-shell">
+      <span class="login-context-eyebrow">ChamberAI Workspace</span>
+      <h1 class="login-context-title">Run chamber operations from one governed workspace.</h1>
+      <p class="login-context-copy">
+        Meetings, member intelligence, geo visibility, kiosk assistance, and AI-guided follow-through
+        move through the same control surface.
+      </p>
+      <div class="login-capabilities">
+        <span>Board operations</span>
+        <span>Business hub visibility</span>
+        <span>Geo intelligence</span>
+        <span>Governed AI workflows</span>
+      </div>
+      <div class="login-outcomes">
+        <article class="login-outcome-card">
+          <strong>Board and approvals</strong>
+          <p>Prepare agendas, capture minutes, track actions, and move approvals without losing auditability.</p>
+        </article>
+        <article class="login-outcome-card">
+          <strong>Member and showcase operations</strong>
+          <p>Connect business profiles, quotes, reviews, and territory context to what chamber staff are acting on today.</p>
+        </article>
+        <article class="login-outcome-card">
+          <strong>AI with governance guardrails</strong>
+          <p>Use summaries, narratives, kiosk support, and analytics inside a workspace built for accountable teams.</p>
+        </article>
+      </div>
+    </div>
+  `;
+
   // Create login card with centered content
   const loginCard = document.createElement("div");
-  loginCard.className = "login-card";
+  loginCard.className = "login-card login-auth-panel";
   loginCard.setAttribute("role", "region");
   loginCard.setAttribute("aria-labelledby", "loginPageTitle");
 
@@ -95,7 +131,7 @@ function renderLoginPage(ssoStatus = null) {
 
   const eyebrow = document.createElement("span");
   eyebrow.className = "login-eyebrow";
-  eyebrow.textContent = "Secretary Console";
+  eyebrow.textContent = "Workspace Access";
 
   const brandMark = document.createElement("div");
   brandMark.className = "brand-mark-large";
@@ -105,26 +141,23 @@ function renderLoginPage(ssoStatus = null) {
   const title = document.createElement("h1");
   title.id = "loginPageTitle";
   title.className = "login-title";
-  title.textContent = "Welcome to ChamberAI";
+  title.textContent = "Enter ChamberAI";
 
   const subtitle = document.createElement("p");
   subtitle.className = "login-subtitle";
   subtitle.textContent =
-    "Board operations, member intelligence, and AI-assisted governance.";
+    "Sign in to the control center for chamber teams, board workflows, and governed AI operations.";
 
-  const capabilityList = document.createElement("div");
-  capabilityList.className = "login-capabilities";
-  capabilityList.innerHTML = `
-    <span>Meetings intelligence</span>
-    <span>Member directory operations</span>
-    <span>Governed AI workflows</span>
-  `;
+  const authNote = document.createElement("p");
+  authNote.className = "login-auth-note";
+  authNote.textContent =
+    "Choose your organization sign-in path. Local demo access remains available for QA and workflow review.";
 
   header.appendChild(eyebrow);
   header.appendChild(brandMark);
   header.appendChild(title);
   header.appendChild(subtitle);
-  header.appendChild(capabilityList);
+  header.appendChild(authNote);
 
   // SSO button (if enabled)
   let ssoBtn = null;
@@ -168,7 +201,7 @@ function renderLoginPage(ssoStatus = null) {
 
   const demoNote = document.createElement("p");
   demoNote.className = "demo-note";
-  demoNote.textContent = "Demo access is intended for local validation and responsive QA.";
+  demoNote.textContent = "Demo access is intended for local validation, responsive QA, and workflow review.";
 
   // Email input
   const emailLabel = document.createElement("label");
@@ -253,7 +286,9 @@ function renderLoginPage(ssoStatus = null) {
   loginCard.appendChild(demoAccess);
 
   // Assemble the login page
-  loginPage.appendChild(loginCard);
+  loginStage.appendChild(contextPanel);
+  loginStage.appendChild(loginCard);
+  loginPage.appendChild(loginStage);
 
   return loginPage;
 }
