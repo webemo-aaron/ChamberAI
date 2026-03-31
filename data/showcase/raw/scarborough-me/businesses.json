@@ -1,0 +1,52 @@
+{
+  "city": "Scarborough, ME",
+  "scope_type": "town",
+  "scope_id": "Scarborough",
+  "source_label": "Portland Regional Chamber Membership Directory",
+  "source_url": "https://web.portlandregion.com/search",
+  "captured_at": "2026-03-28",
+  "records": [
+    {
+      "source_id": "scarborough-001",
+      "business_name": "Pine Point Service Group",
+      "category": "Business Services",
+      "description": "Field and office support provider serving Scarborough growth corridor businesses.",
+      "street_address": "14 Route 1",
+      "city": "Scarborough",
+      "state": "ME",
+      "zip": "04074",
+      "phone": "207-555-4101",
+      "email": "ops@pinepointservice.example",
+      "website": "https://pinepointservice.example",
+      "source_url": "https://web.portlandregion.com/search"
+    },
+    {
+      "source_id": "scarborough-002",
+      "business_name": "Marshview Dental",
+      "category": "Healthcare",
+      "description": "Dental clinic serving families, commuters, and local employers in Scarborough.",
+      "street_address": "220 US Route 1",
+      "city": "Scarborough",
+      "state": "ME",
+      "zip": "04074",
+      "phone": "207-555-4102",
+      "email": "care@marshviewdental.example",
+      "website": "https://marshviewdental.example",
+      "source_url": "https://web.portlandregion.com/search"
+    },
+    {
+      "source_id": "scarborough-003",
+      "business_name": "Coastal Growth Realty",
+      "category": "Real Estate",
+      "description": "Commercial and residential real estate team supporting relocations and business growth.",
+      "street_address": "550 Payne Rd",
+      "city": "Scarborough",
+      "state": "ME",
+      "zip": "04074",
+      "phone": "207-555-4103",
+      "email": "team@coastalgrowthrealty.example",
+      "website": "https://coastalgrowthrealty.example",
+      "source_url": "https://web.portlandregion.com/search"
+    }
+  ]
+}

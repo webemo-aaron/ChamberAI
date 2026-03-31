@@ -1,0 +1,52 @@
+{
+  "city": "Augusta, ME",
+  "scope_type": "city",
+  "scope_id": "Augusta",
+  "source_label": "Kennebec Valley Chamber of Commerce",
+  "source_url": "https://www.augustamaine.com/our-members",
+  "captured_at": "2026-03-28",
+  "records": [
+    {
+      "source_id": "augusta-001",
+      "business_name": "Capitol Strategy Group",
+      "category": "Professional Services",
+      "description": "Government-adjacent operations and communications support for local organizations.",
+      "street_address": "12 State St",
+      "city": "Augusta",
+      "state": "ME",
+      "zip": "04330",
+      "phone": "207-555-2101",
+      "email": "hello@capitolstrategy.example",
+      "website": "https://capitolstrategy.example",
+      "source_url": "https://www.augustamaine.com/our-members"
+    },
+    {
+      "source_id": "augusta-002",
+      "business_name": "Riverfront Wellness",
+      "category": "Healthcare",
+      "description": "Primary and preventative care practice serving downtown Augusta families and workers.",
+      "street_address": "25 Water St",
+      "city": "Augusta",
+      "state": "ME",
+      "zip": "04330",
+      "phone": "207-555-2102",
+      "email": "care@riverfrontwellness.example",
+      "website": "https://riverfrontwellness.example",
+      "source_url": "https://www.augustamaine.com/our-members"
+    },
+    {
+      "source_id": "augusta-003",
+      "business_name": "Main Street Mercantile",
+      "category": "Retail",
+      "description": "Downtown retail shop supporting local events, gift buyers, and seasonal traffic.",
+      "street_address": "58 Water St",
+      "city": "Augusta",
+      "state": "ME",
+      "zip": "04330",
+      "phone": "207-555-2103",
+      "email": "team@mainstreetmercantile.example",
+      "website": "https://mainstreetmercantile.example",
+      "source_url": "https://www.augustamaine.com/our-members"
+    }
+  ]
+}

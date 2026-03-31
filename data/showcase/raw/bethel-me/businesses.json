@@ -1,0 +1,52 @@
+{
+  "city": "Bethel, ME",
+  "scope_type": "town",
+  "scope_id": "Bethel",
+  "source_label": "Bethel Area Chamber Directory",
+  "source_url": "https://www.bethelmaine.com/directory",
+  "captured_at": "2026-03-29",
+  "records": [
+    {
+      "source_id": "bethel-001",
+      "business_name": "Mountain View Lodging Co.",
+      "category": "Hospitality",
+      "description": "Boutique lodging and visitor concierge support for four-season guests in Bethel.",
+      "street_address": "17 Broad Street",
+      "city": "Bethel",
+      "state": "ME",
+      "zip": "04217",
+      "phone": "207-555-5101",
+      "email": "stay@mountainviewlodging.example",
+      "website": "https://mountainviewlodging.example",
+      "source_url": "https://www.bethelmaine.com/directory"
+    },
+    {
+      "source_id": "bethel-002",
+      "business_name": "Sunday River Gear House",
+      "category": "Retail",
+      "description": "Outdoor apparel and equipment retailer serving visitors, guides, and local families.",
+      "street_address": "42 Main Street",
+      "city": "Bethel",
+      "state": "ME",
+      "zip": "04217",
+      "phone": "207-555-5102",
+      "email": "team@rivergearhouse.example",
+      "website": "https://rivergearhouse.example",
+      "source_url": "https://www.bethelmaine.com/directory"
+    },
+    {
+      "source_id": "bethel-003",
+      "business_name": "Western Maine Adventure Guides",
+      "category": "Outdoor Recreation",
+      "description": "Guide service coordinating seasonal trips, guest itineraries, and local activity referrals.",
+      "street_address": "9 Greenwood Avenue",
+      "city": "Bethel",
+      "state": "ME",
+      "zip": "04217",
+      "phone": "207-555-5103",
+      "email": "hello@westernmaineguides.example",
+      "website": "https://westernmaineguides.example",
+      "source_url": "https://www.bethelmaine.com/directory"
+    }
+  ]
+}

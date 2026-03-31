@@ -1,0 +1,52 @@
+{
+  "city": "Bangor, ME",
+  "scope_type": "city",
+  "scope_id": "Bangor",
+  "source_label": "Downtown Bangor Business Directory",
+  "source_url": "https://downtownbangor.com/business-directory/",
+  "captured_at": "2026-03-28",
+  "records": [
+    {
+      "source_id": "bangor-001",
+      "business_name": "Queen City Media House",
+      "category": "Marketing",
+      "description": "Creative and digital services studio supporting regional campaigns and member promotions.",
+      "street_address": "10 Central St",
+      "city": "Bangor",
+      "state": "ME",
+      "zip": "04401",
+      "phone": "207-555-3101",
+      "email": "hello@queencitymedia.example",
+      "website": "https://queencitymedia.example",
+      "source_url": "https://downtownbangor.com/business-directory/"
+    },
+    {
+      "source_id": "bangor-002",
+      "business_name": "Penobscot Logistics Advisors",
+      "category": "Professional Services",
+      "description": "Regional logistics advisory firm helping growth-stage businesses coordinate operations.",
+      "street_address": "72 Harlow St",
+      "city": "Bangor",
+      "state": "ME",
+      "zip": "04401",
+      "phone": "207-555-3102",
+      "email": "team@penobscotlogistics.example",
+      "website": "https://penobscotlogistics.example",
+      "source_url": "https://downtownbangor.com/business-directory/"
+    },
+    {
+      "source_id": "bangor-003",
+      "business_name": "Crossroads Hospitality Group",
+      "category": "Hospitality",
+      "description": "Guest services and event support team serving downtown visitors and partner venues.",
+      "street_address": "99 Main St",
+      "city": "Bangor",
+      "state": "ME",
+      "zip": "04401",
+      "phone": "207-555-3103",
+      "email": "info@crossroadshospitality.example",
+      "website": "https://crossroadshospitality.example",
+      "source_url": "https://downtownbangor.com/business-directory/"
+    }
+  ]
+}

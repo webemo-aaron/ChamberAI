@@ -1,0 +1,52 @@
+{
+  "city": "Carrabassett Valley, ME",
+  "scope_type": "town",
+  "scope_id": "Carrabassett Valley",
+  "source_label": "Carrabassett Valley Resort Alliance",
+  "source_url": "https://www.carrabassettvalley.org/business-directory",
+  "captured_at": "2026-03-29",
+  "records": [
+    {
+      "source_id": "carrabassett-001",
+      "business_name": "Summit Stay Hospitality",
+      "category": "Hospitality",
+      "description": "Guest lodging operator supporting resort travelers, event guests, and destination bookings.",
+      "street_address": "100 Valley Crossing",
+      "city": "Carrabassett Valley",
+      "state": "ME",
+      "zip": "04947",
+      "phone": "207-555-7101",
+      "email": "reservations@summitstay.example",
+      "website": "https://summitstay.example",
+      "source_url": "https://www.carrabassettvalley.org/business-directory"
+    },
+    {
+      "source_id": "carrabassett-002",
+      "business_name": "Peak Season Shuttle",
+      "category": "Transportation",
+      "description": "Seasonal shuttle and guest transfer service coordinating visitor movement across the valley.",
+      "street_address": "4 Access Road",
+      "city": "Carrabassett Valley",
+      "state": "ME",
+      "zip": "04947",
+      "phone": "207-555-7102",
+      "email": "dispatch@peakseasonshuttle.example",
+      "website": "https://peakseasonshuttle.example",
+      "source_url": "https://www.carrabassettvalley.org/business-directory"
+    },
+    {
+      "source_id": "carrabassett-003",
+      "business_name": "Alpine Event Support Group",
+      "category": "Events",
+      "description": "Production and guest-operations partner for resort events, races, and destination activations.",
+      "street_address": "25 Mountain Base Loop",
+      "city": "Carrabassett Valley",
+      "state": "ME",
+      "zip": "04947",
+      "phone": "207-555-7103",
+      "email": "hello@alpineeventsupport.example",
+      "website": "https://alpineeventsupport.example",
+      "source_url": "https://www.carrabassettvalley.org/business-directory"
+    }
+  ]
+}

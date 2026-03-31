@@ -1,0 +1,50 @@
+{
+  "city": "Portland, ME",
+  "source_label": "Portland Regional Chamber Membership Directory",
+  "source_url": "https://web.portlandregion.com/search",
+  "captured_at": "2026-03-28",
+  "records": [
+    {
+      "source_id": "portland-001",
+      "business_name": "Harbor Bistro",
+      "category": "Restaurants",
+      "description": "Waterfront dining, private events, and chamber catering support.",
+      "street_address": "123 Wharf St",
+      "city": "Portland",
+      "state": "ME",
+      "zip": "04101",
+      "phone": "207-555-1111",
+      "email": "info@harborbistro.example",
+      "website": "https://harborbistro.example",
+      "source_url": "https://web.portlandregion.com/search"
+    },
+    {
+      "source_id": "portland-002",
+      "business_name": "Casco Bay Legal Group",
+      "category": "Professional Services",
+      "description": "Business counsel and chamber-facing compliance support for small firms.",
+      "street_address": "44 Exchange St",
+      "city": "Portland",
+      "state": "ME",
+      "zip": "04101",
+      "phone": "207-555-1122",
+      "email": "team@cascobaylegal.example",
+      "website": "https://cascobaylegal.example",
+      "source_url": "https://web.portlandregion.com/search"
+    },
+    {
+      "source_id": "portland-003",
+      "business_name": "Old Port Event Co.",
+      "category": "Events",
+      "description": "Event logistics and sponsor activation for waterfront and chamber programs.",
+      "street_address": "88 Commercial St",
+      "city": "Portland",
+      "state": "ME",
+      "zip": "04101",
+      "phone": "207-555-1199",
+      "email": "hello@oldportevents.example",
+      "website": "https://oldportevents.example",
+      "source_url": "https://web.portlandregion.com/search"
+    }
+  ]
+}

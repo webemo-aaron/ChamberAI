@@ -1,0 +1,52 @@
+{
+  "city": "Kingfield, ME",
+  "scope_type": "town",
+  "scope_id": "Kingfield",
+  "source_label": "Kingfield Business Association",
+  "source_url": "https://www.kingfieldmaine.org/businesses",
+  "captured_at": "2026-03-29",
+  "records": [
+    {
+      "source_id": "kingfield-001",
+      "business_name": "Carrabassett Coffee House",
+      "category": "Food Service",
+      "description": "Cafe and light catering stop serving commuters, visitors, and local events in Kingfield.",
+      "street_address": "11 Main Street",
+      "city": "Kingfield",
+      "state": "ME",
+      "zip": "04947",
+      "phone": "207-555-6101",
+      "email": "hello@carrabassettcoffee.example",
+      "website": "https://carrabassettcoffee.example",
+      "source_url": "https://www.kingfieldmaine.org/businesses"
+    },
+    {
+      "source_id": "kingfield-002",
+      "business_name": "High Peak Property Services",
+      "category": "Home Services",
+      "description": "Property maintenance and seasonal support provider for homes, lodges, and small businesses.",
+      "street_address": "28 Depot Street",
+      "city": "Kingfield",
+      "state": "ME",
+      "zip": "04947",
+      "phone": "207-555-6102",
+      "email": "ops@highpeakproperty.example",
+      "website": "https://highpeakproperty.example",
+      "source_url": "https://www.kingfieldmaine.org/businesses"
+    },
+    {
+      "source_id": "kingfield-003",
+      "business_name": "Sugarloaf Trail Outfitters",
+      "category": "Outdoor Recreation",
+      "description": "Trail, bike, and outdoor gear support for visitors exploring the western mountains corridor.",
+      "street_address": "77 Route 27",
+      "city": "Kingfield",
+      "state": "ME",
+      "zip": "04947",
+      "phone": "207-555-6103",
+      "email": "team@sugarloaftrail.example",
+      "website": "https://sugarloaftrail.example",
+      "source_url": "https://www.kingfieldmaine.org/businesses"
+    }
+  ]
+}
