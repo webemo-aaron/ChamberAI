@@ -11,6 +11,7 @@ fi
 set -a
 source "${ENV_FILE}"
 set +a
+source "$(dirname "$0")/load_hcloud_token.sh"
 
 HCLOUD_SERVER_ID="${HCLOUD_SERVER_ID:-}"
 HCLOUD_FIREWALL_NAME="${HCLOUD_FIREWALL_NAME:-chamberai-firewall}"
@@ -19,7 +20,7 @@ DEPLOY_MIN_MEMORY_FREE_MB="${DEPLOY_MIN_MEMORY_FREE_MB:-512}"
 DEPLOY_EXPECTED_INBOUND_PORTS="${DEPLOY_EXPECTED_INBOUND_PORTS:-22,80,443}"
 
 if [[ -z "${HCLOUD_TOKEN:-}" ]]; then
-  echo "HCLOUD_TOKEN must be exported before running preflight." >&2
+  echo "HCLOUD_TOKEN is missing. Export it or set HCLOUD_TOKEN_FILE in ${ENV_FILE}." >&2
   exit 1
 fi
 

@@ -12,6 +12,7 @@
 #   0 2 * * * cd /opt/chamberai && HCLOUD_TOKEN=$HCLOUD_TOKEN SERVER_ID=$SERVER_ID ./scripts/hetzner_snapshot.sh >> /var/log/chamberai-snapshot.log 2>&1
 
 set -euo pipefail
+source "$(dirname "$0")/load_hcloud_token.sh"
 
 SERVER_ID="${SERVER_ID:-}"
 SNAPSHOT_LABEL="${SNAPSHOT_LABEL:-chamberai-auto}"
@@ -20,7 +21,7 @@ SNAPSHOT_REASON="${SNAPSHOT_REASON:-scheduled}"
 RELEASE_REF="${RELEASE_REF:-manual}"
 
 if [[ -z "${HCLOUD_TOKEN:-}" ]]; then
-  echo "ERROR: HCLOUD_TOKEN not set"
+  echo "ERROR: HCLOUD_TOKEN is missing. Export it or set HCLOUD_TOKEN_FILE."
   exit 1
 fi
 

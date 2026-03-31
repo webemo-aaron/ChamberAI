@@ -11,6 +11,7 @@ fi
 set -a
 source "${ENV_FILE}"
 set +a
+source "$(dirname "$0")/load_hcloud_token.sh"
 
 APP_DIR="${APP_DIR:-$(pwd)}"
 DEPLOY_STABILIZATION_SECONDS="${DEPLOY_STABILIZATION_SECONDS:-15}"

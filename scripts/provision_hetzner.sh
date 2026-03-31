@@ -13,6 +13,7 @@
 #   - Exits 1 on error
 
 set -euo pipefail
+source "$(dirname "$0")/load_hcloud_token.sh"
 
 # Configuration
 SERVER_NAME="${SERVER_NAME:-chamberai-prod}"
@@ -29,7 +30,7 @@ if ! command -v hcloud &> /dev/null; then
 fi
 
 if [[ -z "${HCLOUD_TOKEN:-}" ]]; then
-  echo "ERROR: HCLOUD_TOKEN not set. Export your Hetzner API token."
+  echo "ERROR: HCLOUD_TOKEN is missing. Export it or set HCLOUD_TOKEN_FILE."
   exit 1
 fi
 
