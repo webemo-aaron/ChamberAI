@@ -10,16 +10,35 @@
 import { showToast } from './toast.js';
 import { getFirebaseUser as getAuthFirebaseUser } from './auth.js';
 
+export function detectDefaultApiBase() {
+  if (window.location.hostname === 'chamberai.mahoosuc.ai') {
+    return 'https://api.chamberai.mahoosuc.ai';
+  }
+
+  if (window.location.hostname.endsWith('.vercel.app')) {
+    return 'https://chamberai-api-ecfgvedexq-uc.a.run.app';
+  }
+
+  const isLocalDevHost =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  if (isLocalDevHost) {
+    const currentPort = window.location.port;
+    if (currentPort === '5175' || currentPort === '5176' || currentPort === '5173') {
+      return 'http://127.0.0.1:4010';
+    }
+    return 'http://localhost:4000';
+  }
+
+  return 'http://localhost:4000';
+}
+
 // API base URL management
 let apiBase = (() => {
   const stored = localStorage.getItem('camApiBase');
   if (stored) return stored;
-
-  // Auto-detect based on deployment environment
-  if (window.location.hostname.endsWith('.vercel.app')) {
-    return 'https://chamberai-api.vercel.app';
-  }
-  return 'http://localhost:4000';
+  return detectDefaultApiBase();
 })();
 
 /**
@@ -41,7 +60,7 @@ export function setApiBase(url) {
  * @returns {string} The API base URL
  */
 export function getApiBase() {
-  return apiBase || 'http://localhost:4000';
+  return apiBase || detectDefaultApiBase();
 }
 
 /**

@@ -104,7 +104,7 @@ if (result && result.error) {
 On first load, the module auto-detects the API base:
 
 ```javascript
-// Vercel deployment: https://chamberai-api.vercel.app
+// Vercel deployment: https://chamberai-api-ecfgvedexq-uc.a.run.app
 // Localhost: http://localhost:4000
 ```
 

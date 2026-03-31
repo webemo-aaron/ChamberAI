@@ -18,6 +18,23 @@ fi
 # shellcheck disable=SC1090
 source "${ENV_FILE}"
 
+require_real_value() {
+  local name="$1"
+  local value="$2"
+
+  if [[ "${value}" =~ ^[A-Z0-9_]+=$ ]]; then
+    echo "Invalid ${name} in ${ENV_FILE}: found an env assignment fragment instead of a real value." >&2
+    exit 1
+  fi
+
+  case "${value}" in
+    ""|your-gcp-project-id|your-audio-bucket|https://your-app.vercel.app|replace-with-resend-key|replace-with-gemini-key)
+      echo "Invalid ${name} in ${ENV_FILE}: replace the placeholder value before deploying." >&2
+      exit 1
+      ;;
+  esac
+}
+
 : "${PROJECT_ID:?PROJECT_ID is required}"
 : "${REGION:?REGION is required}"
 : "${AR_REPO:?AR_REPO is required}"
@@ -26,6 +43,10 @@ source "${ENV_FILE}"
 # If unknown yet, set "*" temporarily and tighten later.
 VERCEL_FRONTEND_URL="${VERCEL_FRONTEND_URL:-*}"
 : "${GCS_BUCKET_NAME:?GCS_BUCKET_NAME is required}"
+
+require_real_value "PROJECT_ID" "${PROJECT_ID}"
+require_real_value "GCS_BUCKET_NAME" "${GCS_BUCKET_NAME}"
+require_real_value "VERCEL_FRONTEND_URL" "${VERCEL_FRONTEND_URL}"
 
 API_MIN_INSTANCES="${API_MIN_INSTANCES:-0}"
 API_MAX_INSTANCES="${API_MAX_INSTANCES:-2}"
@@ -41,6 +62,10 @@ AUTH_BOOTSTRAP_ADMINS="${AUTH_BOOTSTRAP_ADMINS:-}"
 INVITE_ALLOWED_SENDERS="${INVITE_ALLOWED_SENDERS:-}"
 RESEND_FROM_EMAIL="${RESEND_FROM_EMAIL:-}"
 RESEND_API_KEY="${RESEND_API_KEY:-}"
+AI_GENERATION_ENABLED="${AI_GENERATION_ENABLED:-false}"
+AI_TEXT_MODEL="${AI_TEXT_MODEL:-gemini-2.5-flash}"
+GEMINI_API_KEY="${GEMINI_API_KEY:-}"
+GOOGLE_GENERATIVE_AI_API_KEY="${GOOGLE_GENERATIVE_AI_API_KEY:-}"
 
 echo "== Configure gcloud project =="
 gcloud config set project "${PROJECT_ID}" >/dev/null
@@ -106,7 +131,7 @@ gcloud run deploy "${API_SERVICE}" \
   --memory "${API_MEMORY}" \
   --min-instances "${API_MIN_INSTANCES}" \
   --max-instances "${API_MAX_INSTANCES}" \
-  --set-env-vars "NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},FIREBASE_USE_EMULATOR=false,FIREBASE_AUTH_ENABLED=${FIREBASE_AUTH_ENABLED},FIREBASE_REQUIRE_MEMBERSHIP=${FIREBASE_REQUIRE_MEMBERSHIP},AUTH_BOOTSTRAP_ADMINS=${AUTH_BOOTSTRAP_ADMINS},INVITE_ALLOWED_SENDERS=${INVITE_ALLOWED_SENDERS},RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL},RESEND_API_KEY=${RESEND_API_KEY},GCS_BUCKET_NAME=${GCS_BUCKET_NAME},CORS_ORIGIN=${VERCEL_FRONTEND_URL},WORKER_ENDPOINT=${WORKER_URL}/tasks/process" >/dev/null
+  --set-env-vars "NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},FIREBASE_USE_EMULATOR=false,FIREBASE_AUTH_ENABLED=${FIREBASE_AUTH_ENABLED},FIREBASE_REQUIRE_MEMBERSHIP=${FIREBASE_REQUIRE_MEMBERSHIP},AUTH_BOOTSTRAP_ADMINS=${AUTH_BOOTSTRAP_ADMINS},INVITE_ALLOWED_SENDERS=${INVITE_ALLOWED_SENDERS},RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL},RESEND_API_KEY=${RESEND_API_KEY},GCS_BUCKET_NAME=${GCS_BUCKET_NAME},CORS_ORIGIN=${VERCEL_FRONTEND_URL},WORKER_ENDPOINT=${WORKER_URL}/tasks/process,AI_GENERATION_ENABLED=${AI_GENERATION_ENABLED},AI_TEXT_MODEL=${AI_TEXT_MODEL},GEMINI_API_KEY=${GEMINI_API_KEY},GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}" >/dev/null
 
 API_URL="$(gcloud run services describe "${API_SERVICE}" --region "${REGION}" --format='value(status.url)')"
 

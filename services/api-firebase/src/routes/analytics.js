@@ -2,6 +2,7 @@ import express from "express";
 import { initFirestore } from "../db/firestore.js";
 import { orgCollection } from "../db/orgFirestore.js";
 import { requireTier } from "../middleware/requireTier.js";
+import { annotateTrendAnomalies } from "../services/governance-insights.js";
 
 const router = express.Router();
 
@@ -139,6 +140,112 @@ router.get("/analytics/board", requireTier("council"), async (req, res, next) =>
         attendance_samples: attendanceCount,
         motions_total: motions.length
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+/**
+ * GET /analytics/governance-trends
+ * Returns governance metrics grouped by time period (month/quarter)
+ * Requires: council tier or higher
+ * @returns {governance_trends} - Historical metrics by period
+ */
+router.get("/analytics/governance-trends", requireTier("council"), async (req, res, next) => {
+  try {
+    const db = initFirestore();
+
+    // Fetch all meetings
+    const meetingsSnap = await orgCollection(db, req.orgId, "meetings").get();
+    const meetings = meetingsSnap.docs.map((doc) => doc.data());
+
+    // Fetch all related data
+    const motionsSnap = await orgCollection(db, req.orgId, "motions").get();
+    const actionItemsSnap = await orgCollection(db, req.orgId, "actionItems").get();
+    const kioskChatsSnap = await orgCollection(db, req.orgId, "kiosk_chats").get();
+
+    const motions = motionsSnap.docs.map((doc) => doc.data());
+    const actionItems = actionItemsSnap.docs.map((doc) => doc.data());
+    const kioskChats = kioskChatsSnap.docs.map((doc) => doc.data());
+
+    // Group data by month (YYYY-MM)
+    const monthlyBuckets = {};
+
+    meetings.forEach((meeting) => {
+      const dateStr = meeting.date || meeting.created_at;
+      if (dateStr) {
+        const month = String(dateStr).slice(0, 7);
+        if (!monthlyBuckets[month]) {
+          monthlyBuckets[month] = {
+            period: month,
+            meetings_held: 0,
+            motions_passed: 0,
+            motions_total: 0,
+            action_items: 0,
+            ai_interactions: 0,
+            anomaly: false
+          };
+        }
+        monthlyBuckets[month].meetings_held += 1;
+      }
+    });
+
+    motions.forEach((motion) => {
+      const meetingId = motion.meeting_id;
+      const meeting = meetings.find((m) => m.id === meetingId);
+      if (meeting) {
+        const dateStr = meeting.date || meeting.created_at;
+        const month = String(dateStr).slice(0, 7);
+        if (monthlyBuckets[month]) {
+          monthlyBuckets[month].motions_total += 1;
+          if (motion.outcome === "passed" || motion.outcome === "approved") {
+            monthlyBuckets[month].motions_passed += 1;
+          }
+        }
+      }
+    });
+
+    actionItems.forEach((action) => {
+      const meetingId = action.meeting_id;
+      const meeting = meetings.find((m) => m.id === meetingId);
+      if (meeting) {
+        const dateStr = meeting.date || meeting.created_at;
+        const month = String(dateStr).slice(0, 7);
+        if (monthlyBuckets[month]) {
+          monthlyBuckets[month].action_items += 1;
+        }
+      }
+    });
+
+    kioskChats.forEach((chat) => {
+      const dateStr = chat.timestamp;
+      if (dateStr) {
+        const month = String(dateStr).slice(0, 7);
+        if (!monthlyBuckets[month]) {
+          monthlyBuckets[month] = {
+            period: month,
+            meetings_held: 0,
+            motions_passed: 0,
+            motions_total: 0,
+            action_items: 0,
+            ai_interactions: 0,
+            anomaly: false
+          };
+        }
+        monthlyBuckets[month].ai_interactions += 1;
+      }
+    });
+
+    const trends = annotateTrendAnomalies(
+      Object.values(monthlyBuckets).sort((a, b) => a.period.localeCompare(b.period)).slice(-12)
+    );
+
+    res.json({
+      period_type: "monthly",
+      data: trends,
+      total_periods: trends.length
     });
   } catch (error) {
     next(error);

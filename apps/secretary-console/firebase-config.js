@@ -1,14 +1,16 @@
 // Runtime Firebase config for sign-in via emulator or production Firebase.
-// Safe defaults for emulator deployment. Override in firebase-config.local.js for production Firebase.
+// Local development keeps emulator auth; hosted environments use the real web app.
+const isLocalDevHost =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
+
 window.CHAMBERAI_FIREBASE_CONFIG = {
-  // Emulator-safe defaults (actual values don't matter for emulator auth)
-  apiKey: "AIzaSyDummyKeyForEmulator",
+  apiKey: "AIzaSyAuK2PUSKp4-mewEMHsiF9YRuFQuDNsC4M",
   authDomain: "cam-aim-dev.firebaseapp.com",
   projectId: "cam-aim-dev",
-  appId: "1:123456789:web:abcdef1234567890",
-
-  // Enable Firebase Emulator Suite in browser
-  // Emulator host must match FIREBASE_AUTH_EMULATOR_HOST from server
-  useEmulator: true,
-  emulatorHost: "localhost:9099"  // Override via firebase-config.local.js for production
+  storageBucket: "cam-aim-dev.firebasestorage.app",
+  messagingSenderId: "63262052942",
+  appId: "1:63262052942:web:0ab2cf03f065df5e16e91f",
+  useEmulator: isLocalDevHost,
+  emulatorHost: "localhost:9099"
 };

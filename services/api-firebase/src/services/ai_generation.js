@@ -1,13 +1,17 @@
 import { generateText } from "ai";
-
-const DEFAULT_GATEWAY_MODEL = "anthropic/claude-sonnet-4.6";
+import {
+  DEFAULT_TEXT_GATEWAY_MODEL,
+  resolveTextGenerationModel,
+  resolveTextGenerationModelName
+} from "./ai-models.js";
 
 export async function maybeEnhancePublicSummary(seed, context = {}) {
   if (!isAiGenerationEnabled()) {
     return { output: seed, meta: disabledMeta() };
   }
 
-  const model = process.env.AI_TEXT_MODEL || DEFAULT_GATEWAY_MODEL;
+  const model = resolveTextGenerationModel();
+  const modelName = resolveTextGenerationModelName();
   const startedAt = Date.now();
   try {
     const prompt = [
@@ -52,7 +56,7 @@ export async function maybeEnhancePublicSummary(seed, context = {}) {
       meta: {
         ai_used: true,
         provider: "gateway",
-        model,
+        model: modelName,
         latency_ms: Date.now() - startedAt,
         error: null
       }
@@ -63,7 +67,7 @@ export async function maybeEnhancePublicSummary(seed, context = {}) {
       meta: {
         ai_used: false,
         provider: "gateway",
-        model,
+        model: modelName,
         latency_ms: Date.now() - startedAt,
         error: error instanceof Error ? error.message : "unknown_error"
       }
@@ -76,7 +80,8 @@ export async function maybeEnhanceGeoBrief(seed, context = {}) {
     return { output: seed, meta: disabledMeta() };
   }
 
-  const model = process.env.AI_TEXT_MODEL || DEFAULT_GATEWAY_MODEL;
+  const model = resolveTextGenerationModel();
+  const modelName = resolveTextGenerationModelName();
   const startedAt = Date.now();
   try {
     const prompt = [
@@ -114,7 +119,7 @@ export async function maybeEnhanceGeoBrief(seed, context = {}) {
       meta: {
         ai_used: true,
         provider: "gateway",
-        model,
+        model: modelName,
         latency_ms: Date.now() - startedAt,
         error: null
       }
@@ -125,7 +130,7 @@ export async function maybeEnhanceGeoBrief(seed, context = {}) {
       meta: {
         ai_used: false,
         provider: "gateway",
-        model,
+        model: modelName,
         latency_ms: Date.now() - startedAt,
         error: error instanceof Error ? error.message : "unknown_error"
       }
@@ -141,7 +146,7 @@ function disabledMeta() {
   return {
     ai_used: false,
     provider: "gateway",
-    model: process.env.AI_TEXT_MODEL || DEFAULT_GATEWAY_MODEL,
+    model: resolveTextGenerationModelName() || DEFAULT_TEXT_GATEWAY_MODEL,
     latency_ms: 0,
     error: "ai_generation_disabled"
   };
