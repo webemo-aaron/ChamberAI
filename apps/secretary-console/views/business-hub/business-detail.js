@@ -3,7 +3,7 @@
  *
  * Renders the business detail view with:
  * - Business name, rating, contact info (header)
- * - Tab selector (Profile, Geographic, Reviews, Quotes, AI Search)
+ * - Tab selector (Profile, Market Reach, Reviews, Quotes, Business Mentions)
  * - Tab panel container for active tab content
  * - Lazy-loads tab modules on first activation
  * - Handles tab switching logic
@@ -20,10 +20,10 @@ import {
 const TAB_KEYS = ["profile", "geographic", "reviews", "quotes", "ai-search"];
 const TAB_LABELS = {
   profile: "Profile",
-  geographic: "Geographic",
+  geographic: "Market Reach",
   reviews: "Reviews",
   quotes: "Quotes",
-  "ai-search": "AI Search"
+  "ai-search": "Business Mentions"
 };
 
 /**
@@ -57,7 +57,7 @@ export function createBusinessDetail(business) {
           <span class="business-detail-eyebrow">Business Workspace</span>
           <h2 class="business-name">${business.name}</h2>
           <p class="business-header-lede">
-            ${business.description || "Member profile, service context, and chamber response workflow."}
+            ${business.description || "Member visibility profile, relationship context, and chamber communication workflow."}
           </p>
           <div class="business-header-meta">
             ${

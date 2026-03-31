@@ -169,7 +169,7 @@ export function initBusinessList(container, options = {}) {
           <div class="business-list-toolbar">
             <div>
               <h2 class="business-list-title">Business Hub</h2>
-              <p class="business-list-subtitle">Directory, service context, and member support workflows.</p>
+              <p class="business-list-subtitle">Visibility, relationships, and communication workflows for local businesses.</p>
             </div>
             <button type="button" id="bizRefreshBtn" class="btn ghost business-refresh-btn">
               Refresh

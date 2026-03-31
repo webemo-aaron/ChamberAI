@@ -85,13 +85,13 @@ test("dashboard model exposes route metadata for primary drill-down surfaces", (
 
   assert.deepEqual(
     model.stats.map((stat) => stat.route),
-    ["/meetings", "/business-hub", "/meetings", "/analytics"]
+    ["/meetings", "/business-hub", "/business-hub", "/analytics"]
   );
   assert.deepEqual(
     model.workspaceLanes.map((lane) => ({ id: lane.id, route: lane.route, actionLabel: lane.actionLabel })),
     [
-      { id: "intelligence", route: "/meetings", actionLabel: "Open Intelligence" },
-      { id: "operations", route: "/analytics", actionLabel: "Open Operations" },
+      { id: "intelligence", route: "/dashboard", actionLabel: "Open Overview" },
+      { id: "operations", route: "/meetings", actionLabel: "Open Operations" },
       { id: "admin", route: "/admin/stripe", actionLabel: "Open Admin" }
     ]
   );
@@ -114,10 +114,10 @@ test("dashboard stats adapt helper copy to the selected showcase city", () => {
   assert.deepEqual(
     model.stats.map((stat) => stat.helper),
     [
-      "Scarborough governance in motion",
-      "Scarborough businesses in view",
-      "Scarborough follow-through pending",
-      "Scarborough operational assists"
+      "Scarborough operations in motion",
+      "Scarborough businesses in spotlight",
+      "Scarborough relationship follow-up pending",
+      "Scarborough communication assists"
     ]
   );
 });

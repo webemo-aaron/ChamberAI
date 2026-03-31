@@ -94,29 +94,29 @@ function renderLoginPage(ssoStatus = null) {
   contextPanel.innerHTML = `
     <div class="login-context-shell">
       <span class="login-context-eyebrow">ChamberAI Workspace</span>
-      <h1 class="login-context-title">Run chamber operations from one governed workspace.</h1>
+      <h1 class="login-context-title">Help local businesses get seen, connected, and supported.</h1>
       <p class="login-context-copy">
-        Meetings, member intelligence, geo visibility, kiosk assistance, and AI-guided follow-through
-        move through the same control surface.
+        Run business visibility, relationship workflows, customer communication, and governance
+        from one AI-powered chamber platform.
       </p>
       <div class="login-capabilities">
-        <span>Board operations</span>
-        <span>Business hub visibility</span>
-        <span>Geo intelligence</span>
-        <span>Governed AI workflows</span>
+        <span>Business visibility</span>
+        <span>Relationship activation</span>
+        <span>Member communication</span>
+        <span>Trusted governance</span>
       </div>
       <div class="login-outcomes">
         <article class="login-outcome-card">
-          <strong>Board and approvals</strong>
-          <p>Prepare agendas, capture minutes, track actions, and move approvals without losing auditability.</p>
+          <strong>Advertise member businesses</strong>
+          <p>Keep profiles, quotes, and reviews current so local businesses are easier to discover and trust.</p>
         </article>
         <article class="login-outcome-card">
-          <strong>Member and showcase operations</strong>
-          <p>Connect business profiles, quotes, reviews, and territory context to what chamber staff are acting on today.</p>
+          <strong>Build stronger relationships</strong>
+          <p>Coordinate follow-up, referrals, and outreach with clear ownership across chamber teams.</p>
         </article>
         <article class="login-outcome-card">
-          <strong>AI with governance guardrails</strong>
-          <p>Use summaries, narratives, kiosk support, and analytics inside a workspace built for accountable teams.</p>
+          <strong>Communicate with confidence</strong>
+          <p>Use AI-assisted summaries and responses while keeping approvals, records, and audit controls intact.</p>
         </article>
       </div>
     </div>
@@ -149,7 +149,7 @@ function renderLoginPage(ssoStatus = null) {
   const subtitle = document.createElement("p");
   subtitle.className = "login-subtitle";
   subtitle.textContent =
-    "Sign in to the control center for chamber teams, board workflows, and governed AI operations.";
+    "Sign in to run business visibility, relationship outreach, customer communication, and chamber governance in one place.";
 
   const authNote = document.createElement("p");
   authNote.className = "login-auth-note";

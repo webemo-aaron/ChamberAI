@@ -15,7 +15,7 @@ function read(relativePath) {
   );
 }
 
-test("semantic navigation groups Intelligence, Operations, Admin, and Account", () => {
+test("semantic navigation groups Overview, Operations & Growth, Admin, and Account", () => {
   const sections = getNavigationSections({ role: "admin", tier: "Council" });
 
   assert.deepEqual(
@@ -25,12 +25,12 @@ test("semantic navigation groups Intelligence, Operations, Admin, and Account", 
 
   assert.deepEqual(
     sections[0].items.map((item) => item.id),
-    ["dashboard", "meetings", "business-hub", "geo-intelligence", "kiosk"]
+    ["dashboard", "business-hub", "geo-intelligence", "kiosk"]
   );
 
   assert.deepEqual(
     sections[1].items.map((item) => item.id),
-    ["settings", "analytics", "billing"]
+    ["meetings", "settings", "analytics", "billing"]
   );
 
   assert.deepEqual(
@@ -53,7 +53,7 @@ test("semantic navigation groups Intelligence, Operations, Admin, and Account", 
 
   assert.equal(
     sections[0].description,
-    "Board signals, member context, and chamber visibility."
+    "Business visibility, relationship health, and local market signals."
   );
   assert.equal(
     sections[0].items.find((item) => item.id === "kiosk")?.badge,
@@ -81,7 +81,7 @@ test("mobile navigation is limited to primary destinations", () => {
 
   assert.deepEqual(
     items.map((item) => item.id),
-    ["dashboard", "meetings", "business-hub", "analytics", "settings"]
+    ["dashboard", "business-hub", "meetings", "analytics", "settings"]
   );
 });
 

@@ -15,31 +15,22 @@ const tierHierarchy = {
 const navigationSections = [
   {
     id: "intelligence",
-    label: "Intelligence",
-    description: "Board signals, member context, and chamber visibility.",
+    label: "Overview",
+    description: "Business visibility, relationship health, and local market signals.",
     items: [
       {
         id: "dashboard",
         icon: "◫",
-        label: "Dashboard",
+        label: "Overview",
         route: "/dashboard",
         minRole: "guest",
         testId: "sidebar-link-dashboard",
         mobile: true
       },
       {
-        id: "meetings",
-        icon: "📋",
-        label: "Meetings",
-        route: "/meetings",
-        minRole: "guest",
-        testId: "sidebar-link-meetings",
-        mobile: true
-      },
-      {
         id: "business-hub",
         icon: "🏢",
-        label: "Business Hub",
+        label: "Businesses",
         route: "/business-hub",
         minRole: "guest",
         testId: "sidebar-link-business-hub",
@@ -48,7 +39,7 @@ const navigationSections = [
       {
         id: "geo-intelligence",
         icon: "🗺",
-        label: "Geo Intelligence",
+        label: "Market Coverage",
         route: "/geo-intelligence",
         minRole: "guest",
         testId: "sidebar-link-geo-intelligence"
@@ -56,7 +47,7 @@ const navigationSections = [
       {
         id: "kiosk",
         icon: "🤖",
-        label: "AI Kiosk",
+        label: "AI Engagement",
         route: "/kiosk",
         minRole: "secretary",
         minTier: "Council",
@@ -67,13 +58,22 @@ const navigationSections = [
   },
   {
     id: "operations",
-    label: "Operations",
-    description: "Execution surfaces, reporting, and revenue controls.",
+    label: "Operations & Growth",
+    description: "Campaign execution, communications, governance, and revenue controls.",
     items: [
+      {
+        id: "meetings",
+        icon: "📋",
+        label: "Operations",
+        route: "/meetings",
+        minRole: "guest",
+        testId: "sidebar-link-meetings",
+        mobile: true
+      },
       {
         id: "settings",
         icon: "⚙",
-        label: "Settings",
+        label: "Communications",
         route: "/settings",
         minRole: "guest",
         testId: "sidebar-link-settings",
@@ -82,7 +82,7 @@ const navigationSections = [
       {
         id: "analytics",
         icon: "📈",
-        label: "Analytics",
+        label: "Growth Analytics",
         route: "/analytics",
         minRole: "secretary",
         minTier: "Council",
@@ -190,7 +190,7 @@ export function getNavigationSections({ role = "guest", tier = "Free" } = {}) {
 }
 
 export function getMobileNavigationItems(context = {}) {
-  const order = ["dashboard", "meetings", "business-hub", "analytics", "settings"];
+  const order = ["dashboard", "business-hub", "meetings", "analytics", "settings"];
 
   return getNavigationSections(context)
     .flatMap((section) => section.items)

@@ -157,7 +157,7 @@ function renderDashboard(container, model, render) {
     <div class="dashboard-page" role="main">
       <section class="dashboard-hero panel">
         <div class="dashboard-hero-copy">
-          <span class="dashboard-eyebrow">ChamberAI Workspace</span>
+          <span class="dashboard-eyebrow">ChamberAI Platform</span>
           <h1>${model.welcome.title}</h1>
           <p>${model.welcome.subtitle}</p>
           <div class="dashboard-city-control">
@@ -189,8 +189,8 @@ function renderDashboard(container, model, render) {
       <section class="dashboard-lanes panel">
         <div class="dashboard-section-head dashboard-section-head--actionable">
           <div>
-            <h2>Workspace Lanes</h2>
-            <p>The same semantic structure used in the sidebar, summarized for fast orientation.</p>
+            <h2>Mission Focus Areas</h2>
+            <p>Where to prioritize business visibility, relationship activation, and chamber operations this week.</p>
           </div>
           <button type="button" class="dashboard-section-link" data-route="/dashboard">Refresh Dashboard</button>
         </div>
@@ -208,8 +208,8 @@ function renderDashboard(container, model, render) {
           <section class="panel dashboard-section">
             <div class="dashboard-section-head dashboard-section-head--actionable">
               <div>
-                <h2>Quick Actions</h2>
-                <p>Common operational moves for this role.</p>
+                <h2>Growth Actions</h2>
+                <p>High-impact actions to advertise members, build relationships, and communicate faster.</p>
               </div>
               <button type="button" class="dashboard-section-link" data-route="${model.navigationLinks.quickActions.route}">${model.navigationLinks.quickActions.label}</button>
             </div>
@@ -221,8 +221,8 @@ function renderDashboard(container, model, render) {
           <section class="panel dashboard-section">
             <div class="dashboard-section-head dashboard-section-head--actionable">
               <div>
-                <h2>Intelligence Surfaces</h2>
-                <p>Navigate directly into the chamber work that matters this week.</p>
+                <h2>Growth and Engagement Surfaces</h2>
+                <p>Jump directly into visibility, outreach, and governance workflows.</p>
               </div>
               <button type="button" class="dashboard-section-link" data-route="${model.navigationLinks.feature.route}">${model.navigationLinks.feature.label}</button>
             </div>
@@ -234,8 +234,8 @@ function renderDashboard(container, model, render) {
           <section class="panel dashboard-section">
             <div class="dashboard-section-head dashboard-section-head--actionable">
               <div>
-                <h2>Recent Activity</h2>
-                <p>Last operational events across meetings and member support.</p>
+                <h2>Recent Engagement Activity</h2>
+                <p>Latest events across operations, member support, and local business workflows.</p>
               </div>
               <button type="button" class="dashboard-section-link" data-route="${model.navigationLinks.activity.route}">${model.navigationLinks.activity.label}</button>
             </div>
@@ -249,8 +249,8 @@ function renderDashboard(container, model, render) {
           <section class="panel dashboard-section">
             <div class="dashboard-section-head dashboard-section-head--actionable">
               <div>
-                <h2>Calendar</h2>
-                <p>Upcoming checkpoints and review windows.</p>
+                <h2>Communication Calendar</h2>
+                <p>Upcoming checkpoints for outreach, approvals, and member follow-through.</p>
               </div>
               <button type="button" class="dashboard-section-link" data-route="${model.navigationLinks.calendar.route}">${model.navigationLinks.calendar.label}</button>
             </div>
@@ -261,8 +261,8 @@ function renderDashboard(container, model, render) {
 
           <section class="panel dashboard-section">
             <div class="dashboard-section-head">
-              <h2>Analytics Summary</h2>
-              <p>Operational health at a glance.</p>
+              <h2>Impact Snapshot</h2>
+              <p>Growth and operations health at a glance.</p>
             </div>
             <div class="dashboard-analytics-summary">
               <div class="dashboard-analytics-metric">

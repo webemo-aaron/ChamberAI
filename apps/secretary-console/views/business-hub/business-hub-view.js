@@ -114,7 +114,7 @@ export async function businessHubHandler(params, context) {
     renderDetailEmptyState(
       detailPane,
       "Select a business",
-      `Choose a business from ${getSelectedShowcaseCity().label} to view profile, reviews, quotes, and AI search.`
+      `Choose a business from ${getSelectedShowcaseCity().label} to manage visibility, reviews, quotes, relationships, and communications.`
     );
 
     // Wire showcase city changed listener
@@ -218,7 +218,7 @@ function renderDetailLoadingState(container) {
     <div class="business-detail-empty business-detail-state">
       <div>
         <strong>Loading business details...</strong>
-        <p>Pulling the latest directory record and chamber context.</p>
+        <p>Pulling the latest visibility, relationship, and chamber-support context.</p>
       </div>
     </div>
   `;

@@ -2,11 +2,11 @@ import { getWorkspaceLanes } from "../../components/sidebar-config.js";
 
 const laneRouteMap = {
   intelligence: {
-    route: "/meetings",
-    actionLabel: "Open Intelligence"
+    route: "/dashboard",
+    actionLabel: "Open Overview"
   },
   operations: {
-    route: "/analytics",
+    route: "/meetings",
     actionLabel: "Open Operations"
   },
   admin: {
@@ -245,6 +245,15 @@ function createCalendar(meetings) {
   return fallback;
 }
 
+function buildMissionStatHelpers(cityLabel = "Network") {
+  return {
+    meetings: `${cityLabel} operations in motion`,
+    members: `${cityLabel} businesses in spotlight`,
+    actions: `${cityLabel} relationship follow-up pending`,
+    ai: `${cityLabel} communication assists`
+  };
+}
+
 export function buildDashboardModel({
   role = "guest",
   tier = "Free",
@@ -266,24 +275,29 @@ export function buildDashboardModel({
   const personName = displayName || "there";
   const workspaceLanes = getWorkspaceLanes({ role, tier });
   const cityPlaybook = cityPlaybookMap[showcaseCityId] || cityPlaybookMap.all;
+  const cityLabel =
+    showcaseCityId === "all"
+      ? "Network"
+      : String(showcaseCity || "Chamber").split(",")[0].trim() || "Chamber";
+  const missionStatHelpers = buildMissionStatHelpers(cityLabel);
 
   const quickActions = [
     {
       id: "create-meeting",
-      label: "Create Meeting",
-      helper: "Draft agenda, record, and publish",
+      label: "Run Operations Session",
+      helper: "Capture decisions, assign actions, and publish updates",
       route: "/meetings"
     },
     {
       id: "open-directory",
-      label: "Open Directory",
-      helper: "Review members and local businesses",
+      label: "Open Businesses",
+      helper: "Promote members, track reviews, and manage follow-up",
       route: "/business-hub"
     },
     {
       id: "go-settings",
-      label: "Tune Settings",
-      helper: "Flags, retention, and integrations",
+      label: "Plan Communications",
+      helper: "Channels, message templates, and notification preferences",
       route: "/settings"
     }
   ];
@@ -291,8 +305,8 @@ export function buildDashboardModel({
   if (showAnalytics) {
     quickActions.push({
       id: "review-analytics",
-      label: "Review Analytics",
-      helper: "Board health and completion trends",
+      label: "Review Growth Analytics",
+      helper: "Visibility, engagement, and member-impact trends",
       route: "/analytics"
     });
   }
@@ -300,39 +314,39 @@ export function buildDashboardModel({
   const featureCards = [
     {
       id: "meetings",
-      eyebrow: "Core Workflow",
-      title: "Meetings Intelligence",
-      description: "Minutes, motions, approvals, and audit history in one operating surface.",
+      eyebrow: "Operations",
+      title: "Governance and Communications",
+      description: "Run meetings, approve updates, and keep public communication audit-ready.",
       route: "/meetings"
     },
     {
       id: "business-hub",
-      eyebrow: "Member Service",
-      title: "Business Hub",
-      description: "Directory records, reviews, quotes, and chamber follow-up.",
+      eyebrow: "Business Growth",
+      title: "Business Visibility Hub",
+      description: "Grow member exposure through profiles, reviews, quotes, and relationship actions.",
       route: "/business-hub"
     },
     {
       id: "geo-intelligence",
-      eyebrow: "Coverage",
-      title: "Geo Intelligence",
-      description: "See where chamber activity is strong, thin, or ready for intervention.",
+      eyebrow: "Market Focus",
+      title: "Coverage Intelligence",
+      description: "Find where outreach, partnerships, and local customer communication need attention.",
       route: "/geo-intelligence"
     },
     showKiosk
       ? {
           id: "kiosk",
-          eyebrow: "Premium AI",
-          title: "AI Kiosk",
-          description: "Private and public chamber copilots with governed context windows.",
+          eyebrow: "Engagement AI",
+          title: "Concierge Kiosk",
+          description: "Support members and visitors with AI-guided answers and governed context.",
           route: "/kiosk",
           accent: "ai"
         }
       : {
           id: "analytics",
-          eyebrow: "Operations",
-          title: "Analytics",
-          description: "Track completion, engagement, and board effectiveness over time.",
+          eyebrow: "Growth Signals",
+          title: "Growth Analytics",
+          description: "Track visibility, engagement, and chamber impact over time.",
           route: "/analytics"
         }
   ];
@@ -350,30 +364,30 @@ export function buildDashboardModel({
     stats: [
       {
         id: "meetings",
-        label: "Meetings",
+        label: "Operations",
         value: String(meetingCount),
-        helper: cityPlaybook.statHelpers.meetings,
+        helper: missionStatHelpers.meetings,
         route: "/meetings"
       },
       {
         id: "members",
-        label: "Directory",
+        label: "Businesses",
         value: String(businessCount),
-        helper: cityPlaybook.statHelpers.members,
+        helper: missionStatHelpers.members,
         route: "/business-hub"
       },
       {
         id: "actions",
-        label: "Open Actions",
+        label: "Relationship Actions",
         value: String(actionItemsOpen),
-        helper: cityPlaybook.statHelpers.actions,
-        route: "/meetings"
+        helper: missionStatHelpers.actions,
+        route: "/business-hub"
       },
       {
         id: "ai",
-        label: "AI Interactions",
+        label: "Communication Assists",
         value: String(aiInteractions),
-        helper: cityPlaybook.statHelpers.ai,
+        helper: missionStatHelpers.ai,
         route: "/analytics"
       }
     ],
@@ -394,9 +408,9 @@ export function buildDashboardModel({
     navigationLinks: cityPlaybook.navigationLinks,
     emptyState: {
       isVisible: meetingCount === 0 && businessCount === 0,
-      title: "Start by creating your first operating surface",
+      title: "Start by activating your first business-growth workflow",
       description:
-        "Seed a meeting, connect the business directory, or enable analytics to turn the dashboard into a live chamber cockpit."
+        "Run an operations session, connect member businesses, and begin chamber outreach to turn this dashboard into a live local-commerce command center."
     }
   };
 }

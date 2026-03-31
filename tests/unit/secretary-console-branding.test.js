@@ -16,16 +16,16 @@ test("topbar and login copy use ChamberAI branding language", () => {
 
   assert.match(indexHtml, /<title>ChamberAI - Operations Workspace<\/title>/);
   assert.match(indexHtml, />ChamberAI<\/div>/);
-  assert.match(indexHtml, />Operational intelligence for chamber teams<\/div>/);
-  assert.match(indexHtml, />Connection Control<\/h3>/);
-  assert.match(indexHtml, /Point the console at your active ChamberAI API environment\./);
+  assert.match(indexHtml, />AI platform for local business visibility and engagement<\/div>/);
+  assert.match(indexHtml, />Runtime Connection<\/h3>/);
+  assert.match(indexHtml, /Point the workspace to your active ChamberAI API environment\./);
   assert.match(indexHtml, /fonts\.googleapis\.com/);
   assert.match(indexHtml, /Fraunces/);
   assert.match(indexHtml, /Manrope/);
   assert.match(loginJs, /title\.textContent = "Enter ChamberAI"/);
   assert.match(
     loginJs,
-    /subtitle\.textContent =\s*"Sign in to the control center for chamber teams, board workflows, and governed AI operations\.";/
+    /subtitle\.textContent =\s*"Sign in to run business visibility, relationship outreach, customer communication, and chamber governance in one place\.";/
   );
   assert.match(
     loginJs,
@@ -40,8 +40,8 @@ test("topbar and login copy use ChamberAI branding language", () => {
 });
 
 test("navigation titles stay user-facing and route-specific", () => {
-  assert.equal(getNavigationTitle("/dashboard"), "Dashboard");
-  assert.equal(getNavigationTitle("/analytics"), "Analytics");
+  assert.equal(getNavigationTitle("/dashboard"), "Overview");
+  assert.equal(getNavigationTitle("/analytics"), "Growth Analytics");
   assert.equal(getNavigationTitle("/business-hub/123"), "Business Hub");
   assert.equal(getNavigationTitle("/admin/stripe"), "Stripe Admin");
   assert.equal(getNavigationTitle("/admin/products"), "Products Admin");
