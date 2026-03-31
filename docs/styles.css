@@ -285,9 +285,34 @@ h1 {
 .site-footer {
   display: flex;
   justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
   padding: 24px 60px 40px;
   font-size: 14px;
   color: var(--muted);
+}
+
+.footer-col {
+  display: grid;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.footer-col strong {
+  color: var(--ink);
+}
+
+.footer-col p {
+  margin: 0;
+}
+
+.footer-col a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.footer-col a:hover {
+  color: var(--ink);
 }
 
 @keyframes fade-in {

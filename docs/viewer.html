@@ -67,6 +67,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   </head>
   <body>
     <div class="bg-grid"></div>
@@ -74,6 +75,9 @@
       <div class="brand">ChamberAI Docs</div>
       <nav class="nav">
         <a href="./index.html">Home</a>
+        <a href="./index.html#documentation">Documentation</a>
+        <a href="./index.html#diagrams">Diagrams</a>
+        <a href="./pilot-intake.html">Pilot</a>
       </nav>
     </header>
 
@@ -96,6 +100,23 @@
       </section>
     </main>
 
+    <footer class="site-footer">
+      <div class="footer-col">
+        <strong>ChamberAI</strong>
+        <p>Product documentation and implementation guidance.</p>
+      </div>
+      <div class="footer-col">
+        <strong>Quick Links</strong>
+        <a href="./viewer.html?doc=USER_GUIDE.md">User Guide</a>
+        <a href="./viewer.html?doc=INDEX.md">Docs Index</a>
+        <a href="./viewer.html?doc=plans/2026-03-31-ai-chamber-product-implementation-map.md">Mermaid Maps</a>
+      </div>
+      <div class="footer-col">
+        <strong>Contact</strong>
+        <a href="mailto:aaron@mahoosuc.solutions">aaron@mahoosuc.solutions</a>
+      </div>
+    </footer>
+
     <script>
       const params = new URLSearchParams(window.location.search);
       const docSelect = document.getElementById("docSelect");
@@ -103,6 +124,40 @@
       const loadDocBtn = document.getElementById("loadDocBtn");
       const docTitle = document.getElementById("docTitle");
       const docContent = document.getElementById("docContent");
+      const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      let activeDocPath = "INDEX.md";
+
+      function configureMermaid() {
+        if (!window.mermaid) return;
+        window.mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "loose",
+          theme: darkModeQuery.matches ? "dark" : "default"
+        });
+      }
+
+      function convertMermaidCodeBlocks(root) {
+        const blocks = root.querySelectorAll("pre code.language-mermaid, pre code.lang-mermaid");
+        blocks.forEach((code) => {
+          const diagram = document.createElement("div");
+          diagram.className = "mermaid";
+          diagram.textContent = code.textContent || "";
+          code.parentElement.replaceWith(diagram);
+        });
+      }
+
+      async function renderMermaid(root) {
+        if (!window.mermaid) return;
+        configureMermaid();
+        convertMermaidCodeBlocks(root);
+        const diagrams = root.querySelectorAll(".mermaid");
+        if (!diagrams.length) return;
+        try {
+          await window.mermaid.run({ nodes: diagrams });
+        } catch (error) {
+          console.error("Mermaid render error:", error);
+        }
+      }
 
       function sanitizeDocPath(value) {
         const path = String(value || "").trim();
@@ -122,6 +177,7 @@
           docContent.innerHTML = '<p class="doc-error">Invalid markdown file path.</p>';
           return;
         }
+        activeDocPath = safePath;
 
         const response = await fetch(`./${safePath}`, { cache: "no-cache" });
         if (!response.ok) {
@@ -132,6 +188,7 @@
         const markdown = await response.text();
         docTitle.textContent = humanTitle(safePath);
         docContent.innerHTML = marked.parse(markdown);
+        await renderMermaid(docContent);
         history.replaceState({}, "", `?doc=${encodeURIComponent(safePath)}`);
       }
 
@@ -156,6 +213,7 @@
         docInput.value = initialDoc;
       }
       loadDoc(initialDoc);
+      darkModeQuery.addEventListener("change", () => loadDoc(activeDocPath));
     </script>
   </body>
 </html>
