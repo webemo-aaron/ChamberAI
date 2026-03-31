@@ -53,7 +53,7 @@ test("admin-workspace.js imports escapeHtml from common/format.js and has no loc
     "apps/secretary-console/views/admin/admin-workspace.js"
   );
 
-  assert.match(adminWorkspace, /import \{ escapeHtml \} from "\.\.\/\.\.\/common\/format\.js"/);
+  assert.match(adminWorkspace, /import \{ escapeHtml \} from "\.\.\/common\/format\.js"/);
   assert.doesNotMatch(adminWorkspace, /function escapeHtml\(/);
 });
 

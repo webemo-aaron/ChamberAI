@@ -8,9 +8,9 @@
  * Exported functions: stripeAdminHandler, productsAdminHandler
  */
 
-import { getCurrentRole } from "../../../core/auth.js";
-import { showToast } from "../../../core/toast.js";
-import { navigate } from "../../../core/router.js";
+import { getCurrentRole } from "../../core/auth.js";
+import { showToast } from "../../core/toast.js";
+import { navigate } from "../../core/router.js";
 import { renderAdminWorkspace } from "./admin-workspace.js";
 
 /**

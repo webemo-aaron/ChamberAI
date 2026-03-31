@@ -1,4 +1,4 @@
-import { escapeHtml } from "../../common/format.js";
+import { escapeHtml } from "../common/format.js";
 
 export function renderAdminWorkspace(container, config) {
   container.innerHTML = `

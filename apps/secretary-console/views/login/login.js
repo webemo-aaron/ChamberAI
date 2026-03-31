@@ -14,7 +14,7 @@
 import { signInWithGoogle, signInWithSAML, signInWithOIDC, setRole } from "../../core/auth.js";
 import { showToast } from "../../core/toast.js";
 import { navigate } from "../../core/router.js";
-import { apiCall } from "../../core/api.js";
+import { request } from "../../core/api.js";
 
 /**
  * Check if SSO is enabled for the current org
@@ -32,9 +32,7 @@ async function getSsoStatus() {
     }
 
     // Check SSO status from API
-    const response = await apiCall(`/api/sso/status`, {
-      method: "GET"
-    });
+    const response = await request("/api/sso/status", "GET");
 
     if (response?.enabled) {
       return response;
