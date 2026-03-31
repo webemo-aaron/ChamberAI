@@ -19,8 +19,9 @@ RUN firebase setup:emulators:firestore
 WORKDIR /app
 
 # Copy Firebase configuration files
-COPY firebase.json ./
+COPY firebase.emulator.json ./firebase.json
 COPY firestore.rules ./
+COPY firestore.indexes.json ./
 COPY storage.rules ./
 
 # Set environment variables for emulators
@@ -31,5 +32,5 @@ ENV FIRESTORE_EMULATOR_HOST=0.0.0.0:8080 \
 # Expose emulator ports
 EXPOSE 4000 8080 9099 9199
 
-# Start emulators
-CMD ["firebase", "emulators:start", "--only", "auth,firestore,storage", "--project", "chamberofcommerceai-local"]
+# Start emulators using the dedicated local-only config so storage does not depend on deploy targets.
+CMD ["firebase", "emulators:start", "--only", "auth,firestore,storage", "--project", "cam-aim-dev"]

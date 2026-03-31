@@ -2,6 +2,7 @@ apps/secretary-console
 data/showcase
 deploy/caddy/Caddyfile
 docker-compose.hybrid.yml
+firebase.emulator.json
 docs/HETZNER_MCP_OPERATIONS.md
 scripts/deploy_hybrid_vps.sh
 scripts/import_showcase_businesses.js

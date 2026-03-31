@@ -54,7 +54,7 @@ services:
     restart: unless-stopped
     volumes:
       - firebase-data:/root/.config/firebase
-      - ./firebase.json:/app/firebase.json:ro
+      - ./firebase.emulator.json:/app/firebase.json:ro
       - ./firestore.rules:/app/firestore.rules:ro
       - ./storage.rules:/app/storage.rules:ro
     environment:

@@ -16,6 +16,9 @@ test("Hetzner release workflow scripts and defaults are wired into the hybrid de
   const imageVerifyScript = read("scripts/verify_api_image_integrity.sh");
   const verifyShowcaseScript = read("scripts/verify_showcase_data.sh");
   const auditScript = read("scripts/audit_showcase_data.mjs");
+  const emulatorDockerfile = read("Dockerfile.emulator");
+  const hybridCompose = read("docker-compose.hybrid.yml");
+  const emulatorConfig = read("firebase.emulator.json");
   const syncScript = read("scripts/sync_hetzner_release_workspace.sh");
   const syncManifest = read("scripts/lib/hetzner_release_sync_manifest.txt");
   const remoteDeployScript = read("scripts/remote_deploy.sh");
@@ -31,6 +34,8 @@ test("Hetzner release workflow scripts and defaults are wired into the hybrid de
   assert.match(envExample, /DEPLOY_MIN_DISK_FREE_MB=/);
   assert.match(envExample, /DEPLOY_MIN_MEMORY_FREE_MB=/);
   assert.match(envExample, /DEPLOY_STABILIZATION_SECONDS=/);
+  assert.match(emulatorConfig, /"storage": \{/);
+  assert.match(emulatorConfig, /"host": "0\.0\.0\.0"/);
 
   assert.match(preflightScript, /hcloud server describe/);
   assert.match(preflightScript, /hcloud firewall describe/);
@@ -67,6 +72,9 @@ test("Hetzner release workflow scripts and defaults are wired into the hybrid de
   assert.match(deployScript, /Build remaining hybrid stack images/);
   assert.match(deployScript, /verify_api_image_integrity\.sh/);
   assert.match(deployScript, /docker compose .* up -d/);
+  assert.match(emulatorDockerfile, /COPY firebase\.emulator\.json \.\/firebase\.json/);
+  assert.match(emulatorDockerfile, /emulators:start", "--only", "auth,firestore,storage"/);
+  assert.match(hybridCompose, /\.\/firebase\.emulator\.json:\/app\/firebase\.json:ro/);
   assert.match(imageVerifyScript, /buildGeoProfile/);
   assert.match(imageVerifyScript, /buildGeoContentBrief/);
   assert.match(imageVerifyScript, /Missing default export in geo route module/);
@@ -74,6 +82,7 @@ test("Hetzner release workflow scripts and defaults are wired into the hybrid de
   assert.match(syncScript, /tar czf -/);
   assert.match(syncManifest, /services\/api-firebase\/src/);
   assert.match(syncManifest, /apps\/secretary-console/);
+  assert.match(syncManifest, /firebase\.emulator\.json/);
   assert.match(syncManifest, /scripts\/sync_hetzner_release_workspace\.sh/);
   assert.match(syncManifest, /scripts\/remote_deploy\.sh/);
   assert.match(remoteDeployScript, /\/opt\/ChamberAI/);
