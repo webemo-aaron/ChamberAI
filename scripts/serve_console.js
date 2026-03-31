@@ -36,7 +36,7 @@ const server = http.createServer((req, res) => {
     pathname = "/index.html";
   }
 
-  if (pathname === "/docs") {
+  if (pathname === "/docs" || pathname === "/docs/") {
     pathname = "/docs/index.html";
   }
 
