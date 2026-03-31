@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY scripts/serve_console.js ./scripts/serve_console.js
 COPY apps/secretary-console ./apps/secretary-console
+COPY docs ./docs
 
 ENV CONSOLE_HOST=0.0.0.0 \
     CONSOLE_PORT=5173 \

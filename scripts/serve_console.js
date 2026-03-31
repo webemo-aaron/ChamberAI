@@ -5,7 +5,9 @@ import { fileURLToPath } from "node:url";
 import net from "node:net";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(__dirname, "../apps/secretary-console");
+const appRoot = path.resolve(__dirname, "../apps/secretary-console");
+const docsRoot = path.resolve(__dirname, "../docs");
+const root = appRoot;
 const preferredPort = Number(process.env.CONSOLE_PORT ?? process.env.PORT ?? 5173);
 const host = process.env.CONSOLE_HOST ?? "127.0.0.1";
 const strictPort = process.env.CONSOLE_STRICT_PORT === "true";
@@ -16,7 +18,8 @@ const mimeTypes = {
   ".js": "text/javascript",
   ".png": "image/png",
   ".svg": "image/svg+xml",
-  ".json": "application/json"
+  ".json": "application/json",
+  ".md": "text/markdown; charset=utf-8"
 };
 
 const server = http.createServer((req, res) => {
@@ -33,9 +36,19 @@ const server = http.createServer((req, res) => {
     pathname = "/index.html";
   }
 
-  const filePath = path.join(root, pathname);
+  if (pathname === "/docs") {
+    pathname = "/docs/index.html";
+  }
 
-  if (!filePath.startsWith(root)) {
+  const isDocsPath = pathname.startsWith("/docs/");
+  const isPublicDocsShortcut =
+    pathname === "/viewer.html" || pathname === "/pilot-intake.html" || pathname === "/index-docs.html";
+  const baseRoot = isDocsPath || isPublicDocsShortcut ? docsRoot : appRoot;
+  const normalizedPath = isDocsPath ? pathname.replace(/^\/docs/, "") : pathname;
+  const requestedPath = isPublicDocsShortcut && pathname === "/index-docs.html" ? "/index.html" : normalizedPath;
+  const filePath = path.join(baseRoot, requestedPath);
+
+  if (!filePath.startsWith(baseRoot)) {
     res.writeHead(403, { "Content-Type": "text/plain" });
     res.end("Forbidden");
     return;
@@ -43,6 +56,20 @@ const server = http.createServer((req, res) => {
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
+      const hasFileExtension = path.extname(pathname).length > 0;
+      if (!isDocsPath && !isPublicDocsShortcut && !hasFileExtension) {
+        const spaFallback = path.join(appRoot, "index.html");
+        fs.readFile(spaFallback, (fallbackError, fallbackData) => {
+          if (fallbackError) {
+            res.writeHead(404, { "Content-Type": "text/plain" });
+            res.end("Not found");
+            return;
+          }
+          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+          res.end(fallbackData);
+        });
+        return;
+      }
       res.writeHead(404, { "Content-Type": "text/plain" });
       res.end("Not found");
       return;
