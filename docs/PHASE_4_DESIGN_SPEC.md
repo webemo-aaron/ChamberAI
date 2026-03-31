@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-Phase 4 introduces a dark sidebar navigation paradigm to the ChamberAI Secretary Console. This spec standardizes:
+Phase 4 introduces a dark sidebar navigation paradigm to the ChamberAI Operations Workspace. This spec standardizes:
 
 1. **Layout Architecture**: Sidebar (220px fixed, dark) + content grid reflow
 2. **Navigation Structure**: 6 main links with role/tier gating, active state indicators
@@ -938,7 +938,7 @@ Using Unicode/Emoji for simplicity (no SVG sprite sheet required):
 <div class="brand">
   <span class="brand-mark">CAM</span>
   <div>
-    <div class="brand-title">Secretary Console</div>
+    <div class="brand-title">Operations Workspace</div>
     <div class="brand-sub">Governance-first minutes workflow</div>
   </div>
 </div>
@@ -1475,7 +1475,7 @@ Rationale:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ CAM Secretary Console │ ⚙️ | Auth Status | 👤 | Logout      │
+│ CAM Operations Workspace │ ⚙️ | Auth Status | 👤 | Logout      │
 ├──────────┬──────────────────────────────────────────────────┤
 │ 📋 Meet  │  ┌────────────────────────┬──────────────────┐   │
 │ ings     │  │ 🔍 Search meetings...  │ Minutes          │   │

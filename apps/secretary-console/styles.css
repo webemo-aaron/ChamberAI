@@ -9,8 +9,8 @@
   --pill: var(--color-bg-tertiary);
   --shadow: var(--shadow-2);
   --radius: 8px;
-  --font-display: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
-  --font-ui: "Avenir Next", "Gill Sans", "Futura", sans-serif;
+  --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", serif;
+  --font-ui: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
 
   /* ChamberAI Brand Tokens */
   --sidebar-bg: #1A1F2E;
@@ -1592,6 +1592,113 @@ textarea {
   color: #5b6b82;
 }
 
+#loginPageContainer[data-login-theme="dark"] {
+  background:
+    radial-gradient(circle at top left, rgba(106, 160, 234, 0.16), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(10, 16, 29, 0.4), transparent 26%),
+    linear-gradient(135deg, #151a24 0%, #1c2431 56%, #121924 100%);
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-context-panel,
+#loginPageContainer[data-login-theme="dark"] .login-card {
+  border-color: rgba(191, 206, 228, 0.16);
+  box-shadow: 0 28px 48px rgba(5, 9, 16, 0.42);
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-context-panel {
+  background:
+    radial-gradient(circle at top right, rgba(106, 160, 234, 0.2), transparent 35%),
+    linear-gradient(155deg, rgba(22, 30, 42, 0.95), rgba(17, 25, 36, 0.9));
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-card {
+  background:
+    linear-gradient(180deg, rgba(21, 30, 42, 0.94), rgba(17, 25, 36, 0.9));
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-context-eyebrow {
+  border-color: rgba(134, 176, 236, 0.26);
+  background: rgba(106, 160, 234, 0.15);
+  color: #b6d2fa;
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-context-title,
+#loginPageContainer[data-login-theme="dark"] .login-title,
+#loginPageContainer[data-login-theme="dark"] .login-outcome-card strong {
+  color: #f1f5fb;
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-context-copy,
+#loginPageContainer[data-login-theme="dark"] .login-outcome-card p,
+#loginPageContainer[data-login-theme="dark"] .login-subtitle,
+#loginPageContainer[data-login-theme="dark"] .login-auth-note,
+#loginPageContainer[data-login-theme="dark"] .demo-note,
+#loginPageContainer[data-login-theme="dark"] .form-group label,
+#loginPageContainer[data-login-theme="dark"] .divider-text,
+#loginPageContainer[data-login-theme="dark"] .login-divider {
+  color: #a7b4c8;
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-capabilities span {
+  background: rgba(106, 160, 234, 0.18);
+  border-color: rgba(134, 176, 236, 0.26);
+  color: #c5dbfc;
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-outcome-card {
+  border-color: rgba(185, 203, 227, 0.14);
+  background: rgba(24, 34, 47, 0.86);
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-eyebrow {
+  color: #9ebce4;
+}
+
+#loginPageContainer[data-login-theme="dark"] .btn-primary {
+  background: linear-gradient(135deg, #4b88df, #2c6dc8);
+}
+
+#loginPageContainer[data-login-theme="dark"] .btn-primary:hover {
+  box-shadow: 0 14px 28px rgba(44, 109, 200, 0.34);
+}
+
+#loginPageContainer[data-login-theme="dark"] .btn-secondary {
+  border-color: rgba(134, 176, 236, 0.3);
+  background: rgba(106, 160, 234, 0.16);
+  color: #d6e6fd;
+}
+
+#loginPageContainer[data-login-theme="dark"] .btn-secondary:hover {
+  background: rgba(106, 160, 234, 0.22);
+}
+
+#loginPageContainer[data-login-theme="dark"] .login-divider::before,
+#loginPageContainer[data-login-theme="dark"] .login-divider::after {
+  background: rgba(185, 203, 227, 0.2);
+}
+
+#loginPageContainer[data-login-theme="dark"] .demo-summary {
+  background: rgba(26, 36, 50, 0.78);
+  border-color: rgba(185, 203, 227, 0.16);
+  color: #bccadf;
+}
+
+#loginPageContainer[data-login-theme="dark"] .demo-summary:hover {
+  background: rgba(35, 47, 65, 0.88);
+  border-color: rgba(134, 176, 236, 0.24);
+}
+
+#loginPageContainer[data-login-theme="dark"] .demo-access details[open] .demo-summary {
+  background: rgba(106, 160, 234, 0.2);
+  border-color: rgba(134, 176, 236, 0.32);
+}
+
+#loginPageContainer[data-login-theme="dark"] .form-input {
+  border-color: rgba(185, 203, 227, 0.2);
+  background: rgba(18, 26, 38, 0.88);
+  color: #f1f5fb;
+}
+
 .btn-primary {
   width: 100%;
   padding: 13px 16px;
@@ -1641,7 +1748,8 @@ textarea {
 }
 
 .btn-secondary:hover {
-  background: rgba(31, 111, 214, 0.12);
+  background: var(--color-primary-50);
+  color: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
@@ -2235,8 +2343,10 @@ textarea {
 }
 
 .btn-secondary:hover {
+  background: var(--color-primary-50);
+  color: var(--color-primary-dark);
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(208, 92, 58, 0.2);
+  box-shadow: var(--shadow-2);
 }
 
 /* Mobile Responsive */

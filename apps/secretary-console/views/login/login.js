@@ -16,6 +16,9 @@ import { showToast } from "../../core/toast.js";
 import { navigate } from "../../core/router.js";
 import { request } from "../../core/api.js";
 
+let loginThemeMediaQuery = null;
+let loginThemeChangeHandler = null;
+
 /**
  * Check if SSO is enabled for the current org
  * @async
@@ -484,7 +487,41 @@ export async function loginHandler(params, context) {
   loginContainer.innerHTML = "";
   const loginPage = renderLoginPage(ssoStatus);
   loginContainer.appendChild(loginPage);
+  syncLoginThemeWithOs(loginContainer);
 
   // Set up event handlers with navigate function from context
   setupEventHandlers(context.router.navigate, ssoStatus);
+
+  context?.onCleanup?.(() => {
+    teardownLoginThemeSync();
+  });
+}
+
+function syncLoginThemeWithOs(loginContainer) {
+  teardownLoginThemeSync();
+
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    loginContainer?.setAttribute("data-login-theme", "light");
+    return;
+  }
+
+  loginThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+  const applyTheme = () => {
+    const theme = loginThemeMediaQuery.matches ? "dark" : "light";
+    loginContainer?.setAttribute("data-login-theme", theme);
+  };
+
+  applyTheme();
+
+  loginThemeChangeHandler = () => applyTheme();
+  loginThemeMediaQuery.addEventListener("change", loginThemeChangeHandler);
+}
+
+function teardownLoginThemeSync() {
+  if (loginThemeMediaQuery && loginThemeChangeHandler) {
+    loginThemeMediaQuery.removeEventListener("change", loginThemeChangeHandler);
+  }
+  loginThemeMediaQuery = null;
+  loginThemeChangeHandler = null;
 }

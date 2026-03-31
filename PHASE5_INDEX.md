@@ -1,6 +1,6 @@
 # Phase 5: Meetings View Modularization - Document Index
 
-**Project:** ChamberAI Secretary Console  
+**Project:** ChamberAI Operations Workspace  
 **Phase:** 5 - Meetings View Modularization  
 **Date:** 2026-03-28  
 **Status:** ✅ Design Complete - Ready for Implementation  

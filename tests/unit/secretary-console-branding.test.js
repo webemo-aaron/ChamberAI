@@ -14,10 +14,14 @@ test("topbar and login copy use ChamberAI branding language", () => {
   const indexHtml = read("apps/secretary-console/index.html");
   const loginJs = read("apps/secretary-console/views/login/login.js");
 
+  assert.match(indexHtml, /<title>ChamberAI - Operations Workspace<\/title>/);
   assert.match(indexHtml, />ChamberAI<\/div>/);
   assert.match(indexHtml, />Operational intelligence for chamber teams<\/div>/);
   assert.match(indexHtml, />Connection Control<\/h3>/);
   assert.match(indexHtml, /Point the console at your active ChamberAI API environment\./);
+  assert.match(indexHtml, /fonts\.googleapis\.com/);
+  assert.match(indexHtml, /Fraunces/);
+  assert.match(indexHtml, /Manrope/);
   assert.match(loginJs, /title\.textContent = "Enter ChamberAI"/);
   assert.match(
     loginJs,
@@ -31,6 +35,8 @@ test("topbar and login copy use ChamberAI branding language", () => {
     loginJs,
     /demoNote\.textContent = "Demo access is intended for local validation, responsive QA, and workflow review\."/
   );
+  assert.match(loginJs, /prefers-color-scheme: dark/);
+  assert.match(loginJs, /data-login-theme/);
 });
 
 test("navigation titles stay user-facing and route-specific", () => {

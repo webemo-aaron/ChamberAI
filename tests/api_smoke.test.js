@@ -432,7 +432,7 @@ test("API smoke: business listings endpoints support local business hub flows", 
   assert.ok(syncRunsRes.body.data.some((run) => run.id === "sync_portland_2"));
 });
 
-test("API smoke: options requests expose CORS headers required by the secretary console", async () => {
+test("API smoke: options requests expose CORS headers required by the operations workspace", async () => {
   const { handler } = createServer();
 
   const optionsRes = await invoke(handler, "/business-listings", {

@@ -9,7 +9,7 @@ Scope: From current mock to initial release (MVP)
 ## 0) Summary
 
 This plan defines the full implementation path for CAM-AIMS from the current mock system to an initial release. It includes:
-- UI build-out for Secretary Console and Attendee Mic Join
+- UI build-out for Operations Workspace and Attendee Mic Join
 - API + worker pipeline design
 - Data model and storage layout
 - Security, governance, and retention
@@ -22,14 +22,14 @@ The guiding principle remains: **AI assists the Secretary; the Secretary is edit
 ## 1) Current State vs Target
 
 ### Current (Mock)
-- Static Secretary Console UI (HTML/JS/CSS)
+- Static Operations Workspace UI (HTML/JS/CSS)
 - In-memory API endpoints + worker mock pipeline
 - Draft minutes + action items + motions + approval gates
 - CSV export/import for action items
 - Settings mock, tags, filters, export history
 
 ### Target (Initial Release)
-- Production UI (Secretary Console)
+- Production UI (Operations Workspace)
 - Real API + DB + storage (GCP/Firebase or Postgres + GCS)
 - Batch transcription pipeline + diarization
 - Retention policy + audit log + RBAC
@@ -56,7 +56,7 @@ Non-goals:
 
 ## 3) UI Implementation Plan
 
-### 3.1 Secretary Console
+### 3.1 Operations Workspace
 
 Pages:
 1) Meetings List

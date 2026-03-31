@@ -138,7 +138,7 @@
 **Duration:** 1 hour
 **Objectives:**
 1. Update brand mark to reflect "ChamberAI" positioning
-2. Update brand title (consider "ChamberAI Secretary Console" vs shorter alternatives)
+2. Update brand title (consider "ChamberAI Operations Workspace" vs shorter alternatives)
 3. Ensure API config popover uses design system styling
 4. Apply consistent spacing and typography tokens
 
@@ -296,7 +296,7 @@ Phase 0 Implementation Flow:
 
 2. **Sidebar Styling:** Dark sidebar (#1A1F2E) creates visual separation and professional appearance. Better than light sidebar for deep hierarchy navigation.
 
-3. **Brand Positioning:** "ChamberAI Secretary Console" maintains "Secretary Console" as functionality label while "ChamberAI" is the platform brand. Can be shortened later.
+3. **Brand Positioning:** "ChamberAI Operations Workspace" maintains "Operations Workspace" as functionality label while "ChamberAI" is the platform brand. Can be shortened later.
 
 4. **Dashboard Priority:** Dashboard must be implemented before Phase 5+6 to ensure consistent landing experience for all roles.
 

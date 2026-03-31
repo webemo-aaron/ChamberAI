@@ -35,7 +35,7 @@ ChamberAI is **95% ready** for release candidate validation. The system has:
 ### Frontend ✅
 | Component | Status | Coverage |
 |-----------|--------|----------|
-| Secretary Console | ✅ Complete | All core workflows |
+| Operations Workspace | ✅ Complete | All core workflows |
 | Real-time Editing | ✅ Complete | Minutes collaboration |
 | Search (Full-text) | ✅ Complete | Meeting/content search |
 | Exports | ✅ Complete | PDF, Markdown, CSV |

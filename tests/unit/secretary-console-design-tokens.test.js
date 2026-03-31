@@ -9,7 +9,7 @@ function read(relativePath) {
   );
 }
 
-test("secretary console core styles use ChamberAI design tokens", () => {
+test("operations workspace core styles use ChamberAI design tokens", () => {
   const stylesCss = read("apps/secretary-console/styles.css");
   const businessHubCss = read(
     "apps/secretary-console/views/business-hub/business-hub.css"
@@ -46,7 +46,7 @@ test("secretary console core styles use ChamberAI design tokens", () => {
   assert.match(kioskCss, /\.kiosk-mode-banner\.public\s*\{[\s\S]*background-color:\s*var\(--color-primary-50\)/);
 });
 
-test("secretary console dark mode overrides hardcoded light surfaces in the shell", () => {
+test("operations workspace dark mode overrides hardcoded light surfaces in the shell", () => {
   const stylesCss = read("apps/secretary-console/styles.css");
 
   assert.match(

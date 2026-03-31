@@ -24,7 +24,7 @@ Demonstrate end-to-end local opportunity workflow:
 4. Confirm API base in console points to active stack.
 
 ## Demo Script (10-15 min)
-1. Open **Geo Intelligence** panel in Secretary Console.
+1. Open **Geo Intelligence** panel in Operations Workspace.
 2. Set scope:
    - `Scope Type`: `city`
    - `Scope ID`: target pilot city (e.g., `Bethel`)

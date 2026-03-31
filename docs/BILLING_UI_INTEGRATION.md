@@ -1,6 +1,6 @@
 # Billing UI Integration Guide
 
-Guide for integrating the billing UI components into the Secretary Console.
+Guide for integrating the billing UI components into the Operations Workspace.
 
 ## Overview
 

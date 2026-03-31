@@ -1,4 +1,4 @@
-# Secretary Console (Mock UI)
+# Operations Workspace (Mock UI)
 
 Quickstart (Local)
 - `npm run dev:console` (defaults to `http://127.0.0.1:5173`; auto-falls back to next free port unless `CONSOLE_STRICT_PORT=true`)

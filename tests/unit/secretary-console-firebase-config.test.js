@@ -6,7 +6,7 @@ function read(relativePath) {
   return readFileSync(new URL(`../../${relativePath}`, import.meta.url), "utf8");
 }
 
-test("secretary console loads firebase config before app bootstrap", () => {
+test("operations workspace loads firebase config before app bootstrap", () => {
   const indexHtml = read("apps/secretary-console/index.html");
 
   assert.match(indexHtml, /<script src="\.\/*firebase-config\.js"><\/script>/);
@@ -17,7 +17,7 @@ test("secretary console loads firebase config before app bootstrap", () => {
   );
 });
 
-test("secretary console firebase config uses production web app and limits emulator auth to localhost", () => {
+test("operations workspace firebase config uses production web app and limits emulator auth to localhost", () => {
   const configJs = read("apps/secretary-console/firebase-config.js");
 
   assert.match(configJs, /window\.location\.hostname === "localhost"/);

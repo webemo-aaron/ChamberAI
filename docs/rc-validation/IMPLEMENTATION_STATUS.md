@@ -10,7 +10,7 @@
 │  │  FREE TIER (100% - Self-Hosted, Docker Compose, In Production)     │   │
 │  │                                                                     │   │
 │  │  ┌────────────────────┐    ┌──────────────────┐    ┌────────────┐ │   │
-│  │  │  Secretary Console │    │   API Service    │    │   Worker   │ │   │
+│  │  │  Operations Workspace │    │   API Service    │    │   Worker   │ │   │
 │  │  │   (React SPA)      │───▶│  (Node.js/Express)───▶│  Service   │ │   │
 │  │  │                    │    │   port 4001      │    │ port 4002  │ │   │
 │  │  │ • Meetings         │    │                  │    │            │ │   │

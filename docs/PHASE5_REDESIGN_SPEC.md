@@ -102,7 +102,7 @@ API Routes:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ CAM Secretary Console                    ⚙️ Auth Status  │
+│ CAM Operations Workspace                    ⚙️ Auth Status  │
 ├─────────────────────────────────────────────────────────┤
 │ Sidebar │                                               │
 ├─────────┴──────────────────────────────────────────────┤
@@ -311,7 +311,7 @@ API Routes:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ CAM Secretary Console                    ⚙️ Auth Status  │
+│ CAM Operations Workspace                    ⚙️ Auth Status  │
 ├─────────────────────────────────────────────────────────┤
 │ Sidebar │                                               │
 ├─────────┴──────────────────────────────────────────────┤
@@ -1563,7 +1563,7 @@ async function loadMeetingDetail(id) {
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ CAM Secretary Console                    ⚙️ Auth Status  │
+│ CAM Operations Workspace                    ⚙️ Auth Status  │
 ├─────────────────────────────────────────────────────────┤
 │ Sidebar │                                               │
 ├─────────┴──────────────────────────────────────────────┤
@@ -1601,7 +1601,7 @@ async function loadMeetingDetail(id) {
 **List Page (#/meetings):**
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ CAM Secretary Console                    ⚙️ Auth Status  │
+│ CAM Operations Workspace                    ⚙️ Auth Status  │
 ├─────────────────────────────────────────────────────────┤
 │ Sidebar │                                               │
 ├─────────┴──────────────────────────────────────────────┤
@@ -1627,7 +1627,7 @@ async function loadMeetingDetail(id) {
 **Detail Page (#/meetings/:id):**
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ CAM Secretary Console                    ⚙️ Auth Status  │
+│ CAM Operations Workspace                    ⚙️ Auth Status  │
 ├─────────────────────────────────────────────────────────┤
 │ Sidebar │                                               │
 ├─────────┴──────────────────────────────────────────────┤

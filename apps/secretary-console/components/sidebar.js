@@ -1,5 +1,5 @@
 /**
- * Sidebar navigation component for ChamberAI Secretary Console
+ * Sidebar navigation component for ChamberAI Operations Workspace
  *
  * Responsibilities:
  * - Render semantic navigation groups

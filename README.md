@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/github/license/mahoosuc-solutions/ChamberOfCommerceAI)
 ![Issues](https://img.shields.io/github/issues/mahoosuc-solutions/ChamberOfCommerceAI)
 
-ChamberOfCommerceAI is a Secretary Console that helps teams run meetings, capture minutes, and track
+ChamberOfCommerceAI is a Operations Workspace that helps teams run meetings, capture minutes, and track
 follow-ups. The self-hosted (free) tier runs locally with the Firebase Emulator Suite and
 can be switched to real Firebase services for production.
 
@@ -190,7 +190,7 @@ cp .env.gcp.vercel.example .env.gcp.vercel
 ./scripts/setup_firebase_web_auth.sh cam-aim-dev
 ./scripts/enable_firebase_google_auth.sh cam-aim-dev
 
-# Deploy secretary console to Vercel production
+# Deploy operations workspace to Vercel production
 ./scripts/deploy_vercel_console.sh
 ```
 

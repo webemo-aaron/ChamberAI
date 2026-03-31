@@ -1,5 +1,5 @@
 # ChamberAI Platform UI Strategy
-## From "Secretary Console" to "ChamberAI" - Comprehensive Platform Redesign
+## From "Operations Workspace" to "ChamberAI" - Comprehensive Platform Redesign
 **Date:** 2026-03-28 | **Strategic Pivot** | **Phase 0 UI Architecture**
 
 ---
@@ -7,7 +7,7 @@
 ## 🎯 **Strategic Vision**
 
 ### Current State (Limited Positioning)
-**Name:** Secretary Console
+**Name:** Operations Workspace
 **Positioning:** Meetings & business management tool for secretaries
 **Messaging:** Internal operations tool
 **Scope Perception:** Narrow, tactical
@@ -481,6 +481,6 @@ By end of April, ChamberAI looks like a cohesive, professional AI-powered platfo
 
 ---
 
-**From "Secretary Console" to "ChamberAI" - The Platform for Chamber Management & Member Intelligence**
+**From "Operations Workspace" to "ChamberAI" - The Platform for Chamber Management & Member Intelligence**
 
 This is the moment to make that leap. Let's build it.

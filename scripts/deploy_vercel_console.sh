@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Deploy secretary console static app to Vercel.
+# Deploy operations workspace static app to Vercel.
 # Requires Vercel CLI auth and project linkage.
 #
 # Usage:
@@ -21,7 +21,7 @@ if [[ ! -d "${APP_DIR}" ]]; then
   exit 1
 fi
 
-echo "== Deploy secretary console to Vercel (production) =="
+echo "== Deploy operations workspace to Vercel (production) =="
 if [[ -n "${VERCEL_TOKEN:-}" ]]; then
   vercel --token "${VERCEL_TOKEN}" --cwd "${APP_DIR}" deploy --prod --yes
 else

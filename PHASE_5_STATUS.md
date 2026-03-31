@@ -95,7 +95,7 @@
 - [ ] Create Stripe products & prices
 - [ ] Configure webhook endpoint in Stripe
 - [ ] Run production webhook tests with real cards
-- [ ] Integrate billing UI into Secretary Console
+- [ ] Integrate billing UI into Operations Workspace
 - [ ] Update E2E tests for multi-tenancy
 - [ ] Set up webhook monitoring
 

@@ -452,7 +452,7 @@ Network ($399/mo): All features included
 
 ## Next Steps
 
-1. **Frontend UI** - Add product management UI to Secretary Console
+1. **Frontend UI** - Add product management UI to Operations Workspace
 2. **Product Dashboard** - Display available products to tenants
 3. **Billing Integration** - Link products to checkout flow
 4. **Analytics** - Product revenue tracking & forecasting

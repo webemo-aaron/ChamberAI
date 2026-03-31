@@ -136,7 +136,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Secretary Console (static frontend)
+  # Operations Workspace (static frontend)
   console:
     build:
       context: .

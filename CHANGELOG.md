@@ -8,7 +8,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [0.2.17-rc1] - 2026-02-25
 
-- Streamlined and polished secretary console layout with clearer spacing, grouped controls, and progressive disclosure for advanced options.
+- Streamlined and polished operations workspace layout with clearer spacing, grouped controls, and progressive disclosure for advanced options.
 - Updated UI automation specs for new collapsed/default states (advanced filters, settings operations, public summary section editor).
 - Added rollback critical-test gate script and CI enforcement to fail when rollback drill includes any failed critical tests.
 - Completed local soak validation (`critical x10`, `rollback drill x3`) with zero failures.
@@ -72,7 +72,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Added full-text advanced search endpoint (`GET /search/meetings?q=`) and console controls.
 - Added real-time collaborative minutes editing across active console sessions.
 - Added minutes version history with rollback support in the minutes panel.
-- Hardened API response parsing for non-JSON/error responses in secretary console.
+- Hardened API response parsing for non-JSON/error responses in operations workspace.
 - Added clean-room compose smoke validation in CI.
 - Added release-time report assertion and release artifact attachment in GitHub Actions.
 - Added API contract test suite (`npm run test:contracts`).

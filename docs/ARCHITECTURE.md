@@ -5,20 +5,20 @@
 
 ## Overview
 
-ChamberOfCommerceAI is a web-based secretary console backed by an API and worker service. The
+ChamberOfCommerceAI is a web-based operations workspace backed by an API and worker service. The
 self-hosted stack is designed to run locally with the Firebase Emulator Suite and
 can be switched to real Firebase services for production.
 
 At a high level:
 
-- The **Secretary Console** is a static frontend app.
+- The **Operations Workspace** is a static frontend app.
 - The **API service** handles requests and persists data in Firestore/Storage.
 - The **Worker service** processes background tasks (currently a stub).
 - The **Firebase Emulator Suite** provides local Auth, Firestore, and Storage.
 
 ## Components
 
-### Secretary Console (Frontend)
+### Operations Workspace (Frontend)
 
 Location: `apps/secretary-console`
 
@@ -72,7 +72,7 @@ Defined in `docker-compose.yml` and built with `Dockerfile.emulator`.
 
 ## Data Flow (Self-Hosted)
 
-1. User interacts with the Secretary Console UI.
+1. User interacts with the Operations Workspace UI.
 2. UI sends requests to the API service.
 3. API reads/writes data in Firestore and Storage.
 4. For processing tasks, API forwards to the Worker.
@@ -86,7 +86,7 @@ Defined in `docker-compose.yml` and built with `Dockerfile.emulator`.
 - `firebase-emulators` for Auth/Firestore/Storage
 - `api` for REST endpoints
 - `worker` for background processing
-- `console` for the static Secretary Console UI (`http://localhost:5173`)
+- `console` for the static Operations Workspace UI (`http://localhost:5173`)
 
 ### Local Development (Node.js)
 

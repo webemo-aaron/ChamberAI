@@ -1,5 +1,5 @@
 /**
- * Topbar component for ChamberAI Secretary Console
+ * Topbar component for ChamberAI Operations Workspace
  *
  * Responsibilities:
  * - Render simplified topbar with brand mark and title

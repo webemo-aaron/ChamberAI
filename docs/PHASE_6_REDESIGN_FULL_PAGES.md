@@ -3,7 +3,7 @@
 **Document Type:** Design Specification
 **Version:** 1.0
 **Status:** Design Phase Complete
-**Target:** ChamberAI Secretary Console
+**Target:** ChamberAI Operations Workspace
 **Timeline:** 6-7 days (design 1d, implementation 4-5d, testing 1-2d)
 **Created:** 2026-03-28
 

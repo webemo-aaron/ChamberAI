@@ -1,5 +1,5 @@
 /**
- * Billing Module for Secretary Console
+ * Billing Module for Operations Workspace
  * Handles subscription management, tier display, and upgrade flows
  */
 

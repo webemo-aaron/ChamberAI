@@ -70,7 +70,7 @@ Comprehensive responsive testing for Phase 4 (Sidebar + Visual Refresh) and Phas
 
 #### Topbar
 - [ ] Brand mark visible (logo)
-- [ ] "ChamberAI Secretary Console" text visible
+- [ ] "ChamberAI Operations Workspace" text visible
 - [ ] API config icon button visible (⚙️)
 - [ ] Click API icon → popover opens
 

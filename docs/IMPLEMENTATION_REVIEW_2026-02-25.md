@@ -9,7 +9,7 @@
 - Deployment/runtime configuration alignment
 
 ## Completed
-- Google sign-in integrated in secretary console UI.
+- Google sign-in integrated in operations workspace UI.
 - Display identity improved (role + display name/email).
 - Invite API endpoints implemented and mounted.
 - Invite email template supports meeting details + optional Motion link.

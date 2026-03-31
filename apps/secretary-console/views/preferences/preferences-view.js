@@ -88,7 +88,7 @@ export function preferencesHandler() {
 
         <article class="panel utility-card">
           <h2>What This Changes</h2>
-          <p>These settings apply immediately inside the secretary console.</p>
+          <p>These settings apply immediately inside the operations workspace.</p>
           <div class="utility-metric-row">
             <div class="utility-metric">
               <span>Next landing</span>

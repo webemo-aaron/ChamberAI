@@ -354,7 +354,7 @@ ChamberAI/
 - [ ] Follow `docs/STRIPE_LOCAL_TESTING.md` to test full flow
 - [ ] Create test organizations and verify tier gating
 - [ ] Test webhook delivery with Stripe CLI
-- [ ] Integrate billing UI components into Secretary Console
+- [ ] Integrate billing UI components into Operations Workspace
 - [ ] Update E2E tests per `docs/E2E_MULTITENANCY_TESTING.md`
 
 ### Medium-term (This Month)

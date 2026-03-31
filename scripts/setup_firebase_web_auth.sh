@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Create/find Firebase web app and print SDK config for secretary console Google auth.
+# Create/find Firebase web app and print SDK config for operations workspace Google auth.
 #
 # Usage:
 #   ./scripts/setup_firebase_web_auth.sh cam-aim-dev

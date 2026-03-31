@@ -6,7 +6,7 @@ function read(relativePath) {
   return readFileSync(new URL(`../../${relativePath}`, import.meta.url), "utf8");
 }
 
-test("local secretary console defaults local dev sessions to the mock API on port 4010", () => {
+test("local operations workspace defaults local dev sessions to the mock API on port 4010", () => {
   const apiJs = read("apps/secretary-console/core/api.js");
   const appJs = read("apps/secretary-console/app.js");
 
@@ -16,7 +16,7 @@ test("local secretary console defaults local dev sessions to the mock API on por
   assert.match(appJs, /detectDefaultApiBase/);
 });
 
-test("hosted Vercel secretary console defaults to the deployed Cloud Run API", () => {
+test("hosted Vercel operations workspace defaults to the deployed Cloud Run API", () => {
   const apiJs = read("apps/secretary-console/core/api.js");
 
   assert.match(apiJs, /window\.location\.hostname\.endsWith\('\.vercel\.app'\)/);

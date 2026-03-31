@@ -1,5 +1,5 @@
 /**
- * ChamberAI Secretary Console - Main Entry Point
+ * ChamberAI Operations Workspace - Main Entry Point
  *
  * Responsibilities:
  * - Initialize core modules (router, auth, toast, API)
