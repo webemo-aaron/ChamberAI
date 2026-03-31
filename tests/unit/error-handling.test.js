@@ -78,7 +78,7 @@ async function invoke(handler, path, options = {}) {
   return { status: res.statusCode, body };
 }
 
-test("API returns 400 for missing required meeting fields", async () => {
+test("API returns 422 for missing required meeting fields", async () => {
   const { handler } = createServer();
 
   // Missing all fields
@@ -87,7 +87,7 @@ test("API returns 400 for missing required meeting fields", async () => {
     body: JSON.stringify({})
   });
 
-  assert.equal(res.status, 400);
+  assert.equal(res.status, 422);
   assert.ok(res.body.error);
   assert.ok(
     res.body.error.includes("required") ||

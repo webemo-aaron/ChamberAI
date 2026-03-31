@@ -1,13 +1,109 @@
 import { MeetingStatus } from "../../packages/shared/status.js";
 import { addAuditLog, getDraftMinutes, setDraftMinutes, updateMeeting } from "./in_memory_db.js";
 
-export function updateDraftMinutes(db, meetingId, content) {
+export function updateDraftMinutes(db, meetingId, payload = {}) {
+  const content = payload.content ?? "";
   const existing = getDraftMinutes(db, meetingId);
-  const minutesVersion = existing?.minutes_version ?? 1;
+  const currentVersion = Number(existing?.minutes_version ?? 0);
+  const baseVersion = payload.base_version;
+
+  if (baseVersion !== undefined && Number(baseVersion) !== currentVersion) {
+    const error = new Error("Version conflict");
+    error.status = 409;
+    error.current_version = currentVersion;
+    error.current_content = existing?.content ?? "";
+    throw error;
+  }
+
+  const minutesVersion = currentVersion + 1;
+  const versions = Array.isArray(existing?.versions) ? existing.versions : [];
+  const nextEntry = {
+    version: minutesVersion,
+    content,
+    updated_at: db.now().toISOString()
+  };
+
   setDraftMinutes(db, meetingId, {
     content,
     minutes_version: minutesVersion,
-    updated_at: db.now().toISOString()
+    updated_at: nextEntry.updated_at,
+    versions: [nextEntry, ...versions]
+  });
+  return getDraftMinutes(db, meetingId);
+}
+
+export function listDraftMinuteVersions(db, meetingId, options = {}) {
+  const draft = getDraftMinutes(db, meetingId);
+  const versions = Array.isArray(draft?.versions) ? draft.versions : [];
+  const limitRaw = Number.parseInt(String(options.limit ?? "50"), 10);
+  const offsetRaw = Number.parseInt(String(options.offset ?? "0"), 10);
+
+  if (options.limit !== undefined && Number.isNaN(limitRaw)) {
+    const error = new Error("limit must be a number");
+    error.status = 400;
+    throw error;
+  }
+  if (options.offset !== undefined && Number.isNaN(offsetRaw)) {
+    const error = new Error("offset must be a number");
+    error.status = 400;
+    throw error;
+  }
+
+  const limit = Number.isNaN(limitRaw) ? 50 : Math.min(Math.max(limitRaw, 1), 100);
+  const offset = Number.isNaN(offsetRaw) ? 0 : Math.max(offsetRaw, 0);
+  const items = versions.slice(offset, offset + limit);
+  const nextOffset = offset + items.length;
+  const hasMore = nextOffset < versions.length;
+
+  return {
+    items,
+    offset,
+    limit,
+    next_offset: hasMore ? nextOffset : null,
+    has_more: hasMore,
+    total: versions.length
+  };
+}
+
+export function rollbackDraftMinutes(db, meetingId, version) {
+  const targetVersion = Number(version ?? 0);
+  if (!targetVersion) {
+    const error = new Error("version required");
+    error.status = 400;
+    throw error;
+  }
+
+  const draft = getDraftMinutes(db, meetingId);
+  const versions = Array.isArray(draft?.versions) ? draft.versions : [];
+  const target = versions.find((entry) => Number(entry.version) === targetVersion);
+  if (!target) {
+    const error = new Error("Version not found");
+    error.status = 404;
+    throw error;
+  }
+
+  const currentVersion = Number(draft?.minutes_version ?? 0);
+  const nextVersion = currentVersion + 1;
+  const rolledBack = {
+    content: target.content ?? "",
+    minutes_version: nextVersion,
+    updated_at: db.now().toISOString(),
+    rolled_back_from_version: targetVersion,
+    versions: [
+      {
+        version: nextVersion,
+        content: target.content ?? "",
+        updated_at: db.now().toISOString()
+      },
+      ...versions
+    ]
+  };
+  setDraftMinutes(db, meetingId, rolledBack);
+  addAuditLog(db, {
+    meeting_id: meetingId,
+    event_type: "MINUTES_ROLLBACK",
+    actor: "system",
+    details: { from_version: currentVersion, to_version: targetVersion }
   });
   return getDraftMinutes(db, meetingId);
 }
@@ -36,13 +132,11 @@ export function approveMinutes(db, meetingId) {
 }
 
 export function exportMinutes(db, meetingId, format) {
-  const draft = getDraftMinutes(db, meetingId);
-  if (!draft) {
-    throw new Error("Draft minutes not found");
-  }
   const meeting = db.meetings.get(meetingId);
   if (!meeting) {
-    throw new Error(`Meeting not found: ${meetingId}`);
+    const error = new Error(`Meeting not found: ${meetingId}`);
+    error.status = 404;
+    throw error;
   }
   const exportId = `export_${meetingId}_${format}_${Date.now()}`;
   const fileUri = `exports/${meetingId}/${exportId}.${format}`;

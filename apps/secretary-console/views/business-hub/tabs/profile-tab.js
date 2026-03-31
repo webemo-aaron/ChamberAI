@@ -29,7 +29,7 @@ export function render(container, options = {}) {
   const { business = {}, onBusinessUpdated = () => {} } = options;
   const role = getCurrentRole();
   const isAdmin = role === "admin";
-  const hydratedBusiness = applyDraftBusiness(business);
+  let currentBusiness = applyDraftBusiness(business);
   let editMode = false;
 
   function renderView() {
@@ -37,16 +37,16 @@ export function render(container, options = {}) {
       <div class="profile-tab-content">
       <!-- Description Section -->
       ${
-        hydratedBusiness.description
+        currentBusiness.description
           ? `
         <section class="profile-section">
           <h3>About</h3>
           ${
             editMode
               ? `<textarea id="businessDescription" class="profile-edit-input profile-edit-textarea">${escapeHtml(
-                  hydratedBusiness.description
+                  currentBusiness.description
                 )}</textarea>`
-              : `<p class="profile-description">${escapeHtml(hydratedBusiness.description)}</p>`
+              : `<p class="profile-description">${escapeHtml(currentBusiness.description)}</p>`
           }
         </section>
       `
@@ -58,17 +58,17 @@ export function render(container, options = {}) {
         <h3>Contact Information</h3>
         <div class="profile-contact">
           ${
-            hydratedBusiness.phone
+            currentBusiness.phone
               ? `
             <div class="contact-item">
               <span class="contact-label">Phone:</span>
               ${
                 editMode
                   ? `<input id="businessPhone" class="profile-edit-input" type="tel" value="${escapeHtml(
-                      hydratedBusiness.phone
+                      currentBusiness.phone
                     )}" />`
-                  : `<a href="tel:${hydratedBusiness.phone}" class="contact-link">
-                      ${escapeHtml(hydratedBusiness.phone)}
+                  : `<a href="tel:${currentBusiness.phone}" class="contact-link">
+                      ${escapeHtml(currentBusiness.phone)}
                     </a>`
               }
             </div>
@@ -77,17 +77,17 @@ export function render(container, options = {}) {
           }
 
           ${
-            hydratedBusiness.email
+            currentBusiness.email
               ? `
             <div class="contact-item">
               <span class="contact-label">Email:</span>
               ${
                 editMode
                   ? `<input id="businessEmail" class="profile-edit-input" type="email" value="${escapeHtml(
-                      hydratedBusiness.email
+                      currentBusiness.email
                     )}" />`
-                  : `<a href="mailto:${hydratedBusiness.email}" class="contact-link">
-                      ${escapeHtml(hydratedBusiness.email)}
+                  : `<a href="mailto:${currentBusiness.email}" class="contact-link">
+                      ${escapeHtml(currentBusiness.email)}
                     </a>`
               }
             </div>
@@ -96,17 +96,17 @@ export function render(container, options = {}) {
           }
 
           ${
-            hydratedBusiness.website
+            currentBusiness.website
               ? `
             <div class="contact-item">
               <span class="contact-label">Website:</span>
               ${
                 editMode
                   ? `<input id="businessWebsite" class="profile-edit-input" type="url" value="${escapeHtml(
-                      hydratedBusiness.website
+                      currentBusiness.website
                     )}" />`
-                  : `<a href="${hydratedBusiness.website}" target="_blank" rel="noopener noreferrer" class="contact-link">
-                      ${escapeHtml(hydratedBusiness.website)}
+                  : `<a href="${currentBusiness.website}" target="_blank" rel="noopener noreferrer" class="contact-link">
+                      ${escapeHtml(currentBusiness.website)}
                     </a>`
               }
             </div>
@@ -115,7 +115,7 @@ export function render(container, options = {}) {
           }
 
           ${
-            hydratedBusiness.address
+            currentBusiness.address
               ? `
             <div class="contact-item">
               <span class="contact-label">Address:</span>
@@ -124,25 +124,25 @@ export function render(container, options = {}) {
                   editMode
                     ? `
                       <input id="businessAddress" class="profile-edit-input" type="text" value="${escapeHtml(
-                        hydratedBusiness.address
+                        currentBusiness.address
                       )}" />
                       <div class="profile-edit-grid">
                         <input id="businessCity" class="profile-edit-input" type="text" value="${escapeHtml(
-                          hydratedBusiness.city || ""
+                          currentBusiness.city || ""
                         )}" placeholder="City" />
                         <input id="businessState" class="profile-edit-input" type="text" value="${escapeHtml(
-                          hydratedBusiness.state || ""
+                          currentBusiness.state || ""
                         )}" placeholder="State" />
                         <input id="businessZip" class="profile-edit-input" type="text" value="${escapeHtml(
-                          hydratedBusiness.zip || ""
+                          currentBusiness.zip || ""
                         )}" placeholder="ZIP" />
                       </div>
                     `
                     : `
-                      <span>${escapeHtml(hydratedBusiness.address)}</span>
-                      ${hydratedBusiness.city ? `<span>${escapeHtml(hydratedBusiness.city)}` : ""}
-                      ${hydratedBusiness.state ? `, ${escapeHtml(hydratedBusiness.state)}` : ""}
-                      ${hydratedBusiness.zip ? ` ${escapeHtml(hydratedBusiness.zip)}</span>` : "</span>"}
+                      <span>${escapeHtml(currentBusiness.address)}</span>
+                      ${currentBusiness.city ? `<span>${escapeHtml(currentBusiness.city)}` : ""}
+                      ${currentBusiness.state ? `, ${escapeHtml(currentBusiness.state)}` : ""}
+                      ${currentBusiness.zip ? ` ${escapeHtml(currentBusiness.zip)}</span>` : "</span>"}
                       <button class="btn-copy" id="copyAddressBtn" title="Copy address">
                         📋 Copy
                       </button>
@@ -158,12 +158,12 @@ export function render(container, options = {}) {
 
       <!-- Hours Section -->
       ${
-        hydratedBusiness.hours
+        currentBusiness.hours
           ? `
         <section class="profile-section">
           <h3>Hours of Operation</h3>
           <div class="profile-hours">
-            ${renderHours(hydratedBusiness.hours)}
+            ${renderHours(currentBusiness.hours)}
           </div>
         </section>
       `
@@ -172,7 +172,7 @@ export function render(container, options = {}) {
 
       <!-- Rating Section -->
       ${
-        hydratedBusiness.rating !== undefined
+        currentBusiness.rating !== undefined
           ? `
         <section class="profile-section">
           <h3>Rating</h3>
@@ -182,12 +182,12 @@ export function render(container, options = {}) {
                 .fill(0)
                 .map(
                   (_, i) =>
-                    `<span class="star ${i < Math.floor(hydratedBusiness.rating) ? "filled" : ""}">★</span>`
+                    `<span class="star ${i < Math.floor(currentBusiness.rating) ? "filled" : ""}">★</span>`
                 )
                 .join("")}
             </div>
-            <span class="rating-value">${hydratedBusiness.rating.toFixed(1)} / 5.0</span>
-            ${hydratedBusiness.reviewCount ? `<span class="rating-count">(${hydratedBusiness.reviewCount} reviews)</span>` : ""}
+            <span class="rating-value">${currentBusiness.rating.toFixed(1)} / 5.0</span>
+            ${currentBusiness.reviewCount ? `<span class="rating-count">(${currentBusiness.reviewCount} reviews)</span>` : ""}
           </div>
         </section>
       `
@@ -196,12 +196,12 @@ export function render(container, options = {}) {
 
       <!-- Social Links Section -->
       ${
-        hydratedBusiness.socialLinks && Object.keys(hydratedBusiness.socialLinks).length > 0
+        currentBusiness.socialLinks && Object.keys(currentBusiness.socialLinks).length > 0
           ? `
         <section class="profile-section">
           <h3>Follow Us</h3>
           <div class="profile-social">
-            ${Object.entries(hydratedBusiness.socialLinks)
+            ${Object.entries(currentBusiness.socialLinks)
               .map(
                 ([platform, url]) => `
               <a href="${url}" target="_blank" rel="noopener noreferrer" class="social-link" title="${platform}">
@@ -239,7 +239,7 @@ export function render(container, options = {}) {
 
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        const address = `${hydratedBusiness.address || ""} ${hydratedBusiness.city || ""} ${hydratedBusiness.state || ""} ${hydratedBusiness.zip || ""}`.trim();
+        const address = `${currentBusiness.address || ""} ${currentBusiness.city || ""} ${currentBusiness.state || ""} ${currentBusiness.zip || ""}`.trim();
         navigator.clipboard.writeText(address).then(() => {
           copyBtn.textContent = "✓ Copied!";
           setTimeout(() => {
@@ -251,8 +251,8 @@ export function render(container, options = {}) {
 
     if (contactBtn) {
       contactBtn.addEventListener("click", () => {
-        if (hydratedBusiness.email) {
-          window.location.href = `mailto:${hydratedBusiness.email}`;
+        if (currentBusiness.email) {
+          window.location.href = `mailto:${currentBusiness.email}`;
         }
       });
     }
@@ -274,18 +274,19 @@ export function render(container, options = {}) {
     if (saveBtn) {
       saveBtn.addEventListener("click", async () => {
         const updatedBusiness = {
-          ...hydratedBusiness,
-          description: container.querySelector("#businessDescription")?.value ?? hydratedBusiness.description,
-          phone: container.querySelector("#businessPhone")?.value ?? hydratedBusiness.phone,
-          email: container.querySelector("#businessEmail")?.value ?? hydratedBusiness.email,
-          website: container.querySelector("#businessWebsite")?.value ?? hydratedBusiness.website,
-          address: container.querySelector("#businessAddress")?.value ?? hydratedBusiness.address,
-          city: container.querySelector("#businessCity")?.value ?? hydratedBusiness.city,
-          state: container.querySelector("#businessState")?.value ?? hydratedBusiness.state,
-          zip: container.querySelector("#businessZip")?.value ?? hydratedBusiness.zip
+          ...currentBusiness,
+          description: container.querySelector("#businessDescription")?.value ?? currentBusiness.description,
+          phone: container.querySelector("#businessPhone")?.value ?? currentBusiness.phone,
+          email: container.querySelector("#businessEmail")?.value ?? currentBusiness.email,
+          website: container.querySelector("#businessWebsite")?.value ?? currentBusiness.website,
+          address: container.querySelector("#businessAddress")?.value ?? currentBusiness.address,
+          city: container.querySelector("#businessCity")?.value ?? currentBusiness.city,
+          state: container.querySelector("#businessState")?.value ?? currentBusiness.state,
+          zip: container.querySelector("#businessZip")?.value ?? currentBusiness.zip
         };
 
         const persistedBusiness = await persistBusinessDraft(updatedBusiness);
+        currentBusiness = persistedBusiness;
         editMode = false;
         onBusinessUpdated(persistedBusiness);
         renderView();

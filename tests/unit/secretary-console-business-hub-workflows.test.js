@@ -20,6 +20,9 @@ test("business hub profile tab supports real edit persistence flow", () => {
   assert.match(profileTabJs, /request\(`\/business-listings\/\$\{business\.id\}`, "PUT"/);
   assert.match(profileTabJs, /Business profile saved locally for this session/);
   assert.match(profileTabJs, /saveProfileBtn/);
+  assert.match(profileTabJs, /let currentBusiness = applyDraftBusiness\(business\)/);
+  assert.match(profileTabJs, /currentBusiness = persistedBusiness/);
+  assert.match(profileTabJs, /description: container\.querySelector\("#businessDescription"\)\?\.value \?\? currentBusiness\.description/);
   assert.match(detailJs, /onBusinessUpdated/);
 });
 

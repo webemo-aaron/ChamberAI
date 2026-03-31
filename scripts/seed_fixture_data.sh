@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_BASE="${API_BASE:-http://127.0.0.1:4001}"
+API_BASE="${API_BASE:-http://127.0.0.1:4000}"
 SEED_TAG="${SEED_TAG:-fixture-$(date +%s)}"
 DATE_BASE="${SEED_DATE:-2026-02-25}"
 FIXTURE_CLEANUP_MODE="${FIXTURE_CLEANUP_MODE:-namespace}"
@@ -27,6 +27,12 @@ id_from_json() {
 set_audio_created_at_days_ago() {
   local audio_id="$1"
   local days_ago="$2"
+  if ! command -v docker >/dev/null 2>&1; then
+    return 0
+  fi
+  if ! docker compose ps --services --status running 2>/dev/null | grep -qx 'api'; then
+    return 0
+  fi
   docker compose exec -T \
     -e AUDIO_ID="${audio_id}" \
     -e DAYS_AGO="${days_ago}" \

@@ -120,6 +120,15 @@ export function renderMeetingDetail(container, meeting, selectedTab = "minutes")
         e.preventDefault();
         allTabs[currentIndex - 1].focus();
         allTabs[currentIndex - 1].click();
+      } else if (e.key === "Home" && allTabs.length > 0) {
+        e.preventDefault();
+        allTabs[0].focus();
+        allTabs[0].click();
+      } else if (e.key === "End" && allTabs.length > 0) {
+        e.preventDefault();
+        const lastTab = allTabs[allTabs.length - 1];
+        lastTab.focus();
+        lastTab.click();
       }
     });
   });
@@ -158,9 +167,10 @@ async function switchTab(tabId, container) {
   // Update panel visibility
   panelsContainer.querySelectorAll(".detail-panel").forEach((panel) => {
     const isActive = panel.dataset.tab === tabId;
-    panel.classList.toggle("hidden", !isActive);
-    panel.classList.toggle("active", isActive);
+    applyPanelState(panel, isActive);
   });
+
+  activeTab = tabId;
 
   // Load tab content if not loaded
   const panel = panelsContainer.querySelector(`#${tabId}-panel`);
@@ -170,6 +180,7 @@ async function switchTab(tabId, container) {
       if (module?.render) {
         panel.innerHTML = ""; // Clear any loading state
         await module.render(panel, currentMeeting);
+        applyPanelState(panel, activeTab === tabId);
         panel.dataset.loaded = "true";
       }
     } catch (error) {
@@ -178,7 +189,14 @@ async function switchTab(tabId, container) {
     }
   }
 
-  activeTab = tabId;
+}
+
+function applyPanelState(panel, isActive) {
+  const preserved = Array.from(panel.classList).filter(
+    (className) => className !== "detail-panel" && className !== "active" && className !== "hidden"
+  );
+  panel.className = [...preserved, "detail-panel", isActive ? "active" : "hidden"].join(" ");
+  panel.setAttribute("aria-hidden", isActive ? "false" : "true");
 }
 
 /**

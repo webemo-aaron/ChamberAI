@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
 
-const API_BASE = process.env.API_BASE ?? "http://127.0.0.1:4001";
+const API_BASE = process.env.API_BASE ?? "http://127.0.0.1:4000";
 const headers = {
   Authorization: "Bearer demo-token",
   "x-demo-email": "admin@acme.com",

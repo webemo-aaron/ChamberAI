@@ -105,6 +105,13 @@ const tabPanelsByKey = {
 
 // Modals
 const quickModal = document.getElementById("quickModal");
+const quickLocationInput = document.getElementById("quickLocation");
+const quickChairInput = document.getElementById("quickChair");
+const quickSecretaryInput = document.getElementById("quickSecretary");
+const quickTagsInput = document.getElementById("quickTags");
+const quickSubmitBtn = document.getElementById("quickSubmit");
+const quickCancelBtn = document.getElementById("quickCancel");
+const quickCreateError = document.getElementById("quickCreateError");
 const csvPreviewModal = document.getElementById("csvPreviewModal");
 
 // Onboarding (Phase 5: content and handlers)
@@ -130,6 +137,7 @@ const modalBehavior = new Map([
 
 let activeModal = null;
 let modalReturnFocus = null;
+const QUICK_CREATE_DEFAULTS_KEY = "camQuickCreateDefaults";
 
 function getTransientContainers() {
   return [
@@ -182,6 +190,111 @@ function renderNamedUtilityRoute(route) {
       email: localStorage.getItem("camEmail") || "guest@chamberai.local"
     })
   );
+}
+
+function readQuickCreateDefaults() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(QUICK_CREATE_DEFAULTS_KEY) || "{}");
+    return typeof parsed === "object" && parsed ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeQuickCreateDefaults(defaults) {
+  localStorage.setItem(QUICK_CREATE_DEFAULTS_KEY, JSON.stringify(defaults));
+}
+
+function clearQuickCreateError() {
+  if (!quickCreateError) return;
+  quickCreateError.textContent = "";
+  quickCreateError.classList.add("hidden");
+}
+
+function showQuickCreateError(message) {
+  if (!quickCreateError) {
+    showToast(message, { type: "error" });
+    return;
+  }
+
+  quickCreateError.textContent = message;
+  quickCreateError.classList.remove("hidden");
+}
+
+function getQuickCreatePayload() {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const location = quickLocationInput?.value.trim() || "";
+  const chair = quickChairInput?.value.trim() || "";
+  const secretary = quickSecretaryInput?.value.trim() || "";
+  const tags = quickTagsInput?.value.trim() || "";
+
+  if (!location) {
+    throw new Error("Location is required");
+  }
+
+  return {
+    date,
+    start_time: "09:00",
+    location,
+    chair_name: chair,
+    secretary_name: secretary,
+    tags
+  };
+}
+
+function populateQuickCreateDefaults() {
+  const defaults = readQuickCreateDefaults();
+
+  if (quickLocationInput) quickLocationInput.value = "";
+  if (quickChairInput) quickChairInput.value = defaults.chair_name ?? "";
+  if (quickSecretaryInput) quickSecretaryInput.value = defaults.secretary_name ?? "";
+  if (quickTagsInput) quickTagsInput.value = defaults.tags ?? "";
+  clearQuickCreateError();
+}
+
+function openQuickCreateModal(trigger) {
+  populateQuickCreateDefaults();
+  openModal(quickModal, {
+    returnFocus: trigger,
+    initialFocus: quickLocationInput
+  });
+}
+
+async function submitQuickCreate() {
+  clearQuickCreateError();
+
+  let payload;
+  try {
+    payload = getQuickCreatePayload();
+  } catch (error) {
+    showQuickCreateError(error.message);
+    quickLocationInput?.focus();
+    return;
+  }
+
+  quickSubmitBtn?.setAttribute("disabled", "true");
+
+  try {
+    const created = await request("/meetings", "POST", payload);
+    if (!created || created.error) {
+      throw new Error(created?.error || "Failed to create meeting");
+    }
+
+    writeQuickCreateDefaults({
+      chair_name: payload.chair_name,
+      secretary_name: payload.secretary_name,
+      tags: payload.tags
+    });
+
+    closeModal(quickModal);
+    showToast("Meeting created");
+    navigate(`/meetings/${created.id}`);
+  } catch (error) {
+    showQuickCreateError(error.message || "Failed to create meeting");
+  } finally {
+    quickSubmitBtn?.removeAttribute("disabled");
+  }
 }
 
 // ============================================================================
@@ -401,6 +514,19 @@ async function initializeApp() {
 
   // 11. Show ready toast
   initRouter();
+
+  meetingsView?.addEventListener("create-meeting", (event) => {
+    const trigger =
+      event.detail?.trigger instanceof HTMLElement
+        ? event.detail.trigger
+        : document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : event.target instanceof HTMLElement
+            ? event.target
+            : null;
+    openQuickCreateModal(trigger);
+  });
+
   showToast("ChamberAI ready");
 }
 
@@ -484,6 +610,7 @@ function openModal(modal, options = {}) {
   modalReturnFocus = options.returnFocus ?? document.activeElement;
 
   modal.classList.remove("hidden");
+  modal.classList.add("visible");
   modal.setAttribute("aria-hidden", "false");
 
   const initialTarget = options.initialFocus ?? config.initialFocus;
@@ -508,6 +635,7 @@ function closeModal(modal, options = {}) {
   if (!modal) return;
 
   const restoreFocus = options.restoreFocus !== false;
+  modal.classList.remove("visible");
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
 
@@ -516,7 +644,10 @@ function closeModal(modal, options = {}) {
   }
 
   if (restoreFocus && modalReturnFocus && typeof modalReturnFocus.focus === "function") {
-    modalReturnFocus.focus();
+    const target = modalReturnFocus;
+    requestAnimationFrame(() => {
+      target.focus();
+    });
   }
 
   modalReturnFocus = null;
@@ -668,6 +799,15 @@ quickModal.addEventListener("click", (event) => {
   if (event.target === quickModal && modalBehavior.get(quickModal)?.closeOnBackdrop) {
     closeModal(quickModal);
   }
+});
+
+quickSubmitBtn?.addEventListener("click", () => {
+  submitQuickCreate();
+});
+
+quickCancelBtn?.addEventListener("click", () => {
+  clearQuickCreateError();
+  closeModal(quickModal);
 });
 
 csvPreviewModal.addEventListener("click", (event) => {

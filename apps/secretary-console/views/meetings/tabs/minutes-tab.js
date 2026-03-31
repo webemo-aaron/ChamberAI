@@ -179,6 +179,7 @@ function createAudioUploadZone() {
   statusDiv.className = "transcription-status hidden";
   statusDiv.setAttribute("role", "status");
   statusDiv.setAttribute("aria-live", "polite");
+  statusDiv.setAttribute("aria-atomic", "true");
   statusDiv.innerHTML = `
     <span class="spinner"></span>
     <span>Transcribing audio...</span>
@@ -372,4 +373,3 @@ export function cleanup() {
   }
   currentMeetingId = null;
 }
-

@@ -36,6 +36,30 @@ let detailContainer = null;
 let unsubscribers = [];
 let removePaneSplitter = null;
 
+function requireApiCollection(response, fallbackMessage) {
+  if (response?.error) {
+    throw new Error(response.error);
+  }
+
+  if (!response) {
+    throw new Error(fallbackMessage);
+  }
+
+  return response.data || response || [];
+}
+
+function requireApiEntity(response, fallbackMessage) {
+  if (response?.error) {
+    throw new Error(response.error);
+  }
+
+  if (!response) {
+    throw new Error(fallbackMessage);
+  }
+
+  return response.data || response;
+}
+
 /**
  * Route handler for /meetings and /meetings/:id
  * Orchestrates list + detail rendering with custom event coordination
@@ -75,7 +99,7 @@ export async function meetingsHandler(params, context) {
   try {
     showToast("Loading meetings...");
     const response = await request("/meetings", "GET");
-    allMeetings = response.data || response || [];
+    allMeetings = requireApiCollection(response, "Meetings request failed");
     currentMeetings = filterMeetingsByShowcaseCity(allMeetings, getSelectedShowcaseCity());
     renderMeetingsList(listContainer, currentMeetings, params.id);
     showToast("Meetings loaded");
@@ -90,7 +114,7 @@ export async function meetingsHandler(params, context) {
     try {
       showToast("Loading meeting detail...");
       const response = await request(`/meetings/${params.id}`, "GET");
-      currentMeeting = response.data || response;
+      currentMeeting = requireApiEntity(response, "Meeting detail request failed");
 
       detailContainer = createMeetingDetail(currentMeeting);
       layout.appendChild(detailContainer);
@@ -162,7 +186,7 @@ function listenForRefreshRequested(layout) {
     try {
       showToast("Refreshing meetings...");
       const response = await request("/meetings", "GET");
-      allMeetings = response.data || response || [];
+      allMeetings = requireApiCollection(response, "Meetings request failed");
       currentMeetings = filterMeetingsByShowcaseCity(allMeetings, getSelectedShowcaseCity());
       renderMeetingsList(listContainer, currentMeetings);
       showToast("Meetings refreshed");

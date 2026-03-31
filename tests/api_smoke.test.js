@@ -56,9 +56,33 @@ async function invoke(handler, path, options = {}) {
 
   let body = null;
   if (res.body) {
-    body = JSON.parse(res.body);
+    const contentType = res.headers["Content-Type"] ?? res.headers["content-type"] ?? "application/json";
+    body = contentType.includes("application/json") ? JSON.parse(res.body) : res.body;
   }
   return { status: res.statusCode, body, headers: res.headers };
+}
+
+async function listen(server) {
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  return `http://127.0.0.1:${address.port}`;
+}
+
+async function waitFor(assertion, { attempts = 20, delayMs = 0 } = {}) {
+  let lastError;
+  for (let index = 0; index < attempts; index += 1) {
+    try {
+      return await assertion();
+    } catch (error) {
+      lastError = error;
+      if (delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      } else {
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+    }
+  }
+  throw lastError;
 }
 
 test("API smoke: create meeting, upload audio, process, approve, audit, retention", async () => {
@@ -90,15 +114,27 @@ test("API smoke: create meeting, upload audio, process, approve, audit, retentio
 
   const processRes = await invoke(handler, `/meetings/${meetingId}/process`, { method: "POST" });
   assert.equal(processRes.status, 200);
-  assert.equal(processRes.body.status, "DRAFT_READY");
+  assert.equal(processRes.body.status, "PROCESSING");
 
-  const minutesRes = await invoke(handler, `/meetings/${meetingId}/draft-minutes`, { method: "GET" });
+  const processStatusRes = await waitFor(async () => {
+    const response = await invoke(handler, `/meetings/${meetingId}/process-status`, { method: "GET" });
+    assert.equal(response.status, 200);
+    assert.ok(["PROCESSING", "DRAFT_READY"].includes(response.body.status));
+    return response;
+  });
+  assert.ok(["PROCESSING", "DRAFT_READY"].includes(processStatusRes.body.status));
+
+  const minutesRes = await invoke(handler, `/meetings/${meetingId}/minutes`, { method: "GET" });
   assert.equal(minutesRes.status, 200);
-  assert.ok(minutesRes.body.content);
+  assert.equal(typeof minutesRes.body?.text, "string");
 
   const updateRes = await invoke(handler, `/meetings/${meetingId}`, {
     method: "PUT",
-    body: JSON.stringify({ end_time: "11:00" })
+    body: JSON.stringify({
+      end_time: "11:00",
+      no_motions: true,
+      no_action_items: true
+    })
   });
   assert.equal(updateRes.status, 200);
 
@@ -149,6 +185,19 @@ test("API smoke: public summary endpoints", async () => {
   const getRes = await invoke(handler, `/meetings/${meetingId}/public-summary`, { method: "GET" });
   assert.equal(getRes.status, 200);
   assert.equal(getRes.body.content, "Public summary content.");
+
+  const summaryAliasSaveRes = await invoke(handler, `/meetings/${meetingId}/summary`, {
+    method: "POST",
+    body: JSON.stringify({
+      text: "Public summary alias content."
+    })
+  });
+  assert.equal(summaryAliasSaveRes.status, 200);
+  assert.equal(summaryAliasSaveRes.body.text, "Public summary alias content.");
+
+  const summaryAliasGetRes = await invoke(handler, `/meetings/${meetingId}/summary`, { method: "GET" });
+  assert.equal(summaryAliasGetRes.status, 200);
+  assert.equal(summaryAliasGetRes.body.text, "Public summary alias content.");
 
   const publishRes = await invoke(handler, `/meetings/${meetingId}/public-summary/publish`, { method: "POST" });
   assert.equal(publishRes.status, 200);
@@ -400,4 +449,141 @@ test("API smoke: options requests expose CORS headers required by the secretary 
     optionsRes.headers["Access-Control-Allow-Methods"],
     "GET,POST,PUT,DELETE,OPTIONS"
   );
+});
+
+test("API smoke: metrics endpoint reports request and error counters", async () => {
+  const { handler } = createServer();
+
+  const initialMetrics = await invoke(handler, "/metrics", { method: "GET" });
+  assert.equal(initialMetrics.status, 200);
+  assert.equal(typeof initialMetrics.body.requests_total, "number");
+  assert.equal(typeof initialMetrics.body.errors_total, "number");
+
+  const notFoundRes = await invoke(handler, "/missing-endpoint", { method: "GET" });
+  assert.equal(notFoundRes.status, 404);
+
+  const updatedMetrics = await invoke(handler, "/metrics", { method: "GET" });
+  assert.equal(updatedMetrics.status, 200);
+  assert.ok(updatedMetrics.body.requests_total >= initialMetrics.body.requests_total + 2);
+});
+
+test("API smoke: current meetings actions aliases support CRUD and CSV export", async () => {
+  const { handler } = createServer();
+
+  const meetingRes = await invoke(handler, "/meetings", {
+    method: "POST",
+    body: JSON.stringify({
+      date: "2026-03-31",
+      start_time: "13:00",
+      location: "Actions Alias Hall",
+      chair_name: "Alex Chair",
+      secretary_name: "Riley Secretary"
+    })
+  });
+  assert.equal(meetingRes.status, 201);
+  const meetingId = meetingRes.body.id;
+
+  const createRes = await invoke(handler, `/meetings/${meetingId}/actions`, {
+    method: "POST",
+    body: JSON.stringify({
+      description: "Follow up with vendor",
+      assignee: "Taylor Treasurer",
+      dueDate: "2026-04-10",
+      status: "not-started"
+    })
+  });
+  assert.equal(createRes.status, 201);
+  assert.equal(createRes.body.description, "Follow up with vendor");
+  assert.equal(createRes.body.assignee, "Taylor Treasurer");
+  assert.equal(createRes.body.dueDate, "2026-04-10");
+
+  const listRes = await invoke(handler, `/meetings/${meetingId}/actions`, { method: "GET" });
+  assert.equal(listRes.status, 200);
+  assert.equal(Array.isArray(listRes.body), true);
+  assert.equal(listRes.body.length, 1);
+  assert.equal(listRes.body[0].description, "Follow up with vendor");
+
+  const updateRes = await invoke(handler, `/meetings/${meetingId}/actions/${createRes.body.id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      description: "Send member update",
+      assignee: "Riley Secretary",
+      dueDate: "2026-04-12",
+      status: "in-progress"
+    })
+  });
+  assert.equal(updateRes.status, 200);
+  assert.equal(updateRes.body.description, "Send member update");
+  assert.equal(updateRes.body.status, "in-progress");
+
+  const exportRes = await invoke(handler, `/meetings/${meetingId}/actions/export-csv`, {
+    method: "GET"
+  });
+  assert.equal(exportRes.status, 200);
+  assert.equal(exportRes.headers["Content-Type"] ?? exportRes.headers["content-type"], "text/csv");
+  assert.match(exportRes.body, /description,owner_name,due_date,status/);
+  assert.match(exportRes.body, /Send member update/);
+
+  const deleteRes = await invoke(handler, `/meetings/${meetingId}/actions/${createRes.body.id}`, {
+    method: "DELETE"
+  });
+  assert.equal(deleteRes.status, 200);
+
+  const emptyRes = await invoke(handler, `/meetings/${meetingId}/actions`, { method: "GET" });
+  assert.equal(emptyRes.status, 200);
+  assert.equal(emptyRes.body.length, 0);
+});
+
+test("API smoke: current meetings actions CSV import accepts multipart form uploads", async () => {
+  const { server } = createServer();
+  const baseUrl = await listen(server);
+
+  try {
+    const meetingRes = await fetch(`${baseUrl}/meetings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: "2026-03-31",
+        start_time: "14:00",
+        location: "CSV Import Hall",
+        chair_name: "Alex Chair",
+        secretary_name: "Riley Secretary"
+      })
+    });
+    assert.equal(meetingRes.status, 201);
+    const meeting = await meetingRes.json();
+
+    const form = new FormData();
+    form.append(
+      "file",
+      new Blob(
+        [[
+          "description,owner_name,due_date,status",
+          "Follow up with vendor,Taylor Treasurer,2026-04-10,OPEN",
+          "Send member update,Riley Secretary,2026-04-12,IN_PROGRESS"
+        ].join("\n")],
+        { type: "text/csv" }
+      ),
+      "action-items.csv"
+    );
+
+    const importRes = await fetch(`${baseUrl}/meetings/${meeting.id}/actions/import-csv`, {
+      method: "POST",
+      body: form
+    });
+    assert.equal(importRes.status, 200);
+    const imported = await importRes.json();
+    assert.equal(Array.isArray(imported.items), true);
+    assert.equal(imported.items.length, 2);
+    assert.equal(imported.items[0].description, "Follow up with vendor");
+    assert.equal(imported.items[0].assignee, "Taylor Treasurer");
+
+    const listRes = await fetch(`${baseUrl}/meetings/${meeting.id}/actions`);
+    assert.equal(listRes.status, 200);
+    const items = await listRes.json();
+    assert.equal(items.length, 2);
+    assert.equal(items[1].description, "Send member update");
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
 });

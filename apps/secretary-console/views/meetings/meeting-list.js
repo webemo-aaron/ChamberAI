@@ -45,7 +45,7 @@ export function createMeetingList() {
       <span class="meeting-count" id="meetingCount">0</span>
     </div>
     <div class="list-actions">
-      <button class="btn btn-primary" id="createMeetingBtn">+ New Meeting</button>
+      <button class="btn btn-primary" id="createMeetingBtn" data-testid="quick-create">+ New Meeting</button>
       <button class="btn-icon" id="refreshBtn" title="Refresh list">⟳</button>
     </div>
   `;
@@ -230,7 +230,7 @@ function setupListHandlers(container) {
     createBtn.addEventListener("click", () => {
       container.dispatchEvent(
         new CustomEvent("create-meeting", {
-          detail: {},
+          detail: { trigger: createBtn },
           bubbles: true
         })
       );
@@ -264,4 +264,3 @@ function applyFilters(container) {
   // Re-render list
   renderMeetingsList(container, filtered, selectedMeetingId);
 }
-

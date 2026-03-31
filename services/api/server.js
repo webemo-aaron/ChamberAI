@@ -13,8 +13,16 @@ import {
   getProcessStatus,
   getDraftMinutes,
   updateDraftMinutes,
+  listDraftMinuteVersions,
+  rollbackDraftMinutes,
   updateActionItems,
   listActionItems,
+  listMeetingActions,
+  createMeetingAction,
+  updateMeetingAction,
+  deleteMeetingAction,
+  importMeetingActionsFromCsv,
+  exportMeetingActionsCsv,
   exportMinutes,
   approveMinutes,
   validateApproval,
@@ -50,6 +58,7 @@ import {
 
 export function createRequestHandler(db) {
   return async (req, res) => {
+    db.requestMetrics.requests_total = Number(db.requestMetrics?.requests_total ?? 0) + 1;
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
       const path = url.pathname;
@@ -66,6 +75,13 @@ export function createRequestHandler(db) {
             profile_refreshed: Number(db.geoMetrics?.profile_refreshed ?? 0),
             content_generated: Number(db.geoMetrics?.content_generated ?? 0)
           }
+        });
+      }
+
+      if (method === "GET" && path === "/metrics") {
+        return sendJson(res, 200, {
+          requests_total: Number(db.requestMetrics?.requests_total ?? 0),
+          errors_total: Number(db.requestMetrics?.errors_total ?? 0)
         });
       }
 
@@ -129,10 +145,71 @@ export function createRequestHandler(db) {
           return sendJson(res, 200, getDraftMinutes(db, meetingId));
         }
         if (method === "PUT") {
+          requireDemoRole(req, "secretary");
           const body = await readJsonBody(req);
-          const updated = updateDraftMinutes(db, meetingId, body.content ?? "");
+          const updated = updateDraftMinutes(db, meetingId, body);
           return sendJson(res, 200, updated);
         }
+      }
+
+      const draftVersionsMatch = path.match(/^\/meetings\/([^/]+)\/draft-minutes\/versions$/);
+      if (draftVersionsMatch && method === "GET") {
+        const meetingId = draftVersionsMatch[1];
+        return sendJson(
+          res,
+          200,
+          listDraftMinuteVersions(db, meetingId, {
+            limit: url.searchParams.get("limit") ?? undefined,
+            offset: url.searchParams.get("offset") ?? undefined
+          })
+        );
+      }
+
+      const draftRollbackMatch = path.match(/^\/meetings\/([^/]+)\/draft-minutes\/rollback$/);
+      if (draftRollbackMatch && method === "POST") {
+        requireDemoRole(req, "secretary");
+        const meetingId = draftRollbackMatch[1];
+        const body = await readJsonBody(req);
+        return sendJson(res, 200, rollbackDraftMinutes(db, meetingId, body.version));
+      }
+
+      const minutesAliasMatch = path.match(/^\/meetings\/([^/]+)\/minutes$/);
+      if (minutesAliasMatch) {
+        const meetingId = minutesAliasMatch[1];
+        if (method === "GET") {
+          const draft = getDraftMinutes(db, meetingId);
+          return sendJson(res, 200, {
+            text: draft?.content ?? "",
+            updated_at: draft?.updated_at ?? null
+          });
+        }
+        if (method === "POST") {
+          requireDemoRole(req, "secretary");
+          const body = await readJsonBody(req);
+          const updated = updateDraftMinutes(db, meetingId, {
+            content: body.text ?? "",
+            base_version: body.base_version
+          });
+          return sendJson(res, 200, {
+            text: updated?.content ?? "",
+            updated_at: updated?.updated_at ?? null
+          });
+        }
+      }
+
+      const minutesVersionsAliasMatch = path.match(/^\/meetings\/([^/]+)\/minutes\/versions$/);
+      if (minutesVersionsAliasMatch && method === "GET") {
+        const meetingId = minutesVersionsAliasMatch[1];
+        const draft = getDraftMinutes(db, meetingId);
+        const versions = draft?.content
+          ? [{ version: draft.minutes_version ?? 1, text: draft.content, updated_at: draft.updated_at ?? null }]
+          : [];
+        return sendJson(res, 200, versions);
+      }
+
+      const minutesAudioAliasMatch = path.match(/^\/meetings\/([^/]+)\/minutes\/audio$/);
+      if (minutesAudioAliasMatch && method === "POST") {
+        return sendJson(res, 202, { ok: true, status: "queued" });
       }
 
       const actionItemsMatch = path.match(/^\/meetings\/([^/]+)\/action-items$/);
@@ -151,19 +228,55 @@ export function createRequestHandler(db) {
       const actionItemsCsvMatch = path.match(/^\/meetings\/([^/]+)\/action-items\/export\/csv$/);
       if (actionItemsCsvMatch && method === "GET") {
         const meetingId = actionItemsCsvMatch[1];
-        const items = listActionItems(db, meetingId);
-        const header = ["description", "owner_name", "due_date", "status"];
-        const lines = [header.join(",")];
-        items.forEach((item) => {
-          const row = [
-            escapeCsv(item.description ?? ""),
-            escapeCsv(item.owner_name ?? ""),
-            escapeCsv(item.due_date ?? ""),
-            escapeCsv(item.status ?? "")
-          ];
-          lines.push(row.join(","));
+        const csv = exportMeetingActionsCsv(db, meetingId);
+        res.writeHead(200, {
+          "Content-Type": "text/csv",
+          "Access-Control-Allow-Origin": "*"
         });
-        const csv = lines.join("\\n");
+        return res.end(csv);
+      }
+
+      const actionsMatch = path.match(/^\/meetings\/([^/]+)\/actions$/);
+      if (actionsMatch) {
+        const meetingId = actionsMatch[1];
+        if (method === "GET") {
+          return sendJson(res, 200, listMeetingActions(db, meetingId));
+        }
+        if (method === "POST") {
+          const body = await readJsonBody(req);
+          return sendJson(res, 201, createMeetingAction(db, meetingId, body));
+        }
+      }
+
+      const actionDetailMatch = path.match(/^\/meetings\/([^/]+)\/actions\/([^/]+)$/);
+      if (actionDetailMatch) {
+        const meetingId = actionDetailMatch[1];
+        const actionId = actionDetailMatch[2];
+        if (method === "PUT") {
+          const body = await readJsonBody(req);
+          return sendJson(res, 200, updateMeetingAction(db, meetingId, actionId, body));
+        }
+        if (method === "DELETE") {
+          return sendJson(res, 200, deleteMeetingAction(db, meetingId, actionId));
+        }
+      }
+
+      const actionsImportCsvMatch = path.match(/^\/meetings\/([^/]+)\/actions\/import-csv$/);
+      if (actionsImportCsvMatch && method === "POST") {
+        const meetingId = actionsImportCsvMatch[1];
+        const formData = await readMultipartFormData(req);
+        const file = formData.get("file");
+        if (!file) {
+          throw new Error("CSV file is required");
+        }
+        const csvText = await file.text();
+        return sendJson(res, 200, importMeetingActionsFromCsv(db, meetingId, csvText));
+      }
+
+      const actionsExportCsvMatch = path.match(/^\/meetings\/([^/]+)\/actions\/export-csv$/);
+      if (actionsExportCsvMatch && method === "GET") {
+        const meetingId = actionsExportCsvMatch[1];
+        const csv = exportMeetingActionsCsv(db, meetingId);
         res.writeHead(200, {
           "Content-Type": "text/csv",
           "Access-Control-Allow-Origin": "*"
@@ -194,6 +307,28 @@ export function createRequestHandler(db) {
           const body = await readJsonBody(req);
           const updated = updatePublicSummary(db, meetingId, body ?? {});
           return sendJson(res, 200, updated);
+        }
+      }
+
+      const summaryAliasMatch = path.match(/^\/meetings\/([^/]+)\/summary$/);
+      if (summaryAliasMatch) {
+        const meetingId = summaryAliasMatch[1];
+        if (method === "GET") {
+          const summary = getPublicSummary(db, meetingId);
+          return sendJson(res, 200, {
+            text: summary?.content ?? "",
+            updated_at: summary?.updated_at ?? null
+          });
+        }
+        if (method === "POST") {
+          const body = await readJsonBody(req);
+          const updated = updatePublicSummary(db, meetingId, {
+            content: body?.text ?? ""
+          });
+          return sendJson(res, 200, {
+            text: updated?.content ?? "",
+            updated_at: updated?.updated_at ?? null
+          });
         }
       }
 
@@ -305,6 +440,14 @@ export function createRequestHandler(db) {
           }
         });
         return sendJson(res, 200, brief);
+      }
+
+      if (path === "/api/kiosk/public-config" && method === "GET") {
+        return sendJson(res, 200, {
+          featureFlags: {
+            kiosk_widget_embed: false
+          }
+        });
       }
 
       if (path === "/business-listings" && method === "GET") {
@@ -495,8 +638,15 @@ export function createRequestHandler(db) {
 
       return sendJson(res, 404, { error: "Not found" });
     } catch (error) {
-      const status = error.details ? 422 : 400;
-      return sendJson(res, status, { error: error.message, details: error.details ?? null });
+      db.requestMetrics.errors_total = Number(db.requestMetrics?.errors_total ?? 0) + 1;
+      const status = Number(error.status ?? error.statusCode ?? (error.details ? 422 : 400));
+      const payload = {
+        error: error.message,
+        details: error.details ?? null
+      };
+      if (error.current_version !== undefined) payload.current_version = error.current_version;
+      if (error.current_content !== undefined) payload.current_content = error.current_content;
+      return sendJson(res, status, payload);
     }
   };
 }
@@ -557,15 +707,55 @@ function readJsonBody(req) {
   });
 }
 
-function escapeCsv(value) {
-  const text = String(value);
-  if (text.includes("\"")) {
-    return `"${text.replace(/\"/g, "\"\"")}"`;
+function readMultipartFormData(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+    req.on("end", async () => {
+      try {
+        const body = Buffer.concat(chunks);
+        const request = new Request("http://localhost/upload", {
+          method: req.method ?? "POST",
+          headers: req.headers,
+          body,
+          duplex: "half"
+        });
+        resolve(await request.formData());
+      } catch (error) {
+        reject(new Error("Invalid multipart form data"));
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
+function requireDemoRole(req, requiredRole) {
+  const currentRole = getDemoRole(req);
+  const hierarchy = {
+    viewer: 1,
+    guest: 1,
+    secretary: 2,
+    admin: 3
+  };
+  if ((hierarchy[currentRole] ?? 0) >= (hierarchy[requiredRole] ?? 0)) {
+    return;
   }
-  if (text.includes(",") || text.includes("\n")) {
-    return `"${text}"`;
+  const error = new Error("Forbidden");
+  error.status = 403;
+  throw error;
+}
+
+function getDemoRole(req) {
+  const explicitRole = String(req.headers["x-demo-role"] ?? "").trim().toLowerCase();
+  if (explicitRole) {
+    return explicitRole;
   }
-  return text;
+  const email = String(req.headers["x-demo-email"] ?? "").trim().toLowerCase();
+  if (email === "admin@acme.com") return "admin";
+  if (email === "secretary@acme.com") return "secretary";
+  return "viewer";
 }
 
 const entryArg = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;

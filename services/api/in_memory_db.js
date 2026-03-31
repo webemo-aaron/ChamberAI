@@ -44,6 +44,10 @@ export function createInMemoryDb(options = {}) {
       profile_refreshed: 0,
       content_generated: 0
     },
+    requestMetrics: {
+      requests_total: 0,
+      errors_total: 0
+    },
     businessStorePath
   };
 
@@ -181,26 +185,46 @@ function validateMeetingInput(data) {
   if (!data.start_time) missing.push("start_time");
   if (!data.location) missing.push("location");
   if (missing.length > 0) {
-    throw new Error(`Missing required meeting fields: ${missing.join(", ")}`);
+    const error = new Error(`Missing required meeting fields: ${missing.join(", ")}`);
+    error.status = 422;
+    throw error;
   }
 }
 
 function validateAudioSourceInput(db, data) {
-  if (!data.type) throw new Error("Audio source type required");
-  if (!data.file_uri) throw new Error("Audio source file_uri required");
-  if (typeof data.duration_seconds !== "number") throw new Error("Audio source duration_seconds required");
+  if (!data.type) {
+    const error = new Error("Audio source type required");
+    error.status = 422;
+    throw error;
+  }
+  if (!data.file_uri) {
+    const error = new Error("Audio source file_uri required");
+    error.status = 422;
+    throw error;
+  }
+  if (typeof data.duration_seconds !== "number") {
+    const error = new Error("Audio source duration_seconds required");
+    error.status = 422;
+    throw error;
+  }
   if (!data.file_uri.endsWith(".mp3") && !data.file_uri.endsWith(".wav")) {
-    throw new Error("Unsupported audio format");
+    const error = new Error("Unsupported audio format");
+    error.status = 422;
+    throw error;
   }
   if (data.duration_seconds > db.config.maxDurationSeconds) {
-    throw new Error("Audio duration exceeds maximum");
+    const error = new Error("Audio duration exceeds maximum");
+    error.status = 422;
+    throw error;
   }
 }
 
 function requireMeeting(db, meetingId) {
   const meeting = db.meetings.get(meetingId);
   if (!meeting) {
-    throw new Error(`Meeting not found: ${meetingId}`);
+    const error = new Error(`Meeting not found: ${meetingId}`);
+    error.status = 404;
+    throw error;
   }
   return meeting;
 }

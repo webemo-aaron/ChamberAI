@@ -4,9 +4,9 @@ export function updatePublicSummary(db, meetingId, payload = {}) {
   const existing = getPublicSummary(db, meetingId);
   const summary = {
     meeting_id: meetingId,
-    content: payload.content ?? "",
-    fields: payload.fields ?? {},
-    checklist: payload.checklist ?? {},
+    content: payload.content ?? existing?.content ?? "",
+    fields: payload.fields ?? existing?.fields ?? {},
+    checklist: payload.checklist ?? existing?.checklist ?? {},
     published_at: existing?.published_at ?? null,
     published_by: existing?.published_by ?? null,
     updated_at: db.now().toISOString()
