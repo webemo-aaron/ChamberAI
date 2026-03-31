@@ -71,10 +71,10 @@ const saveApiBaseBtn = document.getElementById("saveApiBase");
 
 // Authentication
 const loginModal = document.getElementById("loginModal");
-const loginEmail = document.getElementById("loginEmail");
-const loginRole = document.getElementById("loginRole");
-const loginSubmit = document.getElementById("loginSubmit");
-const loginGoogle = document.getElementById("loginGoogle");
+const modalLoginEmail = document.getElementById("modalLoginEmail");
+const modalLoginRole = document.getElementById("modalLoginRole");
+const modalLoginSubmit = document.getElementById("modalLoginSubmit");
+const modalLoginGoogle = document.getElementById("modalLoginGoogle");
 const logoutBtn = document.getElementById("logout");
 const roleBadge = document.getElementById("roleBadge");
 const authCycleStatus = document.getElementById("authCycleStatus");
@@ -123,7 +123,7 @@ const featureFlagsEl = getElement("featureFlagsEl");
 
 /** Modal behavior configuration for focus trapping */
 const modalBehavior = new Map([
-  [loginModal, { initialFocus: loginGoogle, closeOnEscape: false, closeOnBackdrop: false }],
+  [loginModal, { initialFocus: modalLoginGoogle, closeOnEscape: false, closeOnBackdrop: false }],
   [quickModal, { initialFocus: quickModal.querySelector("button"), closeOnEscape: true, closeOnBackdrop: true }],
   [csvPreviewModal, { initialFocus: csvPreviewModal.querySelector("button"), closeOnEscape: true, closeOnBackdrop: true }]
 ]);
@@ -600,9 +600,9 @@ saveApiBaseBtn.addEventListener("click", () => {
 });
 
 // Login Form Submission (Manual)
-loginSubmit.addEventListener("click", () => {
-  const email = loginEmail.value.trim() || "user@example.com";
-  const role = loginRole.value || "secretary";
+modalLoginSubmit.addEventListener("click", () => {
+  const email = modalLoginEmail.value.trim() || "user@example.com";
+  const role = modalLoginRole.value || "secretary";
 
   localStorage.setItem("camRole", role);
   localStorage.setItem("camEmail", email);
@@ -615,7 +615,7 @@ loginSubmit.addEventListener("click", () => {
 });
 
 // Login Form Submission (Google)
-loginGoogle.addEventListener("click", async () => {
+modalLoginGoogle.addEventListener("click", async () => {
   try {
     const user = getFirebaseUser();
     if (!user) {
@@ -623,8 +623,8 @@ loginGoogle.addEventListener("click", async () => {
       return;
     }
 
-    const role = loginRole.value || localStorage.getItem("camRole") || "secretary";
-    const email = user.email || loginEmail.value.trim() || "user@example.com";
+    const role = modalLoginRole.value || localStorage.getItem("camRole") || "secretary";
+    const email = user.email || modalLoginEmail.value.trim() || "user@example.com";
     const displayName = user.displayName || "";
 
     localStorage.setItem("camRole", role);

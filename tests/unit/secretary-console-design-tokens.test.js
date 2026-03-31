@@ -45,3 +45,32 @@ test("secretary console core styles use ChamberAI design tokens", () => {
   assert.match(kioskCss, /\.user-bubble\s*\{[\s\S]*background:\s*linear-gradient\(\s*135deg,\s*var\(--color-primary\)/);
   assert.match(kioskCss, /\.kiosk-mode-banner\.public\s*\{[\s\S]*background-color:\s*var\(--color-primary-50\)/);
 });
+
+test("secretary console dark mode overrides hardcoded light surfaces in the shell", () => {
+  const stylesCss = read("apps/secretary-console/styles.css");
+
+  assert.match(
+    stylesCss,
+    /@media \(prefers-color-scheme: dark\) \{[\s\S]*?\.btn\.ghost\s*\{[\s\S]*?background:\s*var\(--color-bg-secondary\)/
+  );
+  assert.match(
+    stylesCss,
+    /@media \(prefers-color-scheme: dark\) \{[\s\S]*?\.meeting-card\s*\{[\s\S]*?background:\s*var\(--color-bg-secondary\)/
+  );
+  assert.match(
+    stylesCss,
+    /@media \(prefers-color-scheme: dark\) \{[\s\S]*?\.tab\s*\{[\s\S]*?background:\s*var\(--color-bg-tertiary\)/
+  );
+  assert.match(
+    stylesCss,
+    /@media \(prefers-color-scheme: dark\) \{[\s\S]*?\.summary-checklist[\s\S]*?background:\s*var\(--color-bg-secondary\)/
+  );
+  assert.match(
+    stylesCss,
+    /@media \(prefers-color-scheme: dark\) \{[\s\S]*?\.warning[\s\S]*?background:\s*var\(--color-bg-tertiary\)/
+  );
+  assert.match(
+    stylesCss,
+    /@media \(prefers-color-scheme: dark\) \{[\s\S]*?\.adjournment-gate[\s\S]*?background:\s*var\(--color-bg-tertiary\)/
+  );
+});

@@ -143,3 +143,23 @@ test("sidebar.js subscribes to chamberai:city-changed and calls updateCityPill",
   assert.match(sidebarJs, /updateCityPill/);
   assert.match(sidebarJs, /function updateCityPill/);
 });
+
+test("legacy login modal uses distinct field ids from routed login screen", () => {
+  const shellHtml = read("apps/secretary-console/index.html");
+  const routedLoginJs = read("apps/secretary-console/views/login/login.js");
+
+  assert.match(shellHtml, /modalLoginEmail/);
+  assert.match(shellHtml, /modalLoginRole/);
+  assert.match(shellHtml, /modalLoginSubmit/);
+  assert.match(shellHtml, /modalLoginGoogle/);
+
+  assert.doesNotMatch(shellHtml, /id="loginEmail"/);
+  assert.doesNotMatch(shellHtml, /id="loginRole"/);
+  assert.doesNotMatch(shellHtml, /id="loginSubmit"/);
+  assert.doesNotMatch(shellHtml, /id="loginGoogle"/);
+
+  assert.match(routedLoginJs, /emailInput\.id = "loginEmail"/);
+  assert.match(routedLoginJs, /roleSelect\.id = "loginRole"/);
+  assert.match(routedLoginJs, /submitBtn\.id = "loginSubmit"/);
+  assert.match(routedLoginJs, /googleBtn\.id = "loginGoogle"/);
+});
