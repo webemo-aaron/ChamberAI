@@ -18,6 +18,7 @@ DEPLOY_STABILIZATION_SECONDS="${DEPLOY_STABILIZATION_SECONDS:-15}"
 RELEASE_REF="${RELEASE_REF:-$(git rev-parse --short HEAD 2>/dev/null || printf 'unknown')}"
 SNAPSHOT_LABEL="${HCLOUD_SNAPSHOT_LABEL:-chamberai-auto}"
 SNAPSHOT_REASON="${SNAPSHOT_REASON:-pre-deploy}"
+SERVER_ID="${SERVER_ID:-${HCLOUD_SERVER_ID:-}}"
 
 echo "== Hetzner release workflow =="
 echo "Env file: ${ENV_FILE}"
@@ -32,6 +33,12 @@ printf '%s\n' "${backup_output}"
 backup_archive="$(printf '%s\n' "${backup_output}" | awk -F': ' '/Backup complete: /{print $2}' | tail -1)"
 
 echo "== Create Hetzner snapshot =="
+if [[ -z "${SERVER_ID}" ]]; then
+  echo "SERVER_ID/HCLOUD_SERVER_ID is required for snapshot creation." >&2
+  exit 1
+fi
+
+SERVER_ID="${SERVER_ID}" \
 SNAPSHOT_LABEL="${SNAPSHOT_LABEL}" \
 RETENTION_COUNT="${HCLOUD_SNAPSHOT_RETENTION:-7}" \
 SNAPSHOT_REASON="${SNAPSHOT_REASON}" \

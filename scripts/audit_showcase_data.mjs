@@ -10,6 +10,8 @@ const manifestPath = path.join(APP_ROOT, "data/showcase/cities.json");
 
 const API_BASE = process.env.API_BASE ?? "https://api.chamberai.mahoosuc.ai";
 const namespace = process.env.SHOWCASE_NAMESPACE ?? "showcase-live";
+const SHOWCASE_AUTH_TOKEN = process.env.SHOWCASE_AUTH_TOKEN ?? "";
+const SHOWCASE_AUTH_EMAIL = process.env.SHOWCASE_AUTH_EMAIL ?? "";
 const minMeetings = Number(process.env.SHOWCASE_MIN_MEETINGS ?? "1");
 const minBusinesses = Number(process.env.SHOWCASE_MIN_BUSINESSES ?? "1");
 const minReviews = Number(process.env.SHOWCASE_MIN_REVIEWS ?? "1");
@@ -29,7 +31,13 @@ async function main() {
     fetchJson("/business-listings?limit=200")
   ]);
 
-  const meetings = Array.isArray(allMeetings?.data) ? allMeetings.data : Array.isArray(allMeetings) ? allMeetings : [];
+  const meetings = Array.isArray(allMeetings?.meetings)
+    ? allMeetings.meetings
+    : Array.isArray(allMeetings?.data)
+      ? allMeetings.data
+      : Array.isArray(allMeetings)
+        ? allMeetings
+        : [];
   const businesses = Array.isArray(allBusinesses?.data) ? allBusinesses.data : Array.isArray(allBusinesses) ? allBusinesses : [];
 
   const summary = [];
@@ -148,7 +156,15 @@ function matchesBusiness(business, scopeId, cityName, namespace) {
 }
 
 async function fetchJson(pathname) {
-  const response = await fetch(`${API_BASE}${pathname}`);
+  const headers = {};
+  if (SHOWCASE_AUTH_TOKEN) {
+    headers.Authorization = `Bearer ${SHOWCASE_AUTH_TOKEN}`;
+  }
+  if (SHOWCASE_AUTH_EMAIL) {
+    headers["x-demo-email"] = SHOWCASE_AUTH_EMAIL;
+  }
+
+  const response = await fetch(`${API_BASE}${pathname}`, { headers });
   if (!response.ok) {
     throw new Error(`GET ${pathname} failed: ${response.status}`);
   }

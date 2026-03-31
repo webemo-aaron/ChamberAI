@@ -4,16 +4,42 @@ set -euo pipefail
 # Load HCLOUD_TOKEN from a secure local source if it is not already exported.
 # Supported sources (first match wins):
 # 1) HCLOUD_TOKEN (already in environment)
-# 2) HCLOUD_TOKEN_FILE (path to file containing token, first non-empty line)
-# 3) ~/.config/hcloud/cli.toml (hcloud CLI config, active/default context token)
+# 2) CHAMBERAI_HCLOUD_TOKEN (project-scoped env var alias)
+# 3) HCLOUD_TOKEN_FILE (path to file containing token, first non-empty line)
+# 4) ~/.config/hcloud/cli.toml (hcloud CLI config, active/default context token)
 
 if [[ -n "${HCLOUD_TOKEN:-}" ]]; then
   export HCLOUD_TOKEN
   return 0
 fi
 
+if [[ -n "${CHAMBERAI_HCLOUD_TOKEN:-}" ]]; then
+  export HCLOUD_TOKEN="${CHAMBERAI_HCLOUD_TOKEN}"
+  return 0
+fi
+
 if [[ -n "${HCLOUD_TOKEN_FILE:-}" && -r "${HCLOUD_TOKEN_FILE}" ]]; then
-  token_from_file="$(awk 'NF { print; exit }' "${HCLOUD_TOKEN_FILE}" | tr -d '\r' | xargs)"
+  token_from_file="$(
+    awk '
+      NF == 0 { next }
+      /^[[:space:]]*#/ { next }
+      /^[[:space:]]*(HCLOUD_TOKEN|CHAMBERAI_HCLOUD_TOKEN)[[:space:]]*=/ {
+        line=$0
+        sub(/^[[:space:]]*(HCLOUD_TOKEN|CHAMBERAI_HCLOUD_TOKEN)[[:space:]]*=[[:space:]]*/, "", line)
+        gsub(/^"|"$/, "", line)
+        gsub(/^'\''|'\''$/, "", line)
+        print line
+        exit
+      }
+      {
+        line=$0
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+        print line
+        exit
+      }
+    ' "${HCLOUD_TOKEN_FILE}" | tr -d '\r'
+  )"
+  token_from_file="$(printf '%s' "${token_from_file}" | xargs)"
   if [[ -n "${token_from_file}" ]]; then
     export HCLOUD_TOKEN="${token_from_file}"
     return 0
@@ -39,4 +65,3 @@ if [[ -r "${hcloud_cli_config}" ]]; then
     return 0
   fi
 fi
-
