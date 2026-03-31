@@ -1,0 +1,13 @@
+apps/secretary-console
+data/showcase
+deploy/caddy/Caddyfile
+docker-compose.hybrid.yml
+docs/HETZNER_MCP_OPERATIONS.md
+scripts/deploy_hybrid_vps.sh
+scripts/import_showcase_businesses.js
+scripts/remote_deploy.sh
+scripts/seed_showcase_data.js
+scripts/sync_hetzner_release_workspace.sh
+scripts/verify_api_image_integrity.sh
+scripts/lib
+services/api-firebase/src
