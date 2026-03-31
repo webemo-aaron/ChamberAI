@@ -35,7 +35,7 @@ Recommended baseline:
 Use one-command bootstrap (Docker + firewall + fail2ban + backup cron):
 
 ```bash
-sudo APP_DIR=/opt/chamberai SSH_PORT=22 ./scripts/bootstrap_vps.sh
+sudo APP_DIR=/opt/ChamberAI SSH_PORT=22 ./scripts/bootstrap_vps.sh
 ```
 
 This enforces:
@@ -49,7 +49,7 @@ This enforces:
 On VPS:
 
 ```bash
-cd /opt/chamberai
+cd /opt/ChamberAI
 cp .env.hybrid.example .env.hybrid
 ```
 
@@ -96,7 +96,7 @@ Restore from archive:
 ## 7) Low-Cost Ops Rhythm
 
 - Nightly backup cron:
-  - `0 3 * * * cd /opt/chamberai && ./scripts/backup_hybrid_data.sh .env.hybrid`
+  - `0 3 * * * cd /opt/ChamberAI && ./scripts/backup_hybrid_data.sh .env.hybrid`
 - Weekly local RC validation:
   - `npm run rc:local`
 - On-change verification:

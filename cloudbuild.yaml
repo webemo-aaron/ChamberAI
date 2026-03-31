@@ -1,0 +1,145 @@
+# Cloud Build configuration for ChamberAI
+# Triggered automatically on commits to main branch
+# Builds Docker image, runs tests, and deploys to staging.
+# Production rollout uses `gcloud run deploy` during promotion.
+
+steps:
+  # Step 1: Run unit tests
+  - id: "run-tests"
+    name: "node:20"
+    entrypoint: npm
+    args:
+      - "run"
+      - "test:unit"
+    waitFor: ["-"]  # Start immediately
+
+  # Step 2: Build frontend console
+  - id: "build-console"
+    name: "node:20"
+    entrypoint: npm
+    args:
+      - "run"
+      - "build:console"
+    waitFor: ["-"]
+
+  # Step 3: Build Docker image for API
+  - id: "build-image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/chamberai-api:$SHORT_SHA"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/chamberai-api:latest"
+      - "-f"
+      - "services/api-firebase/Dockerfile"
+      - "--build-arg"
+      - "NODE_ENV=production"
+      - "services/api-firebase"
+    waitFor: ["run-tests"]
+
+  # Step 4: Push image to Container Registry
+  - id: "push-image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/chamberai-api:$SHORT_SHA"
+    waitFor: ["build-image"]
+
+  # Step 5: Deploy to staging
+  - id: "deploy-staging"
+    name: "gcr.io/cloud-builders/gke-deploy"
+    args:
+      - "run"
+      - "--filename=.cloudrun.yaml"
+      - "--image=gcr.io/$PROJECT_ID/chamberai-api:$SHORT_SHA"
+      - "--location=us-central1"
+      - "--cluster=chamberai-staging"
+    env:
+      - "CLOUDSDK_COMPUTE_REGION=us-central1"
+      - "CLOUDSDK_CONTAINER_CLUSTER=chamberai-staging"
+    waitFor: ["push-image"]
+
+  # Step 6: Run staging smoke tests
+  - id: "smoke-test-staging"
+    name: "gcr.io/cloud-builders/kubectl"
+    args:
+      - "exec"
+      - "-it"
+      - "chamberai-api-0"
+      - "--"
+      - "curl"
+      - "http://localhost:4000/health"
+    env:
+      - "CLOUDSDK_COMPUTE_REGION=us-central1"
+      - "CLOUDSDK_CONTAINER_CLUSTER=chamberai-staging"
+    waitFor: ["deploy-staging"]
+
+  # Step 7: Build frontend static files
+  - id: "build-static"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "run"
+      - "--rm"
+      - "-v"
+      - "/workspace/apps/secretary-console/dist:/dist"
+      - "node:20"
+      - "/bin/sh"
+      - "-c"
+      - "cp -r /dist /workspace/staging-dist || true"
+    waitFor: ["build-console"]
+
+  # Step 8: Tag image for later promotion
+  - id: "tag-image"
+    name: "gcr.io/cloud-builders/docker"
+    args:
+      - "tag"
+      - "gcr.io/$PROJECT_ID/chamberai-api:$SHORT_SHA"
+      - "gcr.io/$PROJECT_ID/chamberai-api:$BRANCH_NAME-latest"
+    waitFor: ["push-image"]
+
+# Substitution variables
+substitutions:
+  _STAGING_PROJECT: "chamberai-staging"
+  _PROD_PROJECT: "chamberai-prod"
+
+# Build configuration
+options:
+  machineType: "N1_HIGHCPU_8"  # 8 CPU, 7.2 GB memory for faster builds
+  logging: CLOUD_LOGGING_ONLY
+  substitution_option: 'ALLOW_LOOSE'
+
+# Build timeout (45 minutes max)
+timeout: "2700s"
+
+# Images to push to Container Registry
+images:
+  - "gcr.io/$PROJECT_ID/chamberai-api:$SHORT_SHA"
+  - "gcr.io/$PROJECT_ID/chamberai-api:latest"
+
+# Only trigger on commits to main and release branches
+onFailure:
+  - "notify-on-failure"
+
+# Build history and artifacts
+artifacts:
+  objects:
+    location: "gs://$PROJECT_ID-build-artifacts/$BUILD_ID"
+    paths:
+      - "apps/secretary-console/dist/**/*"
+      - "test-results/**/*"
+      - "coverage/**/*"
+
+---
+# Separate build step for production deployments (manual trigger only)
+# This requires approval before deploying to production
+
+# Tags: production-deployment
+# Only runs on tagged releases (v1.0.0, v1.1.0, etc.)
+
+name: "production-deployment"
+filename: "cloudbuild.prod.yaml"
+
+# Trigger conditions:
+# - Manual trigger via gcloud builds submit --config=cloudbuild.prod.yaml
+# - Only available to production admins

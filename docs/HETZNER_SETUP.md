@@ -126,7 +126,7 @@ This installs:
 ### 4.1 Copy Template
 
 ```bash
-cd /opt/chamberai
+cd /opt/ChamberAI
 cp .env.hybrid.example .env.hybrid
 chmod 600 .env.hybrid
 ```
@@ -301,7 +301,7 @@ Add to crontab for automated snapshots:
 SERVER_ID=$(hcloud server list --format json | jq -r '.[] | select(.name=="chamberai-prod") | .id')
 
 # Add to crontab (daily at 2am UTC)
-(crontab -l 2>/dev/null; echo "0 2 * * * cd /opt/chamberai && HCLOUD_TOKEN=$HCLOUD_TOKEN SERVER_ID=$SERVER_ID ./scripts/hetzner_snapshot.sh >> /var/log/chamberai-snapshot.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * * cd /opt/ChamberAI && HCLOUD_TOKEN=$HCLOUD_TOKEN SERVER_ID=$SERVER_ID ./scripts/hetzner_snapshot.sh >> /var/log/chamberai-snapshot.log 2>&1") | crontab -
 ```
 
 ### 7.4 Rollback Procedure

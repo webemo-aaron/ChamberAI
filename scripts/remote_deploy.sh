@@ -6,7 +6,7 @@
 # Pulls latest code, rebuilds, and verifies the stack.
 #
 # Usage:
-#   cd /opt/chamberai
+#   cd /opt/ChamberAI
 #   ./scripts/remote_deploy.sh
 #
 # Or with custom env file:
@@ -15,7 +15,7 @@
 set -euo pipefail
 
 ENV_FILE="${1:-.env.hybrid}"
-APP_DIR="${APP_DIR:-/opt/chamberai}"
+APP_DIR="${APP_DIR:-/opt/ChamberAI}"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "ERROR: Environment file not found: $ENV_FILE"

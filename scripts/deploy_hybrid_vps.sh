@@ -13,8 +13,17 @@ fi
 echo "== Validate compose config =="
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config >/dev/null
 
-echo "== Build and start hybrid stack =="
-docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build
+echo "== Build API image (no cache) =="
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" build --no-cache api
+
+echo "== Build remaining hybrid stack images =="
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" build
+
+echo "== Verify API image integrity =="
+"$(dirname "$0")/verify_api_image_integrity.sh" "chamberofcommerceai-api:local"
+
+echo "== Start hybrid stack =="
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d
 
 echo "== Compose status =="
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps

@@ -30,7 +30,7 @@ app.chamberai    A    46.224.10.3
 
 **Full domains:**
 - `api.chamberai.mahoosuc.ai`
-- `app.chamberai.mahoosuc.ai`
+- `chamberai.mahoosuc.ai`
 
 ---
 
@@ -59,12 +59,12 @@ nano .env.hybrid
 ```bash
 # Public domains
 API_DOMAIN=api.chamberai.mahoosuc.ai
-APP_DOMAIN=app.chamberai.mahoosuc.ai
+APP_DOMAIN=chamberai.mahoosuc.ai
 ACME_EMAIL=ops@mahoosuc.ai
 
 # Frontend
-CORS_ORIGIN=https://app.chamberai.mahoosuc.ai
-APP_BASE_URL=https://app.chamberai.mahoosuc.ai
+CORS_ORIGIN=https://chamberai.mahoosuc.ai
+APP_BASE_URL=https://chamberai.mahoosuc.ai
 API_BASE=https://api.chamberai.mahoosuc.ai
 
 # Stripe (get from https://dashboard.stripe.com)

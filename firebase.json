@@ -1,14 +1,42 @@
 {
-  "emulators": {
-    "auth": { "host": "0.0.0.0", "port": 9099 },
-    "firestore": { "host": "0.0.0.0", "port": 8080 },
-    "storage": { "host": "0.0.0.0", "port": 9199 },
-    "ui": { "host": "0.0.0.0", "port": 4000 }
+  "projects": {
+    "dev": "chamberai-dev",
+    "staging": "chamberai-staging",
+    "prod": "chamberai-prod"
   },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
-  "storage": {
-    "rules": "storage.rules"
+  "storage": [
+    {
+      "bucket": "chamberai-dev.appspot.com",
+      "rules": "storage.rules",
+      "target": "dev"
+    },
+    {
+      "bucket": "chamberai-staging.appspot.com",
+      "rules": "storage.rules",
+      "target": "staging"
+    },
+    {
+      "bucket": "chamberai-prod.appspot.com",
+      "rules": "storage.rules",
+      "target": "prod"
+    }
+  ],
+  "emulators": {
+    "auth": {
+      "host": "127.0.0.1",
+      "port": 9099
+    },
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8080
+    },
+    "storage": {
+      "host": "127.0.0.1",
+      "port": 9199
+    }
   }
 }

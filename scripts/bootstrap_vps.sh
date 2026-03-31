@@ -5,14 +5,14 @@ set -euo pipefail
 # Installs Docker/Compose, UFW, fail2ban, and a nightly backup cron job.
 #
 # Usage:
-#   sudo APP_DIR=/opt/chamberai SSH_PORT=22 BACKUP_TIME="0 3 * * *" ./scripts/bootstrap_vps.sh
+#   sudo APP_DIR=/opt/ChamberAI SSH_PORT=22 BACKUP_TIME="0 3 * * *" ./scripts/bootstrap_vps.sh
 
 if [[ "${EUID}" -ne 0 ]]; then
   echo "Run as root (sudo)." >&2
   exit 1
 fi
 
-APP_DIR="${APP_DIR:-/opt/chamberai}"
+APP_DIR="${APP_DIR:-/opt/ChamberAI}"
 SSH_PORT="${SSH_PORT:-22}"
 BACKUP_TIME="${BACKUP_TIME:-0 3 * * *}"
 BACKUP_KEEP="${BACKUP_KEEP:-14}"

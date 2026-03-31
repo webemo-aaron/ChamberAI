@@ -1,8 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function: user is in the org
+    function userInOrg(orgId) {
+      return request.auth != null && request.auth.token.orgId == orgId;
+    }
+
+    // Subdomain lookup: public read only (for unauthenticated kiosk widget)
+    match /subdomains/{slug} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Organization root documents: authenticated users in that org only
+    match /organizations/{orgId} {
+      allow read, write: if userInOrg(orgId);
+    }
+
+    // All subcollections under an organization: org members only
+    match /organizations/{orgId}/{subcollection}/{document=**} {
+      allow read, write: if userInOrg(orgId);
+    }
+
+    // Deny all other access
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

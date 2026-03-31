@@ -1,0 +1,90 @@
+# This file specifies files that should NOT be sent to Cloud Build
+
+# Local development
+node_modules/
+.env*
+.env.*.local
+.env.local
+.env.*.example
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo
+.next/
+
+# Testing
+test-results/
+coverage/
+.nyc_output/
+playwright-report/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.sublime-project
+.sublime-workspace
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD (except what we need)
+.github/
+.gitlab-ci.yml
+.circleci/
+Jenkinsfile
+
+# Documentation
+docs/
+README.md
+CHANGELOG.md
+*.md
+
+# Docker (local only, Cloud Build builds its own)
+docker-compose*.yml
+Dockerfile.dev
+
+# Scripts (Cloud Build has its own deployment)
+scripts/
+Makefile
+
+# Temporary files
+*.log
+*.tmp
+*.swp
+tmp/
+temp/
+
+# Large data files
+data/
+*.csv
+*.json.gz
+
+# Credentials and secrets
+.env.*.prod
+.env.prod
+secrets/
+keys/
+*.pem
+*.key
+*.cert
+
+# VCS metadata
+.hg/
+.svn/
+CVS/
+
+# Package managers
+.npm/
+.yarn/
+pnpm-lock.yaml
+yarn.lock
+
+# Playwright (local testing only)
+tests/playwright/

@@ -16,6 +16,8 @@ set -euo pipefail
 SERVER_ID="${SERVER_ID:-}"
 SNAPSHOT_LABEL="${SNAPSHOT_LABEL:-chamberai-auto}"
 RETENTION_COUNT="${RETENTION_COUNT:-7}"
+SNAPSHOT_REASON="${SNAPSHOT_REASON:-scheduled}"
+RELEASE_REF="${RELEASE_REF:-manual}"
 
 if [[ -z "${HCLOUD_TOKEN:-}" ]]; then
   echo "ERROR: HCLOUD_TOKEN not set"
@@ -38,15 +40,26 @@ echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] Starting snapshot for server $SERVER_ID
 SNAPSHOT_NAME="${SNAPSHOT_LABEL}-$(date -u +'%Y%m%d-%H%M%S')"
 echo "Creating snapshot: $SNAPSHOT_NAME"
 
-SNAPSHOT_JSON=$(hcloud server create-image "$SERVER_ID" --label "$SNAPSHOT_LABEL" --format json)
-SNAPSHOT_ID=$(echo "$SNAPSHOT_JSON" | jq -r '.image.id')
+SNAPSHOT_JSON=$(hcloud server create-image --type snapshot "$SERVER_ID" \
+  --description "${SNAPSHOT_REASON}:${RELEASE_REF}:${SNAPSHOT_NAME}" \
+  --label "snapshot_label=${SNAPSHOT_LABEL}" \
+  --label "snapshot_reason=${SNAPSHOT_REASON}" \
+  --label "release_ref=${RELEASE_REF}")
+
+SNAPSHOT_ID=$(printf '%s\n' "${SNAPSHOT_JSON}" | sed -n 's/^Image: //p' | head -1)
+if [[ -z "${SNAPSHOT_ID}" ]]; then
+  SNAPSHOT_ID="$(
+    hcloud image list --selector "snapshot_label=${SNAPSHOT_LABEL},release_ref=${RELEASE_REF}" -o json \
+      | jq -r 'sort_by(.created)[-1].id // empty'
+  )"
+fi
 
 echo "Snapshot created: $SNAPSHOT_ID"
 
 # Wait for snapshot to complete (max 30 minutes)
 echo "Waiting for snapshot to complete..."
 for i in {1..180}; do
-  STATUS=$(hcloud image describe "$SNAPSHOT_ID" --format json | jq -r '.status')
+  STATUS=$(hcloud image describe "$SNAPSHOT_ID" -o json | jq -r '.status')
   if [[ "$STATUS" == "available" ]]; then
     echo "Snapshot completed"
     break
@@ -60,7 +73,11 @@ done
 
 # Clean up old snapshots
 echo "Cleaning up old snapshots (keeping last $RETENTION_COUNT)..."
-OLD_SNAPSHOTS=$(hcloud image list --label "$SNAPSHOT_LABEL" --format json | jq -r ".[] | .id" | tail -n +$((RETENTION_COUNT + 1)))
+OLD_SNAPSHOTS=$(
+  hcloud image list --selector "snapshot_label=${SNAPSHOT_LABEL}" -o json \
+    | jq -r 'sort_by(.created) | reverse | .[] | .id' \
+    | tail -n +$((RETENTION_COUNT + 1))
+)
 
 if [[ -n "$OLD_SNAPSHOTS" ]]; then
   while IFS= read -r OLD_SNAPSHOT_ID; do

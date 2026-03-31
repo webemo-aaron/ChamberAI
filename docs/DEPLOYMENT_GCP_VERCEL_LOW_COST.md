@@ -39,7 +39,49 @@ Set at least:
 If you need to deploy immediately before your final Vercel URL is known, set
 `VERCEL_FRONTEND_URL=*` temporarily, then tighten it to the exact `https://<app>.vercel.app` value afterward.
 
+## 1a) Required GCP IAM
+
+The principal running deploy and readiness commands needs more than Firebase Admin.
+For this profile, make sure the active `gcloud` identity has at least:
+
+- `roles/run.admin`
+- `roles/iam.serviceAccountUser`
+- `roles/artifactregistry.admin`
+- `roles/cloudbuild.builds.editor`
+- `roles/storage.admin`
+- `roles/serviceusage.serviceUsageAdmin`
+- `roles/datastore.owner`
+
+At minimum, readiness checks need:
+
+- `roles/run.viewer`
+
+Symptoms of insufficient IAM:
+
+- `Permission 'run.services.get' denied` during readiness
+- bucket create/list failures
+- Cloud Run deploy succeeds partially then fails on service update
+
+If your interactive `gcloud` session is stale but you have a JSON key locally, you can
+override credentials for one command:
+
+```bash
+CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE=/path/to/service-account.json \
+gcloud storage buckets list --project=cam-aim-dev
+```
+
+That override worked for bucket creation in local verification, but the Firebase Admin
+service account still lacked Cloud Run viewer/admin permissions.
+
 ## 2) Deploy Backend
+
+Check IAM before attempting rollout:
+
+```bash
+./scripts/check_gcp_deploy_permissions.sh .env.gcp.vercel
+```
+
+Then deploy:
 
 ```bash
 ./scripts/deploy_gcp_vercel_low_cost.sh .env.gcp.vercel
