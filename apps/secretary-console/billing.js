@@ -3,6 +3,47 @@
  * Handles subscription management, tier display, and upgrade flows
  */
 
+const TIER_STORAGE_KEY = "camUserTier";
+const TIER_PREVIEW_KEY = "camTierPreview";
+const VALID_TIERS = ["Free", "Pro", "Council", "Network"];
+
+export function normalizeTierLabel(tier = "Free") {
+  const normalized = String(tier || "Free").trim().toLowerCase();
+  if (normalized === "pro") return "Pro";
+  if (normalized === "council") return "Council";
+  if (normalized === "network") return "Network";
+  return "Free";
+}
+
+export function getStoredTier() {
+  return normalizeTierLabel(localStorage.getItem(TIER_STORAGE_KEY) || "Free");
+}
+
+export function setStoredTier(tier) {
+  localStorage.setItem(TIER_STORAGE_KEY, normalizeTierLabel(tier));
+}
+
+export function getTierPreview() {
+  const preview = localStorage.getItem(TIER_PREVIEW_KEY);
+  return preview ? normalizeTierLabel(preview) : "";
+}
+
+export function setTierPreview(tier) {
+  const normalized = normalizeTierLabel(tier);
+  if (!VALID_TIERS.includes(normalized)) {
+    return;
+  }
+  localStorage.setItem(TIER_PREVIEW_KEY, normalized);
+}
+
+export function clearTierPreview() {
+  localStorage.removeItem(TIER_PREVIEW_KEY);
+}
+
+export function getEffectiveTier(liveTier = "") {
+  return getTierPreview() || normalizeTierLabel(liveTier || getStoredTier());
+}
+
 export class BillingService {
   constructor(apiBase, authToken) {
     this.apiBase = apiBase;

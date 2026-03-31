@@ -10,13 +10,15 @@
  * Route: /settings
  */
 
-import { request, showToast } from "../../core/api.js";
+import { request } from "../../core/api.js";
 import { getCurrentRole } from "../../core/auth.js";
 import { navigate } from "../../core/router.js";
+import { showToast } from "../../core/toast.js";
 import { renderFeatureFlags } from "./feature-flags.js";
 import { renderRetentionTab } from "./retention-tab.js";
 import { renderInviteTab } from "./invite-tab.js";
 import { renderMotionIntegrationTab } from "./motion-integration-tab.js";
+import { buildOrgProfilePanel, initializeOrgProfile, serializeOrgProfile, setupOrgProfileHandlers } from "./org-profile-tab.js";
 
 /**
  * Create the settings container with tabbed interface
@@ -38,7 +40,7 @@ function renderSettingsPage() {
 
   const description = document.createElement("p");
   description.className = "settings-description";
-  description.textContent = "Manage feature flags, retention policies, invitations, and integrations";
+  description.textContent = "Manage organization profile, feature flags, retention policies, invitations, and integrations";
 
   header.appendChild(title);
   header.appendChild(description);
@@ -49,6 +51,7 @@ function renderSettingsPage() {
   tabBar.setAttribute("role", "tablist");
 
   const tabs = [
+    { id: "org-profile", label: "Organization" },
     { id: "feature-flags", label: "Feature Flags" },
     { id: "retention", label: "Retention & Limits" },
     { id: "invites", label: "Invitations" },
@@ -58,6 +61,7 @@ function renderSettingsPage() {
   tabs.forEach((tab, index) => {
     const tabButton = document.createElement("button");
     tabButton.className = "settings-tab";
+    tabButton.id = tab.id;
     tabButton.setAttribute("role", "tab");
     tabButton.setAttribute("aria-selected", index === 0 ? "true" : "false");
     tabButton.setAttribute("aria-controls", `${tab.id}-panel`);
@@ -71,10 +75,17 @@ function renderSettingsPage() {
   const panelsContainer = document.createElement("div");
   panelsContainer.className = "settings-panels";
 
+  // Organization Profile Panel
+  const orgProfilePanel = buildOrgProfilePanel();
+  orgProfilePanel.className = "settings-panel active";
+  orgProfilePanel.id = "org-profile-panel";
+  orgProfilePanel.setAttribute("role", "tabpanel");
+  orgProfilePanel.setAttribute("aria-labelledby", "org-profile");
+
   // Feature Flags Panel
   const featureFlagsPanel = document.createElement("div");
   featureFlagsPanel.id = "feature-flags-panel";
-  featureFlagsPanel.className = "settings-panel active";
+  featureFlagsPanel.className = "settings-panel";
   featureFlagsPanel.setAttribute("role", "tabpanel");
   featureFlagsPanel.setAttribute("aria-labelledby", "feature-flags");
 
@@ -99,6 +110,7 @@ function renderSettingsPage() {
   motionPanel.setAttribute("role", "tabpanel");
   motionPanel.setAttribute("aria-labelledby", "motion");
 
+  panelsContainer.appendChild(orgProfilePanel);
   panelsContainer.appendChild(featureFlagsPanel);
   panelsContainer.appendChild(retentionPanel);
   panelsContainer.appendChild(invitesPanel);
@@ -160,12 +172,32 @@ function setupTabSwitching(container) {
 
     // Allow arrow key navigation
     tab.addEventListener("keydown", (event) => {
-      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      if (
+        event.key === "ArrowRight" ||
+        event.key === "ArrowLeft" ||
+        event.key === "Home" ||
+        event.key === "End"
+      ) {
         event.preventDefault();
-        const currentIndex = Array.from(tabs).indexOf(tab);
-        const nextIndex = event.key === "ArrowRight" ? currentIndex + 1 : currentIndex - 1;
-        const nextTab = tabs[nextIndex % tabs.length];
-        if (nextTab) nextTab.click();
+        const tabList = Array.from(tabs);
+        const currentIndex = tabList.indexOf(tab);
+        let nextIndex = currentIndex;
+
+        if (event.key === "ArrowRight") {
+          nextIndex = (currentIndex + 1) % tabList.length;
+        } else if (event.key === "ArrowLeft") {
+          nextIndex = (currentIndex - 1 + tabList.length) % tabList.length;
+        } else if (event.key === "Home") {
+          nextIndex = 0;
+        } else if (event.key === "End") {
+          nextIndex = tabList.length - 1;
+        }
+
+        const nextTab = tabList[nextIndex];
+        if (nextTab) {
+          nextTab.click();
+          nextTab.focus();
+        }
       }
     });
   });
@@ -259,23 +291,14 @@ export async function settingsHandler(params, context) {
     return;
   }
 
-  // Get main containers
-  const meetingsView = document.getElementById("meetingsView");
-  const businessHubView = document.getElementById("businessHubView");
-
-  // Hide both main views
-  if (meetingsView) meetingsView.classList.add("hidden");
-  if (businessHubView) businessHubView.classList.add("hidden");
-
-  // Get or create settings container
-  let settingsContainer = document.getElementById("settingsPageContainer");
-  if (!settingsContainer) {
-    settingsContainer = document.createElement("div");
-    settingsContainer.id = "settingsPageContainer";
-    document.body.insertBefore(settingsContainer, document.querySelector(".shell"));
+  const utilityView = document.getElementById("utilityView");
+  if (!utilityView) {
+    throw new Error("Utility view container is required for settings");
   }
 
   // Render settings page
+  const settingsContainer = utilityView;
+  settingsContainer.classList.remove("hidden");
   settingsContainer.innerHTML = "";
   const settingsPage = renderSettingsPage();
   settingsContainer.appendChild(settingsPage);
@@ -285,6 +308,22 @@ export async function settingsHandler(params, context) {
 
   // Load and populate settings
   const currentSettings = await loadSettings();
+
+  // Load org profile configuration
+  let orgProfileConfig = {};
+  try {
+    const orgResult = await request("/api/settings/org-profile", "GET");
+    orgProfileConfig = orgResult || {};
+  } catch (error) {
+    console.warn("Failed to load org profile:", error);
+  }
+
+  // Populate org profile tab
+  const orgProfilePanel = settingsContainer.querySelector("#org-profile-panel");
+  if (orgProfilePanel) {
+    initializeOrgProfile(orgProfileConfig);
+    setupOrgProfileHandlers(request, showToast);
+  }
 
   // Populate feature flags tab
   const featureFlagsPanel = settingsContainer.querySelector("#feature-flags-panel");
@@ -311,7 +350,7 @@ export async function settingsHandler(params, context) {
       const success = await saveAllSettings(settingsContainer);
       if (success) {
         setTimeout(() => {
-          context.router.navigate("/meetings");
+          context.router.navigate("/dashboard");
         }, 500);
       }
     });
@@ -319,7 +358,7 @@ export async function settingsHandler(params, context) {
 
   if (cancelBtn) {
     cancelBtn.addEventListener("click", () => {
-      context.router.navigate("/meetings");
+      context.router.navigate("/dashboard");
     });
   }
 

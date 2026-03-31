@@ -25,10 +25,12 @@
    ============================================================================ */
 
 .sidebar {
-  position: fixed;
-  left: 0;
+  position: sticky;
+  grid-column: 1;
+  grid-row: 2;
   top: 72px;
-  width: var(--sidebar-width);
+  left: 0;
+  width: 100%;
   height: calc(100vh - 72px);
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
@@ -66,6 +68,21 @@
   border-bottom: 1px solid var(--sidebar-border);
 }
 
+.sidebar-city-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  background: rgba(0, 102, 204, 0.15);
+  border: 1px solid rgba(0, 102, 204, 0.3);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sidebar-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 /* ============================================================================
    Navigation List
    ============================================================================ */
@@ -74,10 +91,40 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 18px;
   padding: var(--sidebar-padding) 0;
   list-style: none;
   margin: 0;
+}
+
+.sidebar-section {
+  display: grid;
+  gap: 6px;
+}
+
+.sidebar-section-header {
+  display: grid;
+  gap: 4px;
+  padding: 0 var(--sidebar-padding);
+}
+
+.sidebar-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sidebar-text-muted);
+}
+
+.sidebar-section-description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(245, 245, 245, 0.72);
+}
+
+.sidebar-section-links {
+  display: grid;
 }
 
 /* ============================================================================
@@ -96,7 +143,11 @@
   line-height: 1.4;
   border-left: 3px solid transparent;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    padding-left 0.18s ease;
   min-height: var(--sidebar-link-height);
   user-select: none;
   border: none;
@@ -128,6 +179,17 @@
   border-left-color: var(--color-primary);
 }
 
+.sidebar-link--logout {
+  color: #ffb7bf;
+}
+
+.sidebar-link--logout:hover,
+.sidebar-link--logout[aria-current="page"] {
+  background: rgba(220, 53, 69, 0.16);
+  border-left-color: var(--color-error);
+  color: var(--sidebar-text);
+}
+
 /* Reduce motion support */
 @media (prefers-reduced-motion: reduce) {
   .sidebar-link {
@@ -153,6 +215,24 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sidebar-text);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-link.active .sidebar-badge,
+.sidebar-link:hover .sidebar-badge {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 /* ============================================================================
@@ -214,6 +294,12 @@
   line-height: 1.2;
 }
 
+.user-tier {
+  font-size: 11px;
+  color: var(--color-primary-light);
+  line-height: 1.2;
+}
+
 /* ============================================================================
    Logout Button
    ============================================================================ */
@@ -232,7 +318,11 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  transition: all 0.18s ease;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
   text-align: left;
 }
 
@@ -308,6 +398,7 @@
 
 .bottom-nav-link {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   flex: 1;
@@ -317,7 +408,10 @@
   font-size: 24px;
   color: var(--sidebar-text-muted);
   text-decoration: none;
-  transition: all 0.18s ease;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
   border-top: 3px solid transparent;
   cursor: pointer;
   user-select: none;
@@ -352,6 +446,13 @@
   align-items: center;
   justify-content: center;
   font-size: 24px;
+}
+
+.bottom-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
 }
 
 /* Reduce motion support */
@@ -418,6 +519,10 @@
 
   .bottom-icon {
     font-size: 20px;
+  }
+
+  .bottom-label {
+    font-size: 9px;
   }
 }
 

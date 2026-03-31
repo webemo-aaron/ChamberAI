@@ -5,6 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Product Management - ChamberAI</title>
   <style>
+    :root {
+      color-scheme: light dark;
+      --admin-bg-start: #eef3fb;
+      --admin-bg-end: #dfe8f7;
+      --admin-surface: rgba(255, 255, 255, 0.96);
+      --admin-surface-soft: rgba(247, 249, 252, 0.96);
+      --admin-border: #d8e0ec;
+      --admin-text: #0a0e27;
+      --admin-muted: #5c5c5c;
+      --admin-primary: #0066cc;
+      --admin-primary-strong: #0057b8;
+      --admin-success: #166240;
+      --admin-success-bg: rgba(22, 98, 64, 0.12);
+      --admin-warning: #915f13;
+      --admin-warning-bg: rgba(245, 165, 36, 0.16);
+      --admin-error: #a52828;
+      --admin-error-bg: rgba(220, 53, 69, 0.14);
+      --admin-shadow: 0 18px 40px rgba(10, 14, 39, 0.08);
+      --admin-border-strong: color-mix(in srgb, var(--admin-primary) 18%, var(--admin-border));
+      --admin-radius-lg: 24px;
+      --admin-radius-md: 18px;
+      --admin-radius-sm: 12px;
+      --admin-font-display: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+      --admin-font-ui: "Avenir Next", "Gill Sans", "Futura", sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --admin-bg-start: #141a26;
+        --admin-bg-end: #0f141d;
+        --admin-surface: rgba(29, 35, 50, 0.96);
+        --admin-surface-soft: rgba(24, 29, 43, 0.96);
+        --admin-border: #394455;
+        --admin-text: #f5f5f5;
+        --admin-muted: #bcc4d1;
+        --admin-primary: #66aaff;
+        --admin-primary-strong: #8ac1ff;
+        --admin-success: #8be7bf;
+        --admin-success-bg: rgba(51, 221, 153, 0.16);
+        --admin-warning: #ffd08a;
+        --admin-warning-bg: rgba(245, 165, 36, 0.18);
+        --admin-error: #ffb0b0;
+        --admin-error-bg: rgba(255, 107, 107, 0.16);
+        --admin-shadow: 0 20px 44px rgba(0, 0, 0, 0.28);
+        --admin-border-strong: color-mix(in srgb, var(--admin-primary) 20%, var(--admin-border));
+      }
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -12,9 +60,11 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-        Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--admin-text);
+      background:
+        radial-gradient(circle at top right, rgba(0, 102, 204, 0.14), transparent 36%),
+        linear-gradient(180deg, var(--admin-bg-start), var(--admin-bg-end));
       min-height: 100vh;
       padding: 20px;
     }
@@ -25,14 +75,16 @@
     }
 
     .connection-bar {
-      background: white;
-      border-radius: 8px;
+      background:
+        linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 16px;
       padding: 15px 20px;
       margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--admin-shadow);
+      border: 1px solid var(--admin-border);
       font-size: 13px;
     }
 
@@ -52,15 +104,15 @@
     }
 
     .status-dot.connected {
-      background: #10b981;
+      background: var(--admin-success);
     }
 
     .status-dot.unconfigured {
-      background: #f59e0b;
+      background: var(--admin-warning);
     }
 
     .status-dot.error {
-      background: #ef4444;
+      background: var(--admin-error);
     }
 
     @keyframes pulse {
@@ -72,12 +124,12 @@
       display: flex;
       gap: 20px;
       font-size: 12px;
-      color: #666;
+      color: var(--admin-muted);
     }
 
     .connection-info span {
       font-family: monospace;
-      color: #333;
+      color: var(--admin-text);
     }
 
     .connection-actions {
@@ -92,34 +144,35 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
     }
 
     .btn-primary {
-      background: #667eea;
+      background: var(--admin-primary);
       color: white;
     }
 
     .btn-primary:hover {
-      background: #5568d3;
+      background: var(--admin-primary-strong);
     }
 
     .btn-secondary {
-      background: #e5e7eb;
-      color: #111;
+      background: var(--admin-surface-soft);
+      color: var(--admin-text);
+      border: 1px solid var(--admin-border);
     }
 
     .btn-secondary:hover {
-      background: #d1d5db;
+      background: color-mix(in srgb, var(--admin-primary) 10%, var(--admin-surface-soft));
     }
 
     .btn-danger {
-      background: #ef4444;
+      background: var(--admin-error);
       color: white;
     }
 
     .btn-danger:hover {
-      background: #dc2626;
+      background: color-mix(in srgb, var(--admin-error) 88%, black);
     }
 
     .btn-icon {
@@ -128,30 +181,34 @@
     }
 
     .header {
-      background: white;
-      border-radius: 12px;
+      background:
+        linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 18px;
       padding: 25px 30px;
       margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--admin-shadow);
+      border: 1px solid var(--admin-border);
     }
 
     .header h1 {
       font-size: 26px;
-      color: #111;
+      color: var(--admin-text);
       margin-bottom: 5px;
     }
 
     .header p {
-      color: #666;
+      color: var(--admin-muted);
       font-size: 14px;
     }
 
     .auth-config {
-      background: white;
-      border-radius: 12px;
+      background:
+        linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 18px;
       padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--admin-shadow);
+      border: 1px solid var(--admin-border);
       display: none;
     }
 
@@ -163,7 +220,7 @@
       font-size: 14px;
       margin-bottom: 15px;
       font-weight: 600;
-      color: #111;
+      color: var(--admin-text);
     }
 
     .auth-form {
@@ -180,22 +237,24 @@
     .form-group label {
       font-size: 12px;
       font-weight: 600;
-      color: #666;
+      color: var(--admin-muted);
       text-transform: uppercase;
     }
 
     .form-group input {
       padding: 10px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--admin-border);
       border-radius: 6px;
       font-size: 13px;
       font-family: monospace;
+      background: var(--admin-surface-soft);
+      color: var(--admin-text);
     }
 
     .form-group input:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: var(--admin-primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-primary) 18%, transparent);
     }
 
     .auth-actions {
@@ -205,17 +264,19 @@
     }
 
     .tab-section {
-      background: white;
-      border-radius: 12px;
+      background:
+        linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--admin-shadow);
       margin-bottom: 30px;
+      border: 1px solid var(--admin-border);
     }
 
     .tabs {
       display: flex;
-      border-bottom: 1px solid #eee;
-      background: #fafafa;
+      border-bottom: 1px solid var(--admin-border);
+      background: color-mix(in srgb, var(--admin-primary) 4%, var(--admin-surface-soft));
     }
 
     .tab {
@@ -226,18 +287,18 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      color: #999;
+      color: var(--admin-muted);
       border-bottom: 3px solid transparent;
-      transition: all 0.2s;
+      transition: color 0.2s, border-color 0.2s, background-color 0.2s;
     }
 
     .tab:hover {
-      color: #667eea;
+      color: var(--admin-primary);
     }
 
     .tab.active {
-      color: #667eea;
-      border-bottom-color: #667eea;
+      color: var(--admin-primary);
+      border-bottom-color: var(--admin-primary);
     }
 
     .tab-content {
@@ -250,16 +311,17 @@
     }
 
     .card {
-      background: white;
-      border-radius: 12px;
+      background:
+        linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 16px;
       padding: 20px;
-      border: 1px solid #eee;
+      border: 1px solid var(--admin-border);
       margin-bottom: 15px;
     }
 
     .card h3 {
       font-size: 16px;
-      color: #111;
+      color: var(--admin-text);
       margin-bottom: 10px;
       display: flex;
       align-items: center;
@@ -272,7 +334,7 @@
       margin: 12px 0;
       flex-wrap: wrap;
       font-size: 13px;
-      color: #666;
+      color: var(--admin-muted);
     }
 
     .card-meta-item {
@@ -284,13 +346,13 @@
     .card-meta-label {
       font-size: 11px;
       text-transform: uppercase;
-      color: #999;
+      color: var(--admin-muted);
       font-weight: 600;
     }
 
     .card-meta-value {
       font-family: monospace;
-      color: #333;
+      color: var(--admin-text);
     }
 
     .badge {
@@ -303,44 +365,44 @@
     }
 
     .badge-pro {
-      background: #dbeafe;
-      color: #0c4a6e;
+      background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface));
+      color: var(--admin-primary-strong);
     }
 
     .badge-council {
-      background: #f3e8ff;
-      color: #5b21b6;
+      background: color-mix(in srgb, var(--admin-primary) 18%, var(--admin-surface));
+      color: var(--admin-primary-strong);
     }
 
     .badge-network {
-      background: #dbeafe;
-      color: #0c4a6e;
+      background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface));
+      color: var(--admin-primary-strong);
     }
 
     .badge-addon {
-      background: #dcfce7;
-      color: #166534;
+      background: var(--admin-success-bg);
+      color: var(--admin-success);
     }
 
     .badge-feature {
-      background: #fce7f3;
-      color: #831843;
+      background: color-mix(in srgb, var(--admin-primary) 10%, var(--admin-surface-soft));
+      color: var(--admin-primary);
     }
 
     .badge-service {
-      background: #fed7aa;
-      color: #92400e;
+      background: var(--admin-warning-bg);
+      color: var(--admin-warning);
     }
 
     .empty-state {
       text-align: center;
       padding: 40px 20px;
-      color: #999;
+      color: var(--admin-muted);
     }
 
     .empty-state h3 {
       font-size: 18px;
-      color: #666;
+      color: var(--admin-text);
       margin-bottom: 10px;
     }
 
@@ -351,7 +413,7 @@
     .price-display {
       font-size: 20px;
       font-weight: 700;
-      color: #667eea;
+      color: var(--admin-primary);
       margin: 10px 0;
     }
 
@@ -362,7 +424,7 @@
     .form-section h3 {
       font-size: 14px;
       font-weight: 600;
-      color: #111;
+      color: var(--admin-text);
       margin-bottom: 15px;
     }
 
@@ -381,21 +443,23 @@
     .form-group label {
       font-size: 12px;
       font-weight: 600;
-      color: #333;
+      color: var(--admin-text);
     }
 
     input, select, textarea {
       padding: 10px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--admin-border);
       border-radius: 6px;
       font-size: 13px;
       font-family: inherit;
+      background: var(--admin-surface-soft);
+      color: var(--admin-text);
     }
 
     input:focus, select:focus, textarea:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: var(--admin-primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-primary) 18%, transparent);
     }
 
     textarea {
@@ -404,12 +468,12 @@
     }
 
     .success-panel {
-      background: #d1fae5;
-      border: 1px solid #6ee7b7;
+      background: var(--admin-success-bg);
+      border: 1px solid color-mix(in srgb, var(--admin-success) 34%, var(--admin-border));
       border-radius: 6px;
       padding: 15px;
       margin: 15px 0;
-      color: #065f46;
+      color: var(--admin-success);
     }
 
     .success-panel h4 {
@@ -420,17 +484,17 @@
     .success-panel .copy-link {
       margin-top: 10px;
       padding: 8px 12px;
-      background: white;
-      border: 1px solid #6ee7b7;
+      background: var(--admin-surface);
+      border: 1px solid color-mix(in srgb, var(--admin-success) 34%, var(--admin-border));
       border-radius: 4px;
-      color: #065f46;
+      color: var(--admin-success);
       font-size: 12px;
       cursor: pointer;
       display: inline-block;
     }
 
     .success-panel .copy-link:hover {
-      background: #f0fdf4;
+      background: color-mix(in srgb, var(--admin-success) 10%, var(--admin-surface));
     }
 
     .batch-table {
@@ -443,20 +507,20 @@
     .batch-table td {
       padding: 12px;
       text-align: left;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--admin-border);
       font-size: 13px;
     }
 
     .batch-table th {
-      background: #fafafa;
+      background: color-mix(in srgb, var(--admin-primary) 4%, var(--admin-surface-soft));
       font-weight: 600;
-      color: #333;
+      color: var(--admin-text);
     }
 
     .batch-table input, .batch-table select {
       width: 100%;
       padding: 6px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--admin-border);
       border-radius: 4px;
       font-size: 12px;
     }
@@ -470,28 +534,28 @@
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: white;
+      background: var(--admin-surface);
       border-radius: 8px;
       padding: 15px 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--admin-shadow);
       z-index: 1000;
       max-width: 300px;
       animation: slideIn 0.3s ease-out;
     }
 
     .toast.success {
-      border-left: 4px solid #10b981;
-      color: #065f46;
+      border-left: 4px solid var(--admin-success);
+      color: var(--admin-success);
     }
 
     .toast.error {
-      border-left: 4px solid #ef4444;
-      color: #991b1b;
+      border-left: 4px solid var(--admin-error);
+      color: var(--admin-error);
     }
 
     .toast.info {
-      border-left: 4px solid #0284c7;
-      color: #0c4a6e;
+      border-left: 4px solid var(--admin-primary);
+      color: var(--admin-primary-strong);
     }
 
     @keyframes slideIn {
@@ -509,8 +573,8 @@
       display: inline-block;
       width: 14px;
       height: 14px;
-      border: 2px solid #e5e7eb;
-      border-top-color: #667eea;
+      border: 2px solid color-mix(in srgb, var(--admin-border) 80%, transparent);
+      border-top-color: var(--admin-primary);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
     }
@@ -533,16 +597,17 @@
     }
 
     .product-card {
-      background: white;
-      border: 1px solid #eee;
+      background: var(--admin-surface);
+      border: 1px solid var(--admin-border);
       border-radius: 8px;
       padding: 15px;
-      transition: all 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     }
 
     .product-card:hover {
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      border-color: #667eea;
+      box-shadow: var(--admin-shadow);
+      border-color: var(--admin-primary);
+      transform: translateY(-1px);
     }
 
     .product-header {
@@ -555,7 +620,7 @@
     .product-name {
       font-size: 15px;
       font-weight: 600;
-      color: #111;
+      color: var(--admin-text);
     }
 
     .product-badges {
@@ -580,30 +645,30 @@
     }
 
     .validation-list li.pass {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--admin-success-bg);
+      color: var(--admin-success);
     }
 
     .validation-list li.fail {
-      background: #fee2e2;
-      color: #991b1b;
+      background: var(--admin-error-bg);
+      color: var(--admin-error);
     }
 
     .validation-list li.warn {
-      background: #fef3c7;
-      color: #92400e;
+      background: var(--admin-warning-bg);
+      color: var(--admin-warning);
     }
 
     .footer {
       text-align: center;
-      color: white;
+      color: var(--admin-muted);
       padding: 20px;
       font-size: 12px;
     }
 
     .progress-bar {
       height: 8px;
-      background: #e5e7eb;
+      background: color-mix(in srgb, var(--admin-border) 75%, transparent);
       border-radius: 4px;
       overflow: hidden;
       margin: 10px 0;
@@ -611,19 +676,19 @@
 
     .progress-fill {
       height: 100%;
-      background: #667eea;
+      background: var(--admin-primary);
       transition: width 0.3s;
     }
 
     .code-block {
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
+      background: color-mix(in srgb, var(--admin-bg-end) 88%, black);
+      border: 1px solid var(--admin-border);
       border-radius: 6px;
       padding: 12px;
       font-family: monospace;
       font-size: 12px;
       overflow-x: auto;
-      color: #111;
+      color: color-mix(in srgb, var(--admin-text) 88%, white);
       margin: 10px 0;
     }
 
@@ -633,10 +698,474 @@
       height: 16px;
       opacity: 0.6;
     }
+
+    body {
+      font-family: var(--admin-font-ui);
+      color: var(--admin-text);
+      background:
+        radial-gradient(circle at top left, rgba(0, 102, 204, 0.14), transparent 24%),
+        linear-gradient(180deg, var(--admin-bg-start), var(--admin-bg-end));
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1280px;
+    }
+
+    .shell-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      background: color-mix(in srgb, var(--admin-surface) 90%, transparent);
+      border: 1px solid var(--admin-border);
+      border-radius: var(--admin-radius-md);
+      box-shadow: var(--admin-shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .shell-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: var(--admin-primary);
+      color: #f5f7fb;
+      font-family: var(--admin-font-display);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .shell-kicker {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--admin-primary-strong);
+      margin-bottom: 4px;
+    }
+
+    .shell-title {
+      font-family: var(--admin-font-display);
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .shell-subtitle {
+      font-size: 13px;
+      color: var(--admin-muted);
+    }
+
+    .shell-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .shell-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--admin-border-strong);
+      background: color-mix(in srgb, var(--admin-surface) 92%, transparent);
+      color: var(--admin-primary-strong);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .connection-bar,
+    .auth-config,
+    .header,
+    .tab-section,
+    .card,
+    .product-card {
+      border: 1px solid var(--admin-border);
+      box-shadow: var(--admin-shadow);
+    }
+
+    .connection-bar,
+    .auth-config,
+    .header,
+    .tab-section,
+    .card,
+    .product-card,
+    form,
+    .toast {
+      border-radius: var(--admin-radius-md) !important;
+    }
+
+    .connection-bar,
+    .auth-config,
+    .header,
+    .tab-section,
+    .card,
+    .product-card,
+    form,
+    .toast,
+    .success-panel {
+      background: var(--admin-surface);
+    }
+
+    .connection-bar {
+      padding: 18px 20px;
+      margin-bottom: 20px;
+    }
+
+    .connection-info,
+    .card-meta,
+    .empty-state,
+    .header p,
+    .form-group label,
+    .footer {
+      color: var(--admin-muted);
+    }
+
+    .connection-info span,
+    .card-meta-value,
+    .card h3,
+    .product-name,
+    .form-section h3,
+    .empty-state h3 {
+      color: var(--admin-text);
+    }
+
+    .card-meta-label {
+      color: color-mix(in srgb, var(--admin-muted) 80%, var(--admin-bg-end));
+    }
+
+    .header {
+      background:
+        radial-gradient(circle at top right, rgba(0, 102, 204, 0.12), transparent 34%),
+        linear-gradient(135deg, var(--admin-surface), var(--admin-surface-soft));
+      padding: 34px;
+      box-shadow: 0 24px 60px rgba(10, 14, 39, 0.16);
+      border-color: var(--admin-border-strong);
+    }
+
+    .header h1 {
+      font-size: 38px;
+      font-family: var(--admin-font-display);
+      color: var(--admin-text);
+      margin-bottom: 12px;
+    }
+
+    .header p {
+      font-size: 15px;
+      max-width: 64ch;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--admin-surface) 86%, transparent);
+      border: 1px solid var(--admin-border-strong);
+      color: var(--admin-primary-strong);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    button {
+      padding: 10px 16px;
+      border-radius: var(--admin-radius-sm);
+      font-family: var(--admin-font-ui);
+    }
+
+    .btn-primary {
+      background: var(--admin-primary);
+      color: #f5f7fb;
+    }
+
+    .btn-primary:hover {
+      background: var(--admin-primary-strong);
+    }
+
+    .btn-secondary {
+      background: var(--admin-surface-soft);
+      color: var(--admin-text);
+    }
+
+    .btn-secondary:hover {
+      background: color-mix(in srgb, var(--admin-primary) 10%, var(--admin-surface-soft));
+    }
+
+    .tab-section {
+      background: var(--admin-surface);
+      border-radius: var(--admin-radius-lg);
+      overflow: hidden;
+    }
+
+    .tabs {
+      border-bottom-color: var(--admin-border);
+      background: linear-gradient(180deg, rgba(0, 102, 204, 0.03), rgba(10, 14, 39, 0.01));
+      padding: 8px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      flex: 0 0 auto;
+      padding: 12px 16px;
+      color: color-mix(in srgb, var(--admin-muted) 80%, var(--admin-bg-end));
+      border-bottom: 0;
+      border-radius: var(--admin-radius-sm);
+    }
+
+    .tab:hover,
+    .tab.active {
+      color: var(--admin-primary-strong);
+    }
+
+    .tab.active {
+      background: rgba(0, 102, 204, 0.08);
+    }
+
+    input, select, textarea,
+    .batch-table input, .batch-table select,
+    .form-group input {
+      border: 1px solid var(--admin-border);
+      border-radius: 12px;
+      background: var(--admin-surface);
+      color: var(--admin-text);
+      padding: 11px;
+    }
+
+    input:focus, select:focus, textarea:focus,
+    .form-group input:focus {
+      border-color: var(--admin-primary);
+      box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    }
+
+    .batch-table th,
+    .tabs {
+      background-color: rgba(0, 102, 204, 0.03);
+    }
+
+    .batch-table th,
+    .batch-table td {
+      border-bottom-color: var(--admin-border);
+    }
+
+    .progress-fill {
+      background: var(--admin-primary);
+    }
+
+    .code-block {
+      background: color-mix(in srgb, var(--admin-bg-end) 88%, black);
+      border-color: transparent;
+      color: color-mix(in srgb, var(--admin-text) 88%, white);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .spinner {
+      border-top-color: var(--admin-primary);
+    }
+
+    .tab-utility-link {
+      margin-left: auto;
+    }
+
+    .tab-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab-title {
+      margin: 0;
+      font-size: 18px;
+      color: var(--admin-text);
+    }
+
+    .form-shell,
+    .batch-shell {
+      background: var(--admin-surface);
+      padding: 20px;
+      border-radius: var(--admin-radius-md);
+      border: 1px solid var(--admin-border);
+      box-shadow: var(--admin-shadow);
+    }
+
+    .form-shell-actions,
+    .batch-shell-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .form-shell-actions {
+      margin-top: 30px;
+    }
+
+    .form-span-full {
+      grid-column: 1 / -1;
+    }
+
+    .progress-caption,
+    .support-copy,
+    .products-loading-copy {
+      color: var(--admin-muted);
+      font-size: 13px;
+    }
+
+    .progress-caption {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .support-copy {
+      margin-bottom: 15px;
+    }
+
+    .section-spacing-sm {
+      margin-bottom: 20px;
+    }
+
+    .section-spacing-md {
+      margin-top: 20px;
+    }
+
+    .progress-shell {
+      margin: 15px 0;
+    }
+
+    .is-hidden {
+      display: none;
+    }
+
+    .table-scroll-shell {
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+
+    .products-loading {
+      grid-column: 1 / -1;
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .products-loading-copy {
+      margin-top: 0;
+    }
+
+    .empty-state {
+      display: grid;
+      gap: 10px;
+      justify-items: start;
+      text-align: left;
+      padding: 24px;
+      border-radius: var(--admin-radius-md);
+      border: 1px dashed var(--admin-border);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--admin-primary) 8%, transparent), transparent),
+        var(--admin-surface-soft);
+    }
+
+    .empty-state-actions {
+      margin-top: 6px;
+    }
+
+    .meta-link {
+      margin-left: 5px;
+      text-decoration: none;
+      color: var(--admin-primary);
+    }
+
+    .meta-link:hover {
+      color: var(--admin-primary-strong);
+    }
+
+    .meta-value-break {
+      word-break: break-all;
+    }
+
+    .card-divider {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--admin-border);
+    }
+
+    .inline-list,
+    .ordered-list {
+      margin-left: 20px;
+      margin-top: 10px;
+    }
+
+    .ordered-list li {
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 780px) {
+      body {
+        padding: 16px;
+      }
+
+      .shell-bar,
+      .connection-bar {
+        display: grid;
+      }
+
+      .header {
+        padding: 24px;
+      }
+
+      .header h1 {
+        font-size: 30px;
+      }
+
+      .tabs {
+        display: grid;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="shell-bar">
+      <div class="shell-brand">
+        <div class="brand-mark">CAM</div>
+        <div>
+          <span class="shell-kicker">ChamberAI Admin</span>
+          <div class="shell-title">Product Operations</div>
+          <div class="shell-subtitle">Catalog control for premium chamber commerce workflows</div>
+        </div>
+      </div>
+      <div class="shell-links">
+        <a class="shell-link" href="./">Open Console</a>
+        <a class="shell-link" href="./stripe-admin.html">Open Billing Admin</a>
+      </div>
+    </div>
+
     <!-- Connection Bar -->
     <div class="connection-bar">
       <div class="connection-status">
@@ -673,8 +1202,13 @@
 
     <!-- Header -->
     <div class="header">
-      <h1>📦 Product Management</h1>
-      <p>Create, manage, and configure Stripe products with real-time synchronization</p>
+      <h1>ChamberAI Product Operations</h1>
+      <p>Catalog management, Stripe synchronization, and launch configuration for chamber offerings.</p>
+      <div class="hero-meta">
+        <span class="hero-pill">Catalog workflow</span>
+        <span class="hero-pill">Launch configuration</span>
+        <span class="hero-pill">Stripe sync</span>
+      </div>
     </div>
 
     <!-- Tab Section -->
@@ -684,13 +1218,13 @@
         <button class="tab" onclick="switchTab('create')">Create Product</button>
         <button class="tab" onclick="switchTab('batch')">Batch Create</button>
         <button class="tab" onclick="switchTab('config')">Stripe Config</button>
-        <button class="tab" style="margin-left: auto;" onclick="window.location.href='stripe-admin.html'">← Back to Stripe Admin</button>
+        <button class="tab tab-utility-link" onclick="window.location.href='stripe-admin.html'">Back to Billing Admin</button>
       </div>
 
       <!-- Products Tab -->
       <div id="products" class="tab-content active">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="font-size: 16px; color: #111; margin: 0;">Product Catalog</h3>
+        <div class="tab-toolbar">
+          <h3 class="tab-title">Product Catalog</h3>
           <button class="btn-primary btn-icon" onclick="loadProducts()">🔄 Refresh</button>
         </div>
         <div id="productsList" class="products-grid"></div>
@@ -698,16 +1232,16 @@
 
       <!-- Create Product Tab -->
       <div id="create" class="tab-content">
-        <h3 style="font-size: 18px; margin-bottom: 25px; color: #111;">Create New Product</h3>
-        <form onsubmit="submitCreateForm(event)" style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+        <h3 class="tab-title section-spacing-sm">Create New Product</h3>
+        <form class="form-shell" onsubmit="submitCreateForm(event)">
           <div class="form-section">
             <h3>Basic Information</h3>
             <div class="form-grid">
-              <div class="form-group" style="grid-column: 1 / -1;">
+              <div class="form-group form-span-full">
                 <label>Product Name *</label>
                 <input type="text" id="productName" placeholder="e.g., Premium Analytics" required />
               </div>
-              <div class="form-group" style="grid-column: 1 / -1;">
+              <div class="form-group form-span-full">
                 <label>Description</label>
                 <textarea id="productDesc" placeholder="Brief description of the product..."></textarea>
               </div>
@@ -765,20 +1299,20 @@
             </div>
           </div>
 
-          <div style="display: flex; gap: 10px; margin-top: 30px;">
+          <div class="form-shell-actions">
             <button type="submit" class="btn-primary">✓ Create Product</button>
             <button type="reset" class="btn-secondary">↻ Reset</button>
           </div>
         </form>
 
-        <div id="createSuccess" style="display: none; margin-top: 20px;"></div>
+        <div id="createSuccess" class="is-hidden section-spacing-md"></div>
       </div>
 
       <!-- Batch Create Tab -->
       <div id="batch" class="tab-content">
-        <h3 style="font-size: 18px; margin-bottom: 20px; color: #111;">Batch Create Products</h3>
-        <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
-          <div style="overflow-x: auto; margin-bottom: 20px;">
+        <h3 class="tab-title section-spacing-sm">Batch Create Products</h3>
+        <div class="batch-shell">
+          <div class="table-scroll-shell">
             <table class="batch-table">
               <thead>
                 <tr>
@@ -819,7 +1353,7 @@
             </table>
           </div>
 
-          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <div class="batch-shell-actions section-spacing-sm">
             <button type="button" class="btn-secondary" onclick="addBatchRow()">➕ Add Row</button>
             <button type="button" class="btn-primary" onclick="submitBatchCreate()">✓ Create All</button>
           </div>
@@ -830,15 +1364,15 @@
 
       <!-- Stripe Config Tab -->
       <div id="config" class="tab-content">
-        <h3 style="font-size: 18px; margin-bottom: 20px; color: #111;">Stripe Configuration Status</h3>
+        <h3 class="tab-title section-spacing-sm">Stripe Configuration Status</h3>
 
         <div class="card">
           <h3>Validation Progress</h3>
-          <div id="validationProgress" style="margin: 15px 0;">
+          <div id="validationProgress" class="progress-shell">
             <div class="progress-bar">
               <div class="progress-fill" style="width: 0%"></div>
             </div>
-            <div style="text-align: center; font-size: 14px; color: #666;">
+            <div class="progress-caption">
               <span id="progressPercent">0%</span> Complete
             </div>
           </div>
@@ -846,17 +1380,17 @@
 
         <div id="validationChecks"></div>
 
-        <div style="margin-top: 20px;">
+        <div class="section-spacing-md">
           <button class="btn-primary" onclick="loadStripeStatus()">🔄 Test Connection</button>
         </div>
 
-        <div class="card" style="margin-top: 20px;">
+        <div class="card section-spacing-md">
           <h3>Local Webhook Forwarding</h3>
-          <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+          <p class="support-copy">
             To test webhooks locally, forward Stripe events to your development server:
           </p>
           <div class="code-block">stripe listen --forward-to http://localhost:4001/billing/webhook</div>
-          <p style="color: #666; font-size: 13px; margin-top: 10px;">
+          <p class="support-copy products-loading-copy">
             Then in another terminal, trigger test events:
           </p>
           <div class="code-block">stripe trigger checkout.session.completed</div>
@@ -871,7 +1405,7 @@
   </div>
 
   <script type="module">
-    const API_BASE = window.location.origin;
+    const API_BASE = localStorage.getItem("camApiBase") || window.location.origin;
 
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
@@ -889,6 +1423,21 @@
         "X-Org-Id": localStorage.getItem("orgId") || "org1",
         "Content-Type": "application/json"
       };
+    }
+
+    async function fetchAdminJson(path, options = {}) {
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: {
+          ...getHeaders(),
+          ...(options.headers || {})
+        }
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || data.error || `Request failed: ${response.status}`);
+      }
+      return data;
     }
 
     function loadAuth() {
@@ -929,15 +1478,14 @@
     // API functions
     async function loadProducts() {
       const productsList = document.getElementById("productsList");
-      productsList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;"><div class="spinner"></div><p style="color: #666; margin-top: 10px;">Loading products...</p></div>';
+      productsList.innerHTML = '<div class="products-loading"><div class="spinner"></div><p class="products-loading-copy">Loading products...</p></div>';
 
       try {
-        const res = await fetch(`${API_BASE}/products/stripe/all`, { headers: getHeaders() });
-        const data = await res.json();
+        const data = await fetchAdminJson("/products/stripe/all");
 
         if (!data.products || data.products.length === 0) {
           productsList.innerHTML = `
-            <div style="grid-column: 1/-1;">
+            <div class="grid-span-full">
               <div class="empty-state">
                 <h3>No products yet</h3>
                 <p>Click "Create Product" to get started</p>
@@ -951,7 +1499,7 @@
         productsList.innerHTML = data.products.map(product => renderProductCard(product)).join("");
       } catch (err) {
         console.error("Error loading products:", err);
-        productsList.innerHTML = '<div style="grid-column: 1/-1;"><div class="alert error">Failed to load products</div></div>';
+        productsList.innerHTML = '<div class="grid-span-full"><div class="alert error">Failed to load products</div></div>';
       }
     }
 
@@ -970,17 +1518,17 @@
           <div class="card-meta">
             <div class="card-meta-item">
               <div class="card-meta-label">Stripe Product</div>
-              <div class="card-meta-value" style="word-break: break-all;">
+              <div class="card-meta-value meta-value-break">
                 ${product.stripe_product_id}
-                <a href="${stripeLink}" target="_blank" style="margin-left: 5px; text-decoration: none; color: #667eea;">↗</a>
+                <a href="${stripeLink}" target="_blank" class="meta-link" aria-label="Open ${product.name} in Stripe">↗</a>
               </div>
             </div>
             <div class="card-meta-item">
               <div class="card-meta-label">Stripe Price</div>
-              <div class="card-meta-value" style="word-break: break-all;">${product.stripe_price_id}</div>
+              <div class="card-meta-value meta-value-break">${product.stripe_price_id}</div>
             </div>
           </div>
-          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+          <div class="card-divider">
             <button class="btn-danger btn-icon" onclick="archiveProduct('${product.id}')">🗑 Archive</button>
           </div>
         </div>
@@ -1003,18 +1551,10 @@
       };
 
       try {
-        const res = await fetch(`${API_BASE}/products`, {
+        const result = await fetchAdminJson("/products", {
           method: "POST",
-          headers: getHeaders(),
           body: JSON.stringify(formData)
         });
-
-        const result = await res.json();
-
-        if (!res.ok) {
-          showToast("Error: " + (result.message || "Failed to create product"), "error");
-          return;
-        }
 
         const successDiv = document.getElementById("createSuccess");
         successDiv.innerHTML = `
@@ -1035,7 +1575,7 @@
             </a>
           </div>
         `;
-        successDiv.style.display = "block";
+        successDiv.classList.remove("is-hidden");
 
         // Clear form and reload products
         event.target.reset();
@@ -1053,17 +1593,11 @@
       if (!confirm("Are you sure you want to archive this product?")) return;
 
       try {
-        const res = await fetch(`${API_BASE}/products/${id}`, {
-          method: "DELETE",
-          headers: getHeaders()
+        await fetchAdminJson(`/products/${id}`, {
+          method: "DELETE"
         });
-
-        if (res.ok) {
-          showToast("Product archived", "success");
-          loadProducts();
-        } else {
-          showToast("Error archiving product", "error");
-        }
+        showToast("Product archived", "success");
+        loadProducts();
       } catch (err) {
         console.error("Error:", err);
         showToast("Error archiving product", "error");
@@ -1116,29 +1650,21 @@
       }
 
       try {
-        const res = await fetch(`${API_BASE}/products/batch/create`, {
+        const result = await fetchAdminJson("/products/batch/create", {
           method: "POST",
-          headers: getHeaders(),
           body: JSON.stringify({ products })
         });
+        const resultsDiv = document.getElementById("batchResults");
+        let html = `<div class="success-panel"><h4>✓ Created ${result.created} of ${result.total} products</h4><ul class="inline-list">`;
 
-        const result = await res.json();
+        result.products.forEach(p => {
+          html += `<li>${p.name} <strong>${p.stripe_product_id}</strong> ✓</li>`;
+        });
 
-        if (res.ok) {
-          const resultsDiv = document.getElementById("batchResults");
-          let html = `<div class="success-panel"><h4>✓ Created ${result.created} of ${result.total} products</h4><ul style="margin-left: 20px; margin-top: 10px;">`;
-
-          result.products.forEach(p => {
-            html += `<li>${p.name} <strong>${p.stripe_product_id}</strong> ✓</li>`;
-          });
-
-          html += `</ul></div>`;
-          resultsDiv.innerHTML = html;
-          setTimeout(() => loadProducts(), 1000);
-          showToast("Batch products created successfully", "success");
-        } else {
-          showToast("Error creating batch products", "error");
-        }
+        html += `</ul></div>`;
+        resultsDiv.innerHTML = html;
+        setTimeout(() => loadProducts(), 1000);
+        showToast("Batch products created successfully", "success");
       } catch (err) {
         console.error("Error:", err);
         showToast("Error creating batch products", "error");
@@ -1147,13 +1673,18 @@
 
     async function loadStripeStatus() {
       try {
-        const [systemRes, validationRes] = await Promise.all([
-          fetch(`${API_BASE}/billing/status/system`),
-          fetch(`${API_BASE}/billing/status/validation`)
+        const [system, validation] = await Promise.all([
+          fetchAdminJson("/billing/status/system", {
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }),
+          fetchAdminJson("/billing/status/validation", {
+            headers: {
+              "Content-Type": "application/json"
+            }
+          })
         ]);
-
-        const system = await systemRes.json();
-        const validation = await validationRes.json();
 
         // Update connection bar
         const statusDot = document.getElementById("statusDot");
@@ -1185,9 +1716,9 @@
         checksDiv.innerHTML = `<ul class="validation-list">${html}</ul>`;
 
         if (validation.recommendations.length > 0) {
-          checksDiv.innerHTML += `<div class="card" style="margin-top: 20px;"><h3>Next Steps</h3><ol style="margin-left: 20px; margin-top: 10px;">`;
+          checksDiv.innerHTML += `<div class="card section-spacing-md"><h3>Next Steps</h3><ol class="ordered-list">`;
           validation.recommendations.forEach(rec => {
-            checksDiv.innerHTML += `<li style="margin-bottom: 8px;">${rec}</li>`;
+            checksDiv.innerHTML += `<li>${rec}</li>`;
           });
           checksDiv.innerHTML += `</ol></div>`;
         }

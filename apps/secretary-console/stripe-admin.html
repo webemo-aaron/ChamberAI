@@ -5,6 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stripe Billing Admin - ChamberAI</title>
   <style>
+    :root {
+      color-scheme: light dark;
+      --admin-bg-start: #eef3fb;
+      --admin-bg-end: #dfe8f7;
+      --admin-surface: rgba(255, 255, 255, 0.96);
+      --admin-surface-soft: rgba(247, 249, 252, 0.96);
+      --admin-border: #d8e0ec;
+      --admin-text: #0a0e27;
+      --admin-muted: #5c5c5c;
+      --admin-primary: #0066cc;
+      --admin-primary-strong: #0057b8;
+      --admin-success-bg: #dff5e9;
+      --admin-success-text: #166240;
+      --admin-warning-bg: #fff1d6;
+      --admin-warning-text: #915f13;
+      --admin-error-bg: #fde2e2;
+      --admin-error-text: #a52828;
+      --admin-shadow: 0 18px 40px rgba(10, 14, 39, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --admin-bg-start: #141a26;
+        --admin-bg-end: #0f141d;
+        --admin-surface: rgba(29, 35, 50, 0.96);
+        --admin-surface-soft: rgba(24, 29, 43, 0.96);
+        --admin-border: #394455;
+        --admin-text: #f5f5f5;
+        --admin-muted: #bcc4d1;
+        --admin-primary: #66aaff;
+        --admin-primary-strong: #8ac1ff;
+        --admin-success-bg: rgba(51, 221, 153, 0.16);
+        --admin-success-text: #8be7bf;
+        --admin-warning-bg: rgba(245, 165, 36, 0.18);
+        --admin-warning-text: #ffd08a;
+        --admin-error-bg: rgba(255, 107, 107, 0.16);
+        --admin-error-text: #ffb0b0;
+        --admin-shadow: 0 20px 44px rgba(0, 0, 0, 0.28);
+      }
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -12,9 +53,11 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-        Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--admin-text);
+      background:
+        radial-gradient(circle at top right, rgba(0, 102, 204, 0.14), transparent 36%),
+        linear-gradient(180deg, var(--admin-bg-start), var(--admin-bg-end));
       min-height: 100vh;
       padding: 20px;
     }
@@ -25,21 +68,23 @@
     }
 
     .header {
-      background: white;
-      border-radius: 12px;
+      background:
+        linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 18px;
       padding: 30px;
       margin-bottom: 30px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--admin-shadow);
+      border: 1px solid var(--admin-border);
     }
 
     .header h1 {
       font-size: 28px;
-      color: #111;
+      color: var(--admin-text);
       margin-bottom: 10px;
     }
 
     .header p {
-      color: #666;
+      color: var(--admin-muted);
       font-size: 14px;
     }
 
@@ -51,10 +96,12 @@
     }
 
     .card {
-      background: white;
-      border-radius: 12px;
+      background:
+        linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 18px;
       padding: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--admin-shadow);
+      border: 1px solid var(--admin-border);
     }
 
     .card.status-ready {
@@ -71,7 +118,7 @@
 
     .card h3 {
       font-size: 16px;
-      color: #111;
+      color: var(--admin-text);
       margin-bottom: 15px;
       display: flex;
       align-items: center;
@@ -88,18 +135,18 @@
     }
 
     .badge-ready {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--admin-success-bg);
+      color: var(--admin-success-text);
     }
 
     .badge-warning {
-      background: #fef3c7;
-      color: #92400e;
+      background: var(--admin-warning-bg);
+      color: var(--admin-warning-text);
     }
 
     .badge-error {
-      background: #fee2e2;
-      color: #991b1b;
+      background: var(--admin-error-bg);
+      color: var(--admin-error-text);
     }
 
     .info-section {
@@ -109,20 +156,20 @@
     .info-label {
       font-size: 12px;
       text-transform: uppercase;
-      color: #999;
+      color: var(--admin-muted);
       font-weight: 600;
       margin-bottom: 5px;
     }
 
     .info-value {
       font-size: 14px;
-      color: #111;
+      color: var(--admin-text);
       word-break: break-all;
       font-family: monospace;
     }
 
     .info-value.masked {
-      color: #999;
+      color: var(--admin-muted);
     }
 
     .feature-list {
@@ -132,8 +179,8 @@
     .feature-list li {
       padding: 8px 0;
       font-size: 13px;
-      color: #666;
-      border-bottom: 1px solid #eee;
+      color: var(--admin-muted);
+      border-bottom: 1px solid var(--admin-border);
     }
 
     .feature-list li:last-child {
@@ -142,24 +189,24 @@
 
     .feature-list li::before {
       content: "✓ ";
-      color: #10b981;
+      color: var(--admin-success-text);
       font-weight: bold;
       margin-right: 8px;
     }
 
     .feature-list li.disabled::before {
       content: "✗ ";
-      color: #ef4444;
+      color: var(--admin-error-text);
     }
 
     .feature-list li.disabled {
-      color: #999;
+      color: var(--admin-muted);
     }
 
     .action-section {
       margin-top: 20px;
       padding-top: 20px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--admin-border);
     }
 
     .button-group {
@@ -175,46 +222,49 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
     }
 
     .btn-primary {
-      background: #667eea;
+      background: var(--admin-primary);
       color: white;
     }
 
     .btn-primary:hover {
-      background: #5568d3;
+      background: var(--admin-primary-strong);
     }
 
     .btn-secondary {
-      background: #e5e7eb;
-      color: #111;
+      background: var(--admin-surface-soft);
+      color: var(--admin-text);
+      border: 1px solid var(--admin-border);
     }
 
     .btn-secondary:hover {
-      background: #d1d5db;
+      background: color-mix(in srgb, var(--admin-primary) 10%, var(--admin-surface-soft));
     }
 
     .btn-danger {
-      background: #ef4444;
+      background: var(--admin-error-text);
       color: white;
     }
 
     .btn-danger:hover {
-      background: #dc2626;
+      background: color-mix(in srgb, var(--admin-error-text) 88%, black);
     }
 
     .tab-section {
-      background: white;
-      border-radius: 12px;
+      background:
+        linear-gradient(180deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: var(--admin-shadow);
+      border: 1px solid var(--admin-border);
     }
 
     .tabs {
       display: flex;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--admin-border);
     }
 
     .tab {
@@ -225,14 +275,14 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      color: #999;
+      color: var(--admin-muted);
       border-bottom: 3px solid transparent;
-      transition: all 0.2s;
+      transition: color 0.2s, border-color 0.2s, background-color 0.2s;
     }
 
     .tab.active {
-      color: #667eea;
-      border-bottom-color: #667eea;
+      color: var(--admin-primary);
+      border-bottom-color: var(--admin-primary);
     }
 
     .tab-content {
@@ -255,29 +305,29 @@
     }
 
     .validation-item.pass {
-      background: #d1fae5;
-      color: #065f46;
+      background: var(--admin-success-bg);
+      color: var(--admin-success-text);
     }
 
     .validation-item.fail {
-      background: #fee2e2;
-      color: #991b1b;
+      background: var(--admin-error-bg);
+      color: var(--admin-error-text);
     }
 
     .validation-item.warn {
-      background: #fef3c7;
-      color: #92400e;
+      background: var(--admin-warning-bg);
+      color: var(--admin-warning-text);
     }
 
     .code-block {
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
+      background: var(--admin-surface-soft);
+      border: 1px solid var(--admin-border);
       border-radius: 6px;
       padding: 12px;
       font-family: monospace;
       font-size: 12px;
       overflow-x: auto;
-      color: #111;
+      color: var(--admin-text);
     }
 
     .loading {
@@ -289,8 +339,8 @@
       display: inline-block;
       width: 16px;
       height: 16px;
-      border: 2px solid #e5e7eb;
-      border-top-color: #667eea;
+      border: 2px solid color-mix(in srgb, var(--admin-border) 80%, transparent);
+      border-top-color: var(--admin-primary);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
     }
@@ -309,37 +359,382 @@
     }
 
     .alert.info {
-      background: #dbeafe;
-      color: #0c4a6e;
-      border-left: 4px solid #0284c7;
+      background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface));
+      color: var(--admin-primary-strong);
+      border-left: 4px solid var(--admin-primary);
     }
 
     .alert.success {
-      background: #d1fae5;
-      color: #065f46;
-      border-left: 4px solid #10b981;
+      background: var(--admin-success-bg);
+      color: var(--admin-success-text);
+      border-left: 4px solid var(--admin-success-text);
     }
 
     .alert.error {
-      background: #fee2e2;
-      color: #991b1b;
-      border-left: 4px solid #ef4444;
+      background: var(--admin-error-bg);
+      color: var(--admin-error-text);
+      border-left: 4px solid var(--admin-error-text);
     }
 
     .footer {
       text-align: center;
-      color: white;
+      color: var(--admin-muted);
       padding: 20px;
       font-size: 12px;
+    }
+
+    body {
+      font-family: "Avenir Next", "Gill Sans", "Futura", sans-serif;
+      color: var(--admin-text);
+      background:
+        radial-gradient(circle at top left, rgba(0, 102, 204, 0.14), transparent 24%),
+        linear-gradient(180deg, var(--admin-bg-start), var(--admin-bg-end));
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1280px;
+    }
+
+    .shell-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      background: color-mix(in srgb, var(--admin-surface) 90%, transparent);
+      border: 1px solid var(--admin-border);
+      border-radius: 18px;
+      box-shadow: var(--admin-shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .shell-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: var(--admin-primary);
+      color: #f5f7fb;
+      font-family: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .shell-kicker {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--admin-primary-strong);
+      margin-bottom: 4px;
+    }
+
+    .shell-title {
+      font-family: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .shell-subtitle {
+      font-size: 13px;
+      color: var(--admin-muted);
+    }
+
+    .shell-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .shell-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--admin-primary) 18%, var(--admin-border));
+      background: color-mix(in srgb, var(--admin-surface) 92%, transparent);
+      color: var(--admin-primary-strong);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .header,
+    .tab-section,
+    .card {
+      border: 1px solid var(--admin-border);
+      box-shadow: var(--admin-shadow);
+    }
+
+    .header {
+      background:
+        radial-gradient(circle at top right, rgba(0, 102, 204, 0.12), transparent 34%),
+        linear-gradient(135deg, var(--admin-surface), var(--admin-surface-soft));
+      border-radius: 24px;
+      padding: 34px;
+      margin-bottom: 24px;
+      box-shadow: 0 24px 60px rgba(10, 14, 39, 0.16);
+      border-color: color-mix(in srgb, var(--admin-primary) 18%, var(--admin-border));
+    }
+
+    .header h1 {
+      font-size: 38px;
+      font-family: "Baskerville", "Palatino Linotype", "Book Antiqua", serif;
+      color: var(--admin-text);
+      margin-bottom: 12px;
+    }
+
+    .header p {
+      color: var(--admin-muted);
+      font-size: 15px;
+      max-width: 64ch;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--admin-surface) 86%, transparent);
+      border: 1px solid color-mix(in srgb, var(--admin-primary) 18%, var(--admin-border));
+      color: var(--admin-primary-strong);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .card {
+      background: var(--admin-surface);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .card h3,
+    .info-value {
+      color: var(--admin-text);
+    }
+
+    .info-label,
+    .info-value.masked,
+    .feature-list li.disabled {
+      color: color-mix(in srgb, var(--admin-muted) 80%, var(--admin-bg-end));
+    }
+
+    .feature-list li {
+      color: var(--admin-muted);
+      border-bottom-color: var(--admin-border);
+    }
+
+    .action-section {
+      border-top-color: var(--admin-border);
+    }
+
+    button {
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-family: "Avenir Next", "Gill Sans", "Futura", sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--admin-primary);
+      color: #f5f7fb;
+    }
+
+    .btn-primary:hover {
+      background: var(--admin-primary-strong);
+    }
+
+    .btn-secondary {
+      background: var(--admin-surface-soft);
+      color: var(--admin-text);
+    }
+
+    .btn-secondary:hover {
+      background: color-mix(in srgb, var(--admin-primary) 10%, var(--admin-surface-soft));
+    }
+
+    .tab-section {
+      background: var(--admin-surface);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .tabs {
+      border-bottom-color: var(--admin-border);
+      background: linear-gradient(180deg, rgba(0, 102, 204, 0.05), rgba(10, 14, 39, 0.02));
+      padding: 8px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      flex: 0 0 auto;
+      padding: 12px 16px;
+      color: color-mix(in srgb, var(--admin-muted) 80%, var(--admin-bg-end));
+      border-bottom: 0;
+      border-radius: 12px;
+    }
+
+    .tab.active {
+      color: var(--admin-primary-strong);
+      background: rgba(0, 102, 204, 0.08);
+    }
+
+    .tab-content {
+      padding: 24px;
+    }
+
+    .code-block {
+      background: color-mix(in srgb, var(--admin-bg-end) 88%, black);
+      border-color: transparent;
+      color: color-mix(in srgb, var(--admin-text) 88%, white);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .spinner {
+      border-top-color: var(--admin-primary);
+    }
+
+    .alert.info {
+      background: color-mix(in srgb, var(--admin-primary) 14%, var(--admin-surface));
+      color: var(--admin-primary-strong);
+      border-left-color: var(--admin-primary);
+    }
+
+    .footer {
+      color: var(--admin-muted);
+    }
+
+    input[type="text"] {
+      border: 1px solid var(--admin-border) !important;
+      border-radius: 12px !important;
+      padding: 12px !important;
+      background: var(--admin-surface);
+      color: var(--admin-text);
+    }
+
+    .tab-utility-link {
+      margin-left: auto;
+    }
+
+    .tab-title {
+      margin-bottom: 20px;
+      color: var(--admin-text);
+      font-size: 18px;
+    }
+
+    .loading-panel {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .loading-copy {
+      margin-top: 10px;
+      color: var(--admin-muted);
+    }
+
+    .code-block-spaced {
+      margin-bottom: 20px;
+    }
+
+    .section-subtitle {
+      margin-bottom: 10px;
+      color: var(--admin-text);
+      font-size: 15px;
+    }
+
+    .org-input-shell {
+      width: 100%;
+      margin-bottom: 10px;
+      font-family: monospace;
+    }
+
+    .section-spacing-md {
+      margin-top: 20px;
+    }
+
+    .button-block {
+      width: 100%;
+    }
+
+    .validation-summary {
+      margin-bottom: 20px;
+    }
+
+    .ordered-list {
+      margin-left: 20px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 780px) {
+      body {
+        padding: 16px;
+      }
+
+      .shell-bar {
+        display: grid;
+      }
+
+      .header {
+        padding: 24px;
+      }
+
+      .header h1 {
+        font-size: 30px;
+      }
+
+      .tabs {
+        display: grid;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="shell-bar">
+      <div class="shell-brand">
+        <div class="brand-mark">CAM</div>
+        <div>
+          <span class="shell-kicker">ChamberAI Admin</span>
+          <div class="shell-title">Billing Operations</div>
+          <div class="shell-subtitle">Stripe runtime oversight for premium chamber workflows</div>
+        </div>
+      </div>
+      <div class="shell-links">
+        <a class="shell-link" href="./">Open Console</a>
+        <a class="shell-link" href="./products-admin.html">Open Product Admin</a>
+      </div>
+    </div>
+
     <!-- Header -->
     <div class="header">
-      <h1>🎯 Stripe Billing Administration</h1>
-      <p>Manage Stripe configuration, validate setup, and monitor billing status</p>
+      <h1>ChamberAI Billing Operations</h1>
+      <p>Runtime health, Stripe readiness, and organization billing control for premium chamber deployments.</p>
+      <div class="hero-meta">
+        <span class="hero-pill">Stripe runtime</span>
+        <span class="hero-pill">Validation workflow</span>
+        <span class="hero-pill">Organization support</span>
+      </div>
     </div>
 
     <!-- Status Grid -->
@@ -351,32 +746,32 @@
         <button class="tab active" onclick="switchTab('validation')">Validation</button>
         <button class="tab" onclick="switchTab('setup')">Setup Guide</button>
         <button class="tab" onclick="switchTab('organizations')">Organizations</button>
-        <button class="tab" style="margin-left: auto;" onclick="window.location.href='products-admin.html'">Products →</button>
+        <button class="tab tab-utility-link" onclick="window.location.href='products-admin.html'">Open Product Admin</button>
       </div>
 
       <!-- Validation Tab -->
       <div id="validation" class="tab-content active">
-        <h3 style="margin-bottom: 20px">System Configuration Validation</h3>
+        <h3 class="tab-title">System Configuration Validation</h3>
         <div id="validationResults" class="loading">
-          <div style="text-align: center; padding: 40px">
+          <div class="loading-panel">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: #666">Loading validation...</p>
+            <p class="loading-copy">Loading validation...</p>
           </div>
         </div>
       </div>
 
       <!-- Setup Guide Tab -->
       <div id="setup" class="tab-content">
-        <h3 style="margin-bottom: 20px">Automated Stripe Setup</h3>
+        <h3 class="tab-title">Automated Stripe Setup</h3>
         <div class="alert info">
           <strong>Quick Setup:</strong> Run the automated setup script to configure Stripe
           completely.
         </div>
-        <div class="code-block" style="margin-bottom: 20px">
+        <div class="code-block code-block-spaced">
           chmod +x ./scripts/setup-stripe-automated.sh<br />
           ./scripts/setup-stripe-automated.sh
         </div>
-        <h4 style="margin-bottom: 10px">What the setup does:</h4>
+        <h4 class="section-subtitle">What the setup does:</h4>
         <ul class="feature-list">
           <li>Installs Stripe CLI (if needed)</li>
           <li>Authenticates with your Stripe account</li>
@@ -396,23 +791,16 @@
 
       <!-- Organizations Tab -->
       <div id="organizations" class="tab-content">
-        <h3 style="margin-bottom: 20px">Organization Billing Status</h3>
+        <h3 class="tab-title">Organization Billing Status</h3>
         <div class="alert info">Enter organization ID to view its billing status and subscription</div>
         <input
           type="text"
           id="orgInput"
           placeholder="Enter organization ID (e.g., org_...)"
-          style="
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            font-family: monospace;
-          "
+          class="org-input-shell"
         />
         <button class="btn-primary" onclick="checkOrgStatus()">Check Status</button>
-        <div id="orgStatus" style="margin-top: 20px"></div>
+        <div id="orgStatus" class="section-spacing-md"></div>
       </div>
     </div>
 
@@ -423,7 +811,15 @@
   </div>
 
   <script>
-    const API_BASE = window.location.origin;
+    const API_BASE = localStorage.getItem("camApiBase") || window.location.origin;
+
+    async function fetchAdminJson(path, options = {}) {
+      const response = await fetch(`${API_BASE}${path}`, options);
+      if (!response.ok) {
+        throw new Error(`Request failed: ${response.status}`);
+      }
+      return response.json();
+    }
 
     // Load initial status
     loadSystemStatus();
@@ -432,13 +828,10 @@
 
     async function loadSystemStatus() {
       try {
-        const [systemRes, validationRes] = await Promise.all([
-          fetch(`${API_BASE}/billing/status/system`),
-          fetch(`${API_BASE}/billing/status/validation`)
+        const [system, validation] = await Promise.all([
+          fetchAdminJson("/billing/status/system"),
+          fetchAdminJson("/billing/status/validation")
         ]);
-
-        const system = await systemRes.json();
-        const validation = await validationRes.json();
 
         renderStatusGrid(system, validation);
         renderValidation(validation);
@@ -508,7 +901,7 @@
             <li>Multi-Tenancy</li>
           </ul>
           <div class="action-section">
-            <button class="btn-primary" onclick="loadSystemStatus()" style="width: 100%">
+            <button class="btn-primary button-block" onclick="loadSystemStatus()">
               Refresh Status
             </button>
           </div>
@@ -518,7 +911,7 @@
 
     function renderValidation(validation) {
       const results = document.getElementById("validationResults");
-      let html = `<div style="margin-bottom: 20px">
+      let html = `<div class="validation-summary">
         <strong>Overall:</strong> ${validation.overall_status.toUpperCase()}
         (${validation.validation_percentage}% Complete)
       </div>`;
@@ -532,7 +925,7 @@
       });
 
       if (validation.recommendations.length > 0) {
-        html += `<div style="margin-top: 20px"><strong>Next Steps:</strong><ol style="margin-left: 20px">`;
+        html += `<div class="section-spacing-md"><strong>Next Steps:</strong><ol class="ordered-list">`;
         validation.recommendations.forEach(rec => {
           html += `<li>${rec}</li>`;
         });
@@ -557,14 +950,7 @@
       }
 
       try {
-        const res = await fetch(`${API_BASE}/billing/status/organization/${orgId}`);
-        if (!res.ok) {
-          document.getElementById("orgStatus").innerHTML =
-            '<div class="alert error">Organization not found</div>';
-          return;
-        }
-
-        const org = await res.json();
+        const org = await fetchAdminJson(`/billing/status/organization/${orgId}`);
         document.getElementById("orgStatus").innerHTML = `
           <div class="card">
             <h3>${org.organization.name}</h3>
@@ -598,6 +984,7 @@
           </div>
         `;
       } catch (err) {
+        console.error("Error loading organization status:", err);
         document.getElementById("orgStatus").innerHTML =
           '<div class="alert error">Error loading organization status</div>';
       }

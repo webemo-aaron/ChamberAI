@@ -126,6 +126,9 @@ export function initToast() {
   // Check if toast element already exists
   let existing = document.getElementById('toast');
   if (existing) {
+    existing.setAttribute('aria-live', 'off');
+    existing.setAttribute('aria-atomic', 'true');
+    existing.setAttribute('role', 'presentation');
     toastContainer = existing;
     return toastContainer;
   }
@@ -133,8 +136,9 @@ export function initToast() {
   // Create and append toast container
   const container = document.createElement('div');
   container.id = 'toast';
-  container.setAttribute('role', 'alert');
-  container.setAttribute('aria-live', 'polite');
+  container.setAttribute('role', 'presentation');
+  container.setAttribute('aria-live', 'off');
+  container.setAttribute('aria-atomic', 'true');
   document.body.appendChild(container);
 
   toastContainer = container;
@@ -190,8 +194,12 @@ export function showToast(message, options = {}) {
   }
 
   // Extract options with defaults
-  const type = options.type || 'info';
-  const duration = options.duration !== undefined ? options.duration : 2200;
+  const resolvedOptions =
+    typeof options === "string"
+      ? { type: options }
+      : options || {};
+  const type = resolvedOptions.type || 'info';
+  const duration = resolvedOptions.duration !== undefined ? resolvedOptions.duration : 2200;
 
   // Validate type
   const validTypes = ['info', 'success', 'error', 'warning'];
@@ -208,6 +216,14 @@ export function showToast(message, options = {}) {
   const toastElement = document.createElement('div');
   toastElement.className = `toast-${type}`;
   toastElement.textContent = message;
+  if (type === "error" || type === "warning") {
+    toastElement.setAttribute("role", "alert");
+    toastElement.setAttribute("aria-live", "assertive");
+  } else {
+    toastElement.setAttribute("role", "status");
+    toastElement.setAttribute("aria-live", "polite");
+  }
+  toastElement.setAttribute("aria-atomic", "true");
 
   // Add to container
   toastContainer.appendChild(toastElement);

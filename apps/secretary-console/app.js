@@ -12,8 +12,13 @@
  * All state except shell chrome is managed by core modules.
  */
 
-import { registerRoute, navigate, onRouteChange } from "./core/router.js";
-import { request, setApiBase, getApiBase } from "./core/api.js";
+import {
+  initRouter,
+  registerRoute,
+  navigate,
+  onRouteChange
+} from "./core/router.js";
+import { request, setApiBase, getApiBase, detectDefaultApiBase } from "./core/api.js";
 import {
   getCurrentRole,
   setRole,
@@ -25,15 +30,29 @@ import {
 import { showToast, initToast } from "./core/toast.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { FEATURE_FLAGS, defaultFlags } from "./modules.js";
-import { BillingService, TIERS } from "./billing.js";
 import { loginHandler } from "./views/login/login.js";
 import { settingsHandler } from "./views/settings/settings-view.js";
 import { kioskHandler } from "./views/kiosk/kiosk-view.js";
 import { kioskConfigHandler } from "./views/kiosk/kiosk-config.js";
 import { businessHubHandler } from "./views/business-hub/business-hub-view.js";
+import { meetingsHandler } from "./views/meetings/meetings-view.js";
+import { dashboardHandler } from "./views/dashboard/dashboard-view.js";
+import { analyticsHandler } from "./views/analytics/analytics-view.js";
+import { billingHandler } from "./views/billing/billing-view.js";
+import { geoIntelligenceHandler } from "./views/geo-intelligence/geo-intelligence-view.js";
+import { profileHandler } from "./views/profile/profile-view.js";
+import { preferencesHandler } from "./views/preferences/preferences-view.js";
+import { renderUtilityView } from "./views/common/utility-view.js";
+import { buildUtilityRouteConfig } from "./views/common/utility-config.js";
+import { getEffectiveTier } from "./billing.js";
+import { stripeAdminHandler, productsAdminHandler } from "./views/admin/admin-route-handlers.js";
 import { initKioskWidget } from "./components/kiosk-widget.js";
 import { initSidebar } from "./components/sidebar.js";
 import { initTopbar } from "./components/topbar.js";
+import {
+  getDefaultRouteForRole,
+  getNavigationTitle
+} from "./components/sidebar-config.js";
 
 // ============================================================================
 // DOM Element References (Shell Chrome Only)
@@ -66,6 +85,8 @@ const viewBusinessHubBtn = document.getElementById("viewBusinessHubBtn");
 const viewKioskBtn = document.getElementById("viewKioskBtn");
 const meetingsView = document.getElementById("meetingsView");
 const businessHubView = document.getElementById("businessHubView");
+const dashboardView = document.getElementById("dashboardView");
+const utilityView = document.getElementById("utilityView");
 
 // Tab Management (Phase 5: tabs and panels will be populated with content)
 const tabs = Array.from(document.querySelectorAll(".tab-bar .tab[role='tab']"));
@@ -110,6 +131,59 @@ const modalBehavior = new Map([
 let activeModal = null;
 let modalReturnFocus = null;
 
+function getTransientContainers() {
+  return [
+    document.getElementById("loginPageContainer"),
+    document.getElementById("settingsPageContainer")
+  ].filter(Boolean);
+}
+
+function hideAllViews() {
+  [dashboardView, meetingsView, businessHubView, utilityView].forEach((view) => {
+    if (view) {
+      view.classList.add("hidden");
+    }
+  });
+
+  getTransientContainers().forEach((container) => {
+    container.classList.add("hidden");
+    container.innerHTML = "";
+  });
+}
+
+function activateView(view) {
+  hideAllViews();
+  if (view) {
+    view.classList.remove("hidden");
+  }
+}
+
+function updatePageTitle(path) {
+  const brandTitle = document.querySelector(".brand-title");
+  const brandSub = document.querySelector(".brand-sub");
+  if (brandTitle) {
+    brandTitle.textContent = "ChamberAI";
+  }
+  if (brandSub) {
+    brandSub.textContent = getNavigationTitle(path);
+  }
+}
+
+function renderUtilityRoute(config) {
+  activateView(utilityView);
+  renderUtilityView(utilityView, config);
+}
+
+function renderNamedUtilityRoute(route) {
+  renderUtilityRoute(
+    buildUtilityRouteConfig(route, {
+      role: getCurrentRole(),
+      tier: getEffectiveTier(),
+      email: localStorage.getItem("camEmail") || "guest@chamberai.local"
+    })
+  );
+}
+
 // ============================================================================
 // Initialization
 // ============================================================================
@@ -127,9 +201,7 @@ async function initializeApp() {
     setApiBase(savedApiBase);
     apiBaseInput.value = savedApiBase;
   } else {
-    const inferredApiBase = window.location.hostname.endsWith(".vercel.app")
-      ? "https://chamberai-api-ecfgvedexq-uc.a.run.app"
-      : "http://localhost:4000";
+    const inferredApiBase = detectDefaultApiBase();
     setApiBase(inferredApiBase);
     apiBaseInput.value = inferredApiBase;
   }
@@ -160,14 +232,44 @@ async function initializeApp() {
     closeModal(loginModal);
   }
 
+  // 5b. Load and apply organization branding (Phase 10)
+  try {
+    const config = await request("/api/kiosk/public-config").catch(() => null);
+    if (config?.branding?.logoUrl) {
+      const logo = document.querySelector("#topbar-logo");
+      if (logo) logo.setAttribute("src", config.branding.logoUrl);
+    }
+    if (config?.branding?.displayName) {
+      document.title = `${config.branding.displayName} — Chamber AI`;
+    }
+  } catch (error) {
+    console.debug("Branding config unavailable:", error.message);
+  }
+
   // 6. Register all routes with auth guard
-  registerRoute("/", () => navigate("/meetings"));
-  registerRoute("/login", loginHandler);
+  registerRoute("/", () => {
+    navigate(getDefaultRouteForRole(getCurrentRole() || "guest"), {
+      replace: true
+    });
+  });
+  registerRoute("/login", (params, context) => {
+    hideAllViews();
+    loginHandler(params, context);
+  });
+  registerRoute("/dashboard", async (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    activateView(dashboardView);
+    await dashboardHandler(params, context);
+  });
   registerRoute("/meetings", (params, context) => {
     if (!getCurrentRole()) {
       navigate("/login");
       return;
     }
+    activateView(meetingsView);
     meetingsHandler(params, context);
   });
   registerRoute("/meetings/:id", (params, context) => {
@@ -175,16 +277,73 @@ async function initializeApp() {
       navigate("/login");
       return;
     }
-    meetingDetailHandler(params, context);
+    activateView(meetingsView);
+    meetingsHandler(params, context);
   });
   registerRoute("/business-hub", (params, context) => {
     if (!getCurrentRole()) {
       navigate("/login");
       return;
     }
+    activateView(businessHubView);
     businessHubHandler(params, context);
   });
-  registerRoute("/settings", settingsHandler);
+  registerRoute("/business-hub/:id", (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    activateView(businessHubView);
+    businessHubHandler(params, context);
+  });
+  registerRoute("/settings", (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    activateView(utilityView);
+    settingsHandler(params, context);
+  });
+  registerRoute("/analytics", (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    activateView(utilityView);
+    analyticsHandler(params, context);
+  });
+  registerRoute("/billing", (params, context) => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    activateView(utilityView);
+    billingHandler(params, context);
+  });
+  registerRoute("/geo-intelligence", () => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    activateView(utilityView);
+    geoIntelligenceHandler();
+  });
+  registerRoute("/profile", () => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    activateView(utilityView);
+    profileHandler();
+  });
+  registerRoute("/preferences", () => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    activateView(utilityView);
+    preferencesHandler();
+  });
   registerRoute("/kiosk", (params, context) => {
     if (!getCurrentRole()) {
       navigate("/login");
@@ -200,6 +359,8 @@ async function initializeApp() {
     }
     kioskConfigHandler(params, context);
   });
+  registerRoute("/admin/stripe", stripeAdminHandler);
+  registerRoute("/admin/products", productsAdminHandler);
 
   // 7. Set up navigation button handlers and visibility
   if (viewKioskBtn) {
@@ -224,6 +385,9 @@ async function initializeApp() {
   // 9. Initialize sidebar and topbar (Phase 4)
   initSidebar();
   initTopbar();
+  onRouteChange((route) => {
+    updatePageTitle(route.path);
+  });
 
   // 10. Initialize kiosk widget (Phase 9c)
   // Widget handles its own feature flag and tier checks
@@ -236,39 +400,9 @@ async function initializeApp() {
   });
 
   // 11. Show ready toast
+  initRouter();
   showToast("ChamberAI ready");
 }
-
-// ============================================================================
-// Route Handlers (Placeholders for Phase 5)
-// ============================================================================
-
-/**
- * Handle /meetings route - list view
- * @param {Object} params - Route parameters
- */
-async function meetingsHandler(params) {
-  // Phase 5: Move meeting list rendering here
-  showToast("Loading meetings...");
-}
-
-/**
- * Handle /meetings/:id route - detail view
- * @param {Object} params - Route parameters with id
- */
-async function meetingDetailHandler(params) {
-  // Phase 5: Move meeting detail rendering here
-  if (params.id) {
-    showToast(`Loading meeting ${params.id}...`);
-  }
-}
-
-/**
- * Handle /business-hub route
- * @param {Object} params - Route parameters
- */
-// businessHubHandler is now imported from views/business-hub/business-hub-view.js
-// It is called via registerRoute() below
 
 // ============================================================================
 // Shell Chrome Event Handlers

@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./components/sidebar.css" />
     <link rel="stylesheet" href="./components/kiosk-widget.css" />
+    <link rel="stylesheet" href="./views/dashboard/dashboard.css" />
     <link rel="stylesheet" href="./views/business-hub/business-hub.css" />
     <link rel="stylesheet" href="./views/meetings/meetings.css" />
   </head>
@@ -31,12 +32,12 @@
       <div class="brand">
         <span class="brand-mark">CAM</span>
         <div>
-          <div class="brand-title">Secretary Console</div>
-          <div class="brand-sub">Governance-first minutes workflow</div>
+          <div class="brand-title">ChamberAI</div>
+          <div class="brand-sub">Operational intelligence for chamber teams</div>
         </div>
       </div>
       <div class="api-config">
-        <button id="apiConfigBtn" class="btn ghost" title="API Configuration" aria-label="Open API configuration">⚙️</button>
+        <button id="apiConfigBtn" class="btn ghost" title="API Configuration" aria-label="Open API configuration" aria-haspopup="dialog" aria-expanded="false">⚙️</button>
         <span id="authCycleStatus" class="pill">Auth: not connected</span>
         <span id="roleBadge" class="pill">Role: Guest</span>
         <button id="logout" class="btn ghost" data-testid="logout">Logout</button>
@@ -47,14 +48,19 @@
     <div id="apiPopover" class="api-popover hidden" role="dialog" aria-label="API Configuration">
       <div class="popover-content">
         <div class="popover-header">
-          <h3>API Configuration</h3>
-          <button class="popover-close" aria-label="Close" onclick="this.closest('.api-popover').classList.add('hidden')">✕</button>
+          <div class="popover-heading">
+            <span class="popover-eyebrow">ChamberAI Runtime</span>
+            <h3>Connection Control</h3>
+          </div>
+          <button id="closeApiPopover" class="popover-close" aria-label="Close">✕</button>
         </div>
         <div class="popover-body">
+          <p class="popover-copy">Point the console at your active ChamberAI API environment.</p>
           <label for="apiBase">API Base URL</label>
           <input id="apiBase" type="url" placeholder="http://localhost:4000" />
+          <p class="popover-hint">Use local, staging, or production endpoints without leaving the workspace.</p>
           <div class="popover-actions">
-            <button id="saveApiBase" class="btn" data-testid="save-api-base">Save</button>
+            <button id="saveApiBase" class="btn" data-testid="save-api-base">Save Endpoint</button>
           </div>
         </div>
       </div>
@@ -78,12 +84,17 @@
       </ul>
     </nav>
 
+    <!-- Main: Dashboard View (default post-login landing) -->
+    <main class="shell hidden" id="dashboardView">
+      <!-- Content rendered by dashboard handler -->
+    </main>
+
     <!-- Main: Meetings View (default) -->
     <main class="shell" id="meetingsView">
       <section class="left-pane">
         <!-- Onboarding Banner (Phase 5: content populated) -->
         <div id="onboardingBanner" class="onboarding-banner" style="display: none;">
-          <span>Welcome to CAM-AIMS Secretary Console</span>
+          <span>Welcome to ChamberAI Secretary Console</span>
           <button id="dismissBanner" class="btn ghost">Dismiss</button>
         </div>
 
@@ -119,6 +130,11 @@
     <!-- Main: Business Hub View (hidden) -->
     <main class="shell hidden" id="businessHubView">
       <!-- Content rendered by handlers -->
+    </main>
+
+    <!-- Main: Utility Views (analytics, profile, preferences, geo, billing) -->
+    <main class="shell hidden" id="utilityView">
+      <!-- Content rendered by utility handlers -->
     </main>
 
     <!-- Toast notification -->
