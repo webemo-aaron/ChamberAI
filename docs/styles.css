@@ -13,6 +13,16 @@
   --border: #dccdbb;
   --grid: rgba(28, 26, 22, 0.04);
   --shadow: rgba(28, 26, 22, 0.08);
+
+  /* Tailwind-compatible semantic aliases for future utility-framework parity */
+  --tw-color-background: var(--bg);
+  --tw-color-foreground: var(--ink);
+  --tw-color-muted: var(--muted);
+  --tw-color-border: var(--border);
+  --tw-color-card: var(--surface);
+  --tw-color-primary: var(--accent);
+  --tw-color-primary-foreground: #ffffff;
+  --tw-color-accent: var(--accent-dark);
 }
 
 * {
@@ -337,6 +347,15 @@ h1 {
     --border: #344150;
     --grid: rgba(230, 235, 240, 0.06);
     --shadow: rgba(0, 0, 0, 0.35);
+
+    --tw-color-background: var(--bg);
+    --tw-color-foreground: var(--ink);
+    --tw-color-muted: var(--muted);
+    --tw-color-border: var(--border);
+    --tw-color-card: var(--surface);
+    --tw-color-primary: var(--accent);
+    --tw-color-primary-foreground: #ffffff;
+    --tw-color-accent: var(--accent-dark);
   }
 
   body {

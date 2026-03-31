@@ -89,6 +89,19 @@
   --color-gray: var(--color-text-secondary);
   --color-black: var(--color-text-primary);
   --color-white: var(--color-text-inverse);
+
+  /* Tailwind-compatible semantic aliases (framework-agnostic token bridge) */
+  --tw-color-background: var(--color-bg-primary);
+  --tw-color-foreground: var(--color-text-primary);
+  --tw-color-muted: var(--color-text-secondary);
+  --tw-color-border: var(--color-border);
+  --tw-color-card: var(--color-bg-secondary);
+  --tw-color-primary: var(--color-primary);
+  --tw-color-primary-foreground: var(--color-text-inverse);
+  --tw-color-accent: var(--color-primary-light);
+  --tw-color-success: var(--color-success);
+  --tw-color-warning: var(--color-warning);
+  --tw-color-destructive: var(--color-error);
 }
 
 /* Dark Mode Support (Optional) */
@@ -127,6 +140,19 @@
     --color-error-light: #FF9999;
     --color-error-dark: #CC3333;
     --color-error-50: #4D1919;
+
+    /* Tailwind-compatible semantic aliases (dark mode) */
+    --tw-color-background: var(--color-bg-primary);
+    --tw-color-foreground: var(--color-text-primary);
+    --tw-color-muted: var(--color-text-secondary);
+    --tw-color-border: var(--color-border);
+    --tw-color-card: var(--color-bg-secondary);
+    --tw-color-primary: var(--color-primary);
+    --tw-color-primary-foreground: var(--color-text-inverse);
+    --tw-color-accent: var(--color-primary-light);
+    --tw-color-success: var(--color-success);
+    --tw-color-warning: var(--color-warning);
+    --tw-color-destructive: var(--color-error);
   }
 }
 
