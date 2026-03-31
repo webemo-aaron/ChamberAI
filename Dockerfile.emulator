@@ -21,7 +21,6 @@ WORKDIR /app
 # Copy Firebase configuration files
 COPY firebase.emulator.json ./firebase.json
 COPY firestore.rules ./
-COPY firestore.indexes.json ./
 COPY storage.rules ./
 
 # Set environment variables for emulators
