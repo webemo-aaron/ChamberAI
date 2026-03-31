@@ -35,9 +35,39 @@ export SHOWCASE_NAMESPACE
 export SHOWCASE_AUTH_TOKEN
 export SHOWCASE_AUTH_EMAIL
 
-timeout 30s node "${APP_DIR}/scripts/audit_showcase_data.mjs" || {
-  echo "Showcase data audit failed." >&2
-  exit 1
+run_audit() {
+  timeout 30s node "${APP_DIR}/scripts/audit_showcase_data.mjs"
 }
+
+if ! run_audit; then
+  echo "Primary showcase audit failed for API base: ${API_BASE}" >&2
+
+  if command -v docker >/dev/null 2>&1; then
+    compose_project="${COMPOSE_PROJECT_NAME:-chamberofcommerceai}"
+    compose_network="${compose_project}_${compose_project}-network"
+    if docker network inspect "${compose_network}" >/dev/null 2>&1; then
+      echo "Retrying showcase audit through compose network: ${compose_network}"
+      docker run --rm \
+        --network "${compose_network}" \
+        -v "${APP_DIR}:/workspace" \
+        -w /workspace \
+        -e API_BASE="http://api:8080" \
+        -e SHOWCASE_NAMESPACE="${SHOWCASE_NAMESPACE}" \
+        -e SHOWCASE_AUTH_TOKEN="${SHOWCASE_AUTH_TOKEN}" \
+        -e SHOWCASE_AUTH_EMAIL="${SHOWCASE_AUTH_EMAIL}" \
+        node:20-slim \
+        node /workspace/scripts/audit_showcase_data.mjs || {
+          echo "Showcase data audit failed." >&2
+          exit 1
+        }
+    else
+      echo "Showcase data audit failed." >&2
+      exit 1
+    fi
+  else
+    echo "Showcase data audit failed." >&2
+    exit 1
+  fi
+fi
 
 echo "Showcase data verification complete."
