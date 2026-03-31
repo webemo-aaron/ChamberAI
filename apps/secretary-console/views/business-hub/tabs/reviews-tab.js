@@ -10,20 +10,27 @@
  * - Response modal for composing replies
  * - Delete review functionality (admin only)
  *
- * Exported function: initReviewsTab(container, options)
+ * Exported function: render(container, options)
  */
 
 import { request } from "../../../core/api.js";
 import { showToast } from "../../../core/toast.js";
 import { getCurrentRole } from "../../../core/auth.js";
+import { escapeHtml, formatDate } from "../../common/format.js";
 
 /**
- * Initialize reviews tab
+ * Module-level state for openModal and closeMenuHandler
+ */
+let openModal = null;
+let closeMenuHandler = null;
+
+/**
+ * Render reviews tab
  * @param {HTMLElement} container - Container to render into
  * @param {Object} options - Configuration options
  * @param {Object} options.business - Business data object
  */
-export function initReviewsTab(container, options = {}) {
+export function render(container, options = {}) {
   const { business = {} } = options;
   const role = getCurrentRole();
   const isAdmin = role === "admin";
@@ -34,6 +41,8 @@ export function initReviewsTab(container, options = {}) {
     filteredReviews: [],
     loading: true,
     error: null,
+    notice: null,
+    pendingAction: "",
     filterRating: null,
     sortBy: "date_desc", // date_desc, date_asc, rating_high, rating_low
     selectedReviewId: null
@@ -50,12 +59,18 @@ export function initReviewsTab(container, options = {}) {
     render();
 
     try {
-      const response = await request("GET", `/api/business-listings/${business.id}/reviews`);
-      state.reviews = response.data || [];
+      const response = await request(`/business-listings/${business.id}/reviews`, "GET", null, {
+        suppressAlert: true
+      });
+      if (!response || response.error) {
+        throw new Error(response?.error || "Failed to load reviews");
+      }
+      state.reviews = response?.data || response || [];
+      state.notice = null;
       applyFiltersAndSort();
     } catch (error) {
       console.error("Failed to load reviews:", error);
-      state.error = "Failed to load reviews";
+      state.error = "Verify the API base or backend readiness, then retry.";
       showToast("Failed to load reviews", "error");
     } finally {
       state.loading = false;
@@ -118,6 +133,7 @@ export function initReviewsTab(container, options = {}) {
    */
   function handleDraftResponse(reviewId) {
     state.selectedReviewId = reviewId;
+    state.notice = null;
     renderResponseModal();
   }
 
@@ -132,15 +148,40 @@ export function initReviewsTab(container, options = {}) {
     }
 
     try {
-      await request("POST", `/api/business-listings/${business.id}/reviews/${state.selectedReviewId}/draft-response`, {
+      state.pendingAction = `response-${state.selectedReviewId}`;
+      state.notice = {
+        tone: "info",
+        title: "Submitting Response",
+        message: "Sending the drafted response to the review workflow."
+      };
+      render();
+
+      const response = await request(`/business-listings/${business.id}/reviews/${state.selectedReviewId}/draft-response`, "POST", {
         response: responseText
       });
+      if (!response || response.error) {
+        throw new Error(response?.error || "Failed to submit response");
+      }
+
       showToast("Response submitted successfully");
+      state.pendingAction = "";
+      state.notice = {
+        tone: "success",
+        title: "Response Submitted",
+        message: "The review response has been recorded for this business."
+      };
       state.selectedReviewId = null;
       render();
       loadReviews(); // Reload to show response
     } catch (error) {
       console.error("Failed to submit response:", error);
+      state.pendingAction = "";
+      state.notice = {
+        tone: "warning",
+        title: "Response Unavailable",
+        message: "The response could not be submitted. Retry when the backend is available."
+      };
+      render();
       showToast("Failed to submit response", "error");
     }
   }
@@ -152,11 +193,36 @@ export function initReviewsTab(container, options = {}) {
     if (!confirm("Are you sure you want to delete this review?")) return;
 
     try {
-      await request("DELETE", `/api/business-listings/${business.id}/reviews/${reviewId}`);
+      state.pendingAction = `delete-${reviewId}`;
+      state.notice = {
+        tone: "info",
+        title: "Deleting Review",
+        message: "Removing the selected review from the business record."
+      };
+      render();
+
+      const response = await request(`/business-listings/${business.id}/reviews/${reviewId}`, "DELETE");
+      if (response && response.error) {
+        throw new Error(response.error);
+      }
+
       showToast("Review deleted successfully");
+      state.pendingAction = "";
+      state.notice = {
+        tone: "success",
+        title: "Review Deleted",
+        message: "The selected review has been removed."
+      };
       loadReviews();
     } catch (error) {
       console.error("Failed to delete review:", error);
+      state.pendingAction = "";
+      state.notice = {
+        tone: "warning",
+        title: "Delete Failed",
+        message: "The review could not be deleted. Retry when the reviews backend is available."
+      };
+      render();
       showToast("Failed to delete review", "error");
     }
   }
@@ -168,6 +234,33 @@ export function initReviewsTab(container, options = {}) {
     container.innerHTML = `
       <div class="reviews-tab-content">
         <!-- Controls -->
+        <div class="reviews-header">
+          <div>
+            <h3>Reviews</h3>
+            <p class="reviews-subtitle">Track public feedback and respond with chamber-approved messaging.</p>
+          </div>
+          <div class="surface-primary-actions">
+            <button class="btn ghost" id="refreshReviewsBtn" ${state.pendingAction ? "disabled" : ""}>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        ${
+          state.notice
+            ? `
+              <div
+                class="reviews-notice reviews-notice--${state.notice.tone}"
+                role="${state.notice.tone === "warning" ? "alert" : "status"}"
+                aria-live="${state.notice.tone === "warning" ? "assertive" : "polite"}"
+              >
+                <strong>${state.notice.title}</strong>
+                <p>${state.notice.message}</p>
+              </div>
+            `
+            : ""
+        }
+
         <div class="reviews-controls">
           <div class="control-group">
             <label for="reviewFilterRating" class="control-label">Rating:</label>
@@ -210,9 +303,15 @@ export function initReviewsTab(container, options = {}) {
     // Attach event listeners
     const filterSelect = container.querySelector("#reviewFilterRating");
     const sortSelect = container.querySelector("#reviewSortBy");
+    const refreshBtn = container.querySelector("#refreshReviewsBtn");
 
     if (filterSelect) filterSelect.addEventListener("change", handleFilterChange);
     if (sortSelect) sortSelect.addEventListener("change", handleSortChange);
+    if (refreshBtn) refreshBtn.addEventListener("click", loadReviews);
+
+    container.querySelectorAll("[data-retry-reviews]").forEach((button) => {
+      button.addEventListener("click", loadReviews);
+    });
 
     // Attach review action handlers
     container.querySelectorAll(".review-action-btn").forEach((btn) => {
@@ -227,6 +326,42 @@ export function initReviewsTab(container, options = {}) {
         }
       });
     });
+
+    container.querySelectorAll('[data-action="toggle-menu"]').forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const menu = btn.parentElement?.querySelector(".review-row-menu-panel");
+        if (menu) {
+          menu.classList.toggle("hidden");
+          btn.setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
+        }
+      });
+      btn.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          const menu = btn.parentElement?.querySelector(".review-row-menu-panel");
+          if (menu && !menu.classList.contains("hidden")) {
+            menu.classList.add("hidden");
+            btn.setAttribute("aria-expanded", "false");
+            btn.focus();
+          }
+        }
+      });
+    });
+
+    // Wire closeMenuHandler for outside-click dismissal
+    if (!closeMenuHandler) {
+      closeMenuHandler = (event) => {
+        if (!event.target.closest(".review-row-menu")) {
+          container.querySelectorAll(".review-row-menu-panel:not(.hidden)").forEach((panel) => {
+            panel.classList.add("hidden");
+            panel.closest(".review-row-menu")
+              ?.querySelector('[data-action="toggle-menu"]')
+              ?.setAttribute("aria-expanded", "false");
+          });
+        }
+      };
+      document.addEventListener("click", closeMenuHandler);
+    }
   }
 
   /**
@@ -234,15 +369,26 @@ export function initReviewsTab(container, options = {}) {
    */
   function renderContent() {
     if (state.loading) {
-      return '<div class="loading-message">Loading reviews...</div>';
+      return '<div class="loading-message" role="status" aria-live="polite">Loading reviews...</div>';
     }
 
     if (state.error) {
-      return `<div class="error-message">${state.error}</div>`;
+      return `
+        <div class="error-message" role="alert">
+          <strong>Unable to load reviews</strong>
+          <p>${state.error}</p>
+          <button type="button" class="btn ghost" data-retry-reviews>Retry</button>
+        </div>
+      `;
     }
 
     if (state.filteredReviews.length === 0) {
-      return '<div class="empty-message">No reviews yet</div>';
+      return `
+        <div class="empty-message">
+          <strong>No reviews yet</strong>
+          <p>Customer feedback will appear here when reviews are available for this business.</p>
+        </div>
+      `;
     }
 
     return state.filteredReviews
@@ -290,19 +436,36 @@ export function initReviewsTab(container, options = {}) {
                 class="btn ghost review-action-btn"
                 data-review-id="${review.id}"
                 data-action="response"
+                ${state.pendingAction === `response-${review.id}` ? "disabled" : ""}
               >
                 💬 Draft Response
               </button>
             `
                 : ""
             }
-            <button
-              class="btn ghost review-action-btn"
-              data-review-id="${review.id}"
-              data-action="delete"
-            >
-              🗑️ Delete
-            </button>
+            <div class="review-row-menu">
+              <button
+                class="btn ghost btn-row-menu"
+                data-review-id="${review.id}"
+                data-action="toggle-menu"
+                aria-label="More review actions"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                ⋯
+              </button>
+              <div class="review-row-menu-panel hidden" role="menu">
+                <button
+                  class="btn ghost review-action-btn"
+                  data-review-id="${review.id}"
+                  data-action="delete"
+                  role="menuitem"
+                  ${state.pendingAction === `delete-${review.id}` ? "disabled" : ""}
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
           </div>
         `
             : ""
@@ -338,26 +501,42 @@ export function initReviewsTab(container, options = {}) {
           ></textarea>
         </div>
         <div class="modal-actions">
-          <button class="btn" id="submitResponseBtn">Submit Response</button>
+          <button class="btn" id="submitResponseBtn">${state.pendingAction ? "Submitting..." : "Submit Response"}</button>
           <button class="btn ghost" id="cancelResponseBtn">Cancel</button>
         </div>
       </div>
     `;
 
+    openModal = modal;
     document.body.appendChild(modal);
+
+    const closeModal = () => {
+      modal.remove();
+      openModal = null;
+      state.selectedReviewId = null;
+    };
 
     const submitBtn = modal.querySelector("#submitResponseBtn");
     const cancelBtn = modal.querySelector("#cancelResponseBtn");
 
     submitBtn.addEventListener("click", async () => {
       await handleSubmitResponse();
-      modal.remove();
+      closeModal();
     });
 
-    cancelBtn.addEventListener("click", () => {
-      state.selectedReviewId = null;
-      modal.remove();
-    });
+    cancelBtn.addEventListener("click", closeModal);
+
+    // Backdrop click dismissal
+    modal.querySelector(".modal-overlay")?.addEventListener("click", closeModal);
+
+    // Escape key dismissal
+    const escapeHandler = (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+        document.removeEventListener("keydown", escapeHandler);
+      }
+    };
+    document.addEventListener("keydown", escapeHandler);
 
     // Focus on textarea
     setTimeout(() => {
@@ -367,23 +546,15 @@ export function initReviewsTab(container, options = {}) {
 }
 
 /**
- * Format date
+ * Cleanup function
+ * Called by business-detail.js on route change or business change.
+ * @export
  */
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-}
-
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+export function cleanup() {
+  openModal?.remove();
+  openModal = null;
+  if (closeMenuHandler) {
+    document.removeEventListener("click", closeMenuHandler);
+    closeMenuHandler = null;
+  }
 }

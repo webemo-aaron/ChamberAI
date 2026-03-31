@@ -17,6 +17,12 @@
 
 import { request } from "../../core/api.js";
 import { showToast } from "../../core/toast.js";
+import {
+  buildShowcaseCityOptions,
+  filterBusinessesByShowcaseCity,
+  getSelectedShowcaseCity,
+  setSelectedShowcaseCity
+} from "../common/showcase-city-context.js";
 
 /**
  * Initialize business list component
@@ -25,16 +31,21 @@ import { showToast } from "../../core/toast.js";
  * @param {Function} options.onSelectBusiness - Callback when business selected (businessId)
  */
 export function initBusinessList(container, options = {}) {
-  const { onSelectBusiness = () => {} } = options;
+  const {
+    onSelectBusiness = () => {},
+    onBusinessesLoaded = () => {},
+    selectedBusinessId = null
+  } = options;
 
   // State
   const state = {
     businesses: [],
     filteredBusinesses: [],
-    selectedBusinessId: null,
+    selectedBusinessId,
     loading: true,
     error: null,
     searchTerm: "",
+    selectedCityId: getSelectedShowcaseCity().id,
     filterType: null,
     sortBy: "name", // name, rating, relevance
     page: 1,
@@ -53,13 +64,17 @@ export function initBusinessList(container, options = {}) {
     render();
 
     try {
-      const response = await request("GET", "/api/business-listings");
-      state.businesses = response.data || [];
-      state.filteredBusinesses = [...state.businesses];
+      const response = await request("/business-listings", "GET");
+      const businesses = response?.data || response || [];
+      if (!Array.isArray(businesses)) {
+        throw new Error("Business listings response was not an array");
+      }
+      state.businesses = businesses;
+      onBusinessesLoaded(state.businesses);
       applyFiltersAndSort();
     } catch (error) {
       console.error("Failed to load businesses:", error);
-      state.error = "Failed to load businesses";
+      state.error = "Verify the API base or retry the business listings request.";
       showToast("Failed to load businesses", "error");
     } finally {
       state.loading = false;
@@ -71,7 +86,11 @@ export function initBusinessList(container, options = {}) {
    * Apply search, filters, and sorting
    */
   function applyFiltersAndSort() {
-    let result = [...state.businesses];
+    const selectedCity =
+      getSelectedShowcaseCity().id === state.selectedCityId
+        ? getSelectedShowcaseCity()
+        : setSelectedShowcaseCity(state.selectedCityId);
+    let result = filterBusinessesByShowcaseCity(state.businesses, selectedCity);
 
     // Apply search filter
     if (state.searchTerm) {
@@ -147,6 +166,16 @@ export function initBusinessList(container, options = {}) {
     container.innerHTML = `
       <div class="business-list-wrapper">
         <div class="business-list-controls">
+          <div class="business-list-toolbar">
+            <div>
+              <h2 class="business-list-title">Business Hub</h2>
+              <p class="business-list-subtitle">Directory, service context, and member support workflows.</p>
+            </div>
+            <button type="button" id="bizRefreshBtn" class="btn ghost business-refresh-btn">
+              Refresh
+            </button>
+          </div>
+
           <div class="search-box">
             <input
               type="text"
@@ -159,6 +188,16 @@ export function initBusinessList(container, options = {}) {
           </div>
 
           <div class="filter-controls">
+            <div class="control-group">
+              <label for="bizCityFilter" class="control-label">City:</label>
+              <select
+                id="bizCityFilter"
+                class="filter-select"
+                aria-label="Filter by showcase city"
+              >
+                ${buildShowcaseCityOptions(state.selectedCityId)}
+              </select>
+            </div>
             <div class="control-group">
               <label for="bizFilterType" class="control-label">Type:</label>
               <select
@@ -196,18 +235,55 @@ export function initBusinessList(container, options = {}) {
 
     // Attach event listeners
     const searchInput = container.querySelector("#bizSearch");
+    const citySelect = container.querySelector("#bizCityFilter");
     const filterSelect = container.querySelector("#bizFilterType");
     const sortSelect = container.querySelector("#bizSortBy");
+    const refreshBtn = container.querySelector("#bizRefreshBtn");
 
     if (searchInput) searchInput.addEventListener("input", handleSearch);
+    if (citySelect) {
+      citySelect.addEventListener("change", (event) => {
+        const selected = setSelectedShowcaseCity(event.target.value);
+        state.selectedCityId = selected.id;
+        applyFiltersAndSort();
+        container.dispatchEvent(
+          new CustomEvent("showcase-city-changed", {
+            detail: { cityId: event.target.value },
+            bubbles: true
+          })
+        );
+      });
+    }
     if (filterSelect) filterSelect.addEventListener("change", handleFilter);
     if (sortSelect) sortSelect.addEventListener("change", handleSort);
+    if (refreshBtn) refreshBtn.addEventListener("click", loadBusinesses);
+
+    container.querySelectorAll("[data-reset-filters]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.searchTerm = "";
+        state.filterType = null;
+        state.sortBy = "name";
+        render();
+        applyFiltersAndSort();
+      });
+    });
+
+    container.querySelectorAll("[data-retry-load]").forEach((button) => {
+      button.addEventListener("click", loadBusinesses);
+    });
 
     // Attach business selection handlers
     container.querySelectorAll(".business-list-item").forEach((item) => {
       item.addEventListener("click", () => {
         const bizId = item.dataset.businessId;
         handleSelectBusiness(bizId);
+      });
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          const bizId = item.dataset.businessId;
+          handleSelectBusiness(bizId);
+        }
       });
     });
   }
@@ -217,15 +293,27 @@ export function initBusinessList(container, options = {}) {
    */
   function renderContent() {
     if (state.loading) {
-      return '<div class="loading-message">Loading businesses...</div>';
+      return '<div class="loading-message" role="status" aria-live="polite">Loading businesses...</div>';
     }
 
     if (state.error) {
-      return `<div class="error-message">${state.error}</div>`;
+      return `
+        <div class="error-message" role="alert">
+          <strong>Unable to load businesses</strong>
+          <p>${state.error}</p>
+          <button type="button" class="btn ghost" data-retry-load>Retry</button>
+        </div>
+      `;
     }
 
     if (state.filteredBusinesses.length === 0) {
-      return '<div class="empty-message">No businesses found</div>';
+      return `
+        <div class="empty-message" role="status" aria-live="polite">
+          <strong>No businesses found</strong>
+          <p>Try a different search term or reset your filters.</p>
+          <button type="button" class="btn ghost" data-reset-filters>Reset Filters</button>
+        </div>
+      `;
     }
 
     return `

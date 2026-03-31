@@ -1,4 +1,5 @@
 import http from "node:http";
+import path from "node:path";
 import { URL, pathToFileURL } from "node:url";
 import {
   createInMemoryDb,
@@ -31,7 +32,20 @@ import {
   listGeoProfiles,
   scanGeoProfile,
   listGeoContentBriefs,
-  generateGeoContentBrief
+  generateGeoContentBrief,
+  listBusinessListings,
+  createBusinessListing,
+  getBusinessListing,
+  updateBusinessListing,
+  listBusinessVersions,
+  listBusinessSyncRuns,
+  listBusinessReviews,
+  createBusinessReview,
+  draftBusinessReviewResponse,
+  deleteBusinessReview,
+  listBusinessQuotes,
+  createBusinessQuote,
+  updateBusinessQuote
 } from "./index.js";
 
 export function createRequestHandler(db) {
@@ -293,6 +307,109 @@ export function createRequestHandler(db) {
         return sendJson(res, 200, brief);
       }
 
+      if (path === "/business-listings" && method === "GET") {
+        return sendJson(res, 200, { data: listBusinessListings(db) });
+      }
+
+      if (path === "/business-listings" && method === "POST") {
+        const body = await readJsonBody(req);
+        return sendJson(res, 201, createBusinessListing(db, body));
+      }
+
+      if (path === "/business-sync-runs" && method === "GET") {
+        return sendJson(res, 200, { data: listBusinessSyncRuns(db) });
+      }
+
+      const businessMatch = path.match(/^\/business-listings\/([^/]+)$/);
+      if (businessMatch) {
+        const businessId = businessMatch[1];
+        if (method === "GET") {
+          const business = getBusinessListing(db, businessId);
+          if (!business) {
+            return sendJson(res, 404, { error: "Business not found" });
+          }
+          return sendJson(res, 200, business);
+        }
+        if (method === "PUT") {
+          const body = await readJsonBody(req);
+          return sendJson(res, 200, updateBusinessListing(db, businessId, body));
+        }
+      }
+
+      const businessReviewsMatch = path.match(/^\/business-listings\/([^/]+)\/reviews$/);
+      if (businessReviewsMatch) {
+        if (method === "GET") {
+          return sendJson(res, 200, { data: listBusinessReviews(db, businessReviewsMatch[1]) });
+        }
+        if (method === "POST") {
+          const body = await readJsonBody(req);
+          const existed = body.id
+            ? listBusinessReviews(db, businessReviewsMatch[1]).some((review) => review.id === body.id)
+            : false;
+          const review = createBusinessReview(db, businessReviewsMatch[1], body);
+          return sendJson(res, existed ? 200 : 201, review);
+        }
+      }
+
+      const businessVersionsMatch = path.match(/^\/business-listings\/([^/]+)\/versions$/);
+      if (businessVersionsMatch && method === "GET") {
+        return sendJson(res, 200, { data: listBusinessVersions(db, businessVersionsMatch[1]) });
+      }
+
+      const businessReviewResponseMatch = path.match(
+        /^\/business-listings\/([^/]+)\/reviews\/([^/]+)\/draft-response$/
+      );
+      if (businessReviewResponseMatch && method === "POST") {
+        const body = await readJsonBody(req);
+        return sendJson(
+          res,
+          200,
+          draftBusinessReviewResponse(
+            db,
+            businessReviewResponseMatch[1],
+            businessReviewResponseMatch[2],
+            body
+          )
+        );
+      }
+
+      const businessReviewDeleteMatch = path.match(/^\/business-listings\/([^/]+)\/reviews\/([^/]+)$/);
+      if (businessReviewDeleteMatch && method === "DELETE") {
+        return sendJson(
+          res,
+          200,
+          deleteBusinessReview(db, businessReviewDeleteMatch[1], businessReviewDeleteMatch[2])
+        );
+      }
+
+      const businessQuotesMatch = path.match(/^\/business-listings\/([^/]+)\/quotes$/);
+      if (businessQuotesMatch) {
+        if (method === "GET") {
+          return sendJson(res, 200, { data: listBusinessQuotes(db, businessQuotesMatch[1]) });
+        }
+        if (method === "POST") {
+          const body = await readJsonBody(req);
+          const existed = body.id
+            ? listBusinessQuotes(db, businessQuotesMatch[1]).some((quote) => quote.id === body.id)
+            : false;
+          return sendJson(
+            res,
+            existed ? 200 : 201,
+            createBusinessQuote(db, businessQuotesMatch[1], body)
+          );
+        }
+      }
+
+      const businessQuoteUpdateMatch = path.match(/^\/business-listings\/([^/]+)\/quotes\/([^/]+)$/);
+      if (businessQuoteUpdateMatch && method === "PUT") {
+        const body = await readJsonBody(req);
+        return sendJson(
+          res,
+          200,
+          updateBusinessQuote(db, businessQuoteUpdateMatch[1], businessQuoteUpdateMatch[2], body)
+        );
+      }
+
       if (path === "/invites/authorized-senders" && method === "GET") {
         return sendJson(res, 200, { authorizedSenders: Array.from(db.inviteAuthorizedSenders.values()) });
       }
@@ -394,7 +511,12 @@ export function startServer({
   port = Number(process.env.PORT ?? 4000),
   host = process.env.HOST ?? "127.0.0.1"
 } = {}) {
-  const { server } = createServer();
+  const businessStorePath = process.env.BUSINESS_STORE_PATH
+    ? path.resolve(process.cwd(), process.env.BUSINESS_STORE_PATH)
+    : path.resolve(process.cwd(), "data/showcase/persistent/business-store.json");
+  const { server } = createServer({
+    db: createInMemoryDb({ businessStorePath })
+  });
   server.listen(port, host, () => {
     console.log(`Mock API listening on http://${host}:${port}`);
   });
@@ -405,8 +527,8 @@ function sendJson(res, status, payload) {
   res.writeHead(status, {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-demo-email, X-Org-Id"
   });
   if (status === 204) {
     return res.end();

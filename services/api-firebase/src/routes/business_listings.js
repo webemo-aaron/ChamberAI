@@ -9,17 +9,27 @@ const router = express.Router();
 
 router.post("/business-listings", requireRole("admin", "secretary"), async (req, res, next) => {
   try {
-    requireFields(req.body, ["name", "address", "city", "state", "zip_code", "phone", "email"]);
+    requireFields(req.body, ["name", "address", "city", "state", "phone", "email"]);
+    if (!String(req.body.zip_code ?? req.body.zip ?? "").trim()) {
+      throw new Error("Missing required field: zip_code");
+    }
     const db = initFirestore();
-    const id = makeId("biz");
+    const requestedId = String(req.body.id ?? "").trim();
+    const id = requestedId || makeId("biz");
+    const businessRef = orgCollection(db, req.orgId, "businessListings").doc(id);
+    const existingDoc = requestedId ? await businessRef.get() : null;
+    const existingData = existingDoc?.exists ? existingDoc.data() ?? {} : {};
     const business = {
       id,
       name: req.body.name,
       category: req.body.category ?? null,
+      businessType: req.body.businessType ?? existingData.businessType ?? null,
+      rating: Number(req.body.rating ?? existingData.rating ?? 0),
+      reviewCount: Number(req.body.reviewCount ?? req.body.review_count ?? existingData.reviewCount ?? 0),
       address: req.body.address,
       city: req.body.city,
       state: req.body.state,
-      zip_code: req.body.zip_code,
+      zip_code: req.body.zip_code ?? req.body.zip ?? existingData.zip_code ?? null,
       phone: req.body.phone,
       email: req.body.email,
       website: req.body.website ?? null,
@@ -28,12 +38,13 @@ router.post("/business-listings", requireRole("admin", "secretary"), async (req,
       geo_scope_type: req.body.geo_scope_type ?? "city",
       geo_scope_id: req.body.geo_scope_id ?? null,
       ai_search_enabled: req.body.ai_search_enabled ?? false,
-      created_at: serverTimestamp(),
+      source: req.body.source ?? existingData.source ?? null,
+      created_at: existingData.created_at ?? serverTimestamp(),
       updated_at: serverTimestamp()
     };
 
-    await orgCollection(db, req.orgId, "businessListings").doc(id).set(business);
-    res.status(201).json(business);
+    await businessRef.set(business, { merge: true });
+    res.status(existingDoc?.exists ? 200 : 201).json(business);
   } catch (error) {
     next(error);
   }

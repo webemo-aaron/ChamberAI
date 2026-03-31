@@ -8,6 +8,25 @@ import { maybeEnhanceGeoBrief } from "../services/ai_generation.js";
 
 const router = express.Router();
 
+function normalizeReviewRecord(record = {}) {
+  const reviewerName = record.author ?? record.reviewer_name ?? "Anonymous";
+  const reviewText = record.text ?? record.review_text ?? "";
+  const createdAt = record.createdAt ?? record.review_date ?? record.created_at ?? null;
+  const responseText = record.response ?? record.response_text ?? null;
+
+  return {
+    ...record,
+    author: reviewerName,
+    reviewer_name: reviewerName,
+    text: reviewText,
+    review_text: reviewText,
+    createdAt,
+    review_date: record.review_date ?? createdAt,
+    response: responseText,
+    response_text: responseText
+  };
+}
+
 router.get("/business-listings/:id/reviews", async (req, res, next) => {
   try {
     const db = initFirestore();
@@ -15,8 +34,8 @@ router.get("/business-listings/:id/reviews", async (req, res, next) => {
       .doc(req.params.id)
       .collection("reviews")
       .get();
-    const reviews = snapshot.docs.map((doc) => doc.data()).filter(Boolean);
-    reviews.sort((a, b) => String(b.review_date ?? "").localeCompare(String(a.review_date ?? "")));
+    const reviews = snapshot.docs.map((doc) => normalizeReviewRecord(doc.data())).filter(Boolean);
+    reviews.sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")));
     res.json(reviews);
   } catch (error) {
     next(error);
@@ -27,27 +46,38 @@ router.post("/business-listings/:id/reviews", requireRole("admin", "secretary"),
   try {
     requireFields(req.body, ["platform", "rating", "reviewer_name", "review_text"]);
     const db = initFirestore();
-    const reviewId = makeId("review");
+    const requestedId = String(req.body.id ?? "").trim();
+    const reviewId = requestedId || makeId("review");
+    const reviewRef = orgCollection(db, req.orgId, "businessListings")
+      .doc(req.params.id)
+      .collection("reviews")
+      .doc(reviewId);
+    const existingDoc = requestedId ? await reviewRef.get() : null;
+    const existingData = existingDoc?.exists ? existingDoc.data() ?? {} : {};
+    const reviewerName = req.body.reviewer_name ?? req.body.author;
+    const reviewText = req.body.review_text ?? req.body.text;
+    const reviewDate = req.body.review_date ?? req.body.createdAt ?? new Date().toISOString();
     const review = {
       id: reviewId,
       business_id: req.params.id,
       platform: req.body.platform,
       rating: parseInt(req.body.rating, 10),
-      reviewer_name: req.body.reviewer_name,
-      review_text: req.body.review_text,
-      review_date: req.body.review_date ?? new Date().toISOString(),
-      response_draft: null,
-      response_text: null,
-      response_status: "draft",
-      created_at: serverTimestamp()
+      reviewer_name: reviewerName,
+      author: reviewerName,
+      review_text: reviewText,
+      text: reviewText,
+      review_date: reviewDate,
+      createdAt: reviewDate,
+      response_draft: req.body.response_draft ?? existingData.response_draft ?? null,
+      response_text: req.body.response_text ?? req.body.response ?? existingData.response_text ?? null,
+      response: req.body.response ?? existingData.response ?? null,
+      response_status: req.body.response_status ?? existingData.response_status ?? "draft",
+      created_at: existingData.created_at ?? serverTimestamp(),
+      updated_at: serverTimestamp()
     };
 
-    await orgCollection(db, req.orgId, "businessListings")
-      .doc(req.params.id)
-      .collection("reviews")
-      .doc(reviewId)
-      .set(review);
-    res.status(201).json(review);
+    await reviewRef.set(review, { merge: true });
+    res.status(existingDoc?.exists ? 200 : 201).json(review);
   } catch (error) {
     next(error);
   }
@@ -70,7 +100,7 @@ router.put("/business-listings/:id/reviews/:reviewId", requireRole("admin", "sec
       .collection("reviews")
       .doc(req.params.reviewId)
       .get();
-    res.json(doc.data());
+    res.json(normalizeReviewRecord(doc.data()));
   } catch (error) {
     next(error);
   }
@@ -137,7 +167,7 @@ router.post(
         .doc(reviewId)
         .get();
 
-      res.json(updatedDoc.data());
+      res.json(normalizeReviewRecord(updatedDoc.data()));
     } catch (error) {
       next(error);
     }

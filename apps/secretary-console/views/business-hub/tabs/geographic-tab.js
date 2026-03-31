@@ -8,16 +8,18 @@
  * - Geographic scope (city, county, etc.)
  * - Coordinates for mapping
  *
- * Exported function: initGeographicTab(container, options)
+ * Exported function: render(container, options)
  */
 
+import { escapeHtml } from "../../common/format.js";
+
 /**
- * Initialize geographic tab
+ * Render geographic tab
  * @param {HTMLElement} container - Container to render into
  * @param {Object} options - Configuration options
  * @param {Object} options.business - Business data object
  */
-export function initGeographicTab(container, options = {}) {
+export function render(container, options = {}) {
   const { business = {} } = options;
 
   const html = `
@@ -184,10 +186,10 @@ function formatCoordinate(coord) {
 }
 
 /**
- * Escape HTML special characters
+ * Cleanup function — no-op for this tab
+ * Called by business-detail.js on route change or business change.
+ * @export
  */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+export function cleanup() {
+  // No document listeners, no open modals, no async state
 }

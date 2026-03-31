@@ -9,20 +9,26 @@
  * - View/respond to quotes
  * - Responsive form layout
  *
- * Exported function: initQuotesTab(container, options)
+ * Exported function: render(container, options)
  */
 
 import { request } from "../../../core/api.js";
 import { showToast } from "../../../core/toast.js";
 import { getCurrentRole } from "../../../core/auth.js";
+import { escapeHtml, formatDate } from "../../common/format.js";
 
 /**
- * Initialize quotes tab
+ * Module-level state for closeMenuHandler
+ */
+let closeMenuHandler = null;
+
+/**
+ * Render quotes tab
  * @param {HTMLElement} container - Container to render into
  * @param {Object} options - Configuration options
  * @param {Object} options.business - Business data object
  */
-export function initQuotesTab(container, options = {}) {
+export function render(container, options = {}) {
   const { business = {} } = options;
   const role = getCurrentRole();
 
@@ -31,6 +37,8 @@ export function initQuotesTab(container, options = {}) {
     quotes: [],
     loading: true,
     error: null,
+    notice: null,
+    pendingAction: "",
     showForm: false,
     formData: {
       serviceNeeded: "",
@@ -51,11 +59,17 @@ export function initQuotesTab(container, options = {}) {
     render();
 
     try {
-      const response = await request("GET", `/api/business-listings/${business.id}/quotes`);
-      state.quotes = response.data || [];
+      const response = await request(`/business-listings/${business.id}/quotes`, "GET", null, {
+        suppressAlert: true
+      });
+      if (!response || response.error) {
+        throw new Error(response?.error || "Failed to load quotes");
+      }
+      state.quotes = response?.data || response || [];
+      state.notice = null;
     } catch (error) {
       console.error("Failed to load quotes:", error);
-      state.error = "Failed to load quotes";
+      state.error = "Verify the API base or backend readiness, then retry.";
       showToast("Failed to load quotes", "error");
     } finally {
       state.loading = false;
@@ -76,6 +90,7 @@ export function initQuotesTab(container, options = {}) {
    */
   function toggleForm() {
     state.showForm = !state.showForm;
+    state.notice = null;
     render();
   }
 
@@ -101,15 +116,32 @@ export function initQuotesTab(container, options = {}) {
     }
 
     try {
-      await request("POST", `/api/business-listings/${business.id}/quotes`, {
+      state.pendingAction = "submit";
+      state.notice = {
+        tone: "info",
+        title: "Submitting Quote Request",
+        message: "Sending the request to the business workflow."
+      };
+      render();
+
+      const response = await request(`/business-listings/${business.id}/quotes`, "POST", {
         serviceNeeded,
         budget,
         timeline,
         description: state.formData.description
       });
+      if (!response || response.error) {
+        throw new Error(response?.error || "Failed to submit quote request");
+      }
 
       showToast("Quote request submitted successfully");
       state.showForm = false;
+      state.pendingAction = "";
+      state.notice = {
+        tone: "success",
+        title: "Quote Request Sent",
+        message: "The request is now part of the business history for this record."
+      };
       state.formData = {
         serviceNeeded: "",
         budget: "",
@@ -119,6 +151,13 @@ export function initQuotesTab(container, options = {}) {
       loadQuotes();
     } catch (error) {
       console.error("Failed to submit quote request:", error);
+      state.pendingAction = "";
+      state.notice = {
+        tone: "warning",
+        title: "Quote Request Unavailable",
+        message: "The request could not be submitted. Check connectivity and try again."
+      };
+      render();
       showToast("Failed to submit quote request", "error");
     }
   }
@@ -128,13 +167,38 @@ export function initQuotesTab(container, options = {}) {
    */
   async function handleUpdateQuoteStatus(quoteId, newStatus) {
     try {
-      await request("PUT", `/api/business-listings/${business.id}/quotes/${quoteId}`, {
+      state.pendingAction = `status-${quoteId}`;
+      state.notice = {
+        tone: "info",
+        title: "Updating Quote",
+        message: `Applying the ${newStatus} decision to this quote request.`
+      };
+      render();
+
+      const response = await request(`/business-listings/${business.id}/quotes/${quoteId}`, "PUT", {
         status: newStatus
       });
+      if (!response || response.error) {
+        throw new Error(response?.error || "Failed to update quote status");
+      }
+
       showToast(`Quote ${newStatus} successfully`);
+      state.pendingAction = "";
+      state.notice = {
+        tone: "success",
+        title: "Quote Updated",
+        message: `The quote is now marked as ${newStatus}.`
+      };
       loadQuotes();
     } catch (error) {
       console.error("Failed to update quote status:", error);
+      state.pendingAction = "";
+      state.notice = {
+        tone: "warning",
+        title: "Quote Update Failed",
+        message: "The quote status could not be changed. Retry when the backend is available."
+      };
+      render();
       showToast("Failed to update quote status", "error");
     }
   }
@@ -147,14 +211,45 @@ export function initQuotesTab(container, options = {}) {
       <div class="quotes-tab-content">
         <!-- Quote Request Form Toggle -->
         <div class="quotes-header">
-          <h3>Quote Requests</h3>
-          <button
-            class="btn ${state.showForm ? "ghost" : ""}"
-            id="toggleFormBtn"
-          >
-            ${state.showForm ? "✕ Cancel" : "+ Request Quote"}
-          </button>
+          <div>
+            <h3>Quote Requests</h3>
+            <p class="quotes-subtitle">Track requests, decisions, and vendor responses for this business.</p>
+          </div>
+          <div class="quotes-header-actions">
+            <div class="surface-primary-actions">
+              <button
+                class="btn ${state.showForm ? "ghost" : ""}"
+                id="toggleFormBtn"
+                ${state.pendingAction ? "disabled" : ""}
+              >
+                ${state.showForm ? "✕ Cancel" : "+ Request Quote"}
+              </button>
+            </div>
+            <div class="surface-secondary-actions">
+              <button
+                class="btn ghost"
+                id="refreshQuotesBtn"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
         </div>
+
+        ${
+          state.notice
+            ? `
+              <div
+                class="quotes-notice quotes-notice--${state.notice.tone}"
+                role="${state.notice.tone === "warning" ? "alert" : "status"}"
+                aria-live="${state.notice.tone === "warning" ? "assertive" : "polite"}"
+              >
+                <strong>${state.notice.title}</strong>
+                <p>${state.notice.message}</p>
+              </div>
+            `
+            : ""
+        }
 
         <!-- Quote Request Form -->
         ${
@@ -219,7 +314,7 @@ export function initQuotesTab(container, options = {}) {
 
               <div class="form-actions">
                 <button type="button" class="btn" id="submitQuoteBtn">
-                  Send Quote Request
+                  ${state.pendingAction === "submit" ? "Sending..." : "Send Quote Request"}
                 </button>
                 <button type="button" class="btn ghost" id="cancelFormBtn">
                   Cancel
@@ -242,10 +337,23 @@ export function initQuotesTab(container, options = {}) {
     const toggleBtn = container.querySelector("#toggleFormBtn");
     const submitBtn = container.querySelector("#submitQuoteBtn");
     const cancelBtn = container.querySelector("#cancelFormBtn");
+    const refreshBtn = container.querySelector("#refreshQuotesBtn");
 
     if (toggleBtn) toggleBtn.addEventListener("click", toggleForm);
     if (submitBtn) submitBtn.addEventListener("click", handleSubmitQuote);
     if (cancelBtn) cancelBtn.addEventListener("click", toggleForm);
+    if (refreshBtn) refreshBtn.addEventListener("click", loadQuotes);
+
+    container.querySelectorAll("[data-retry-quotes]").forEach((button) => {
+      button.addEventListener("click", loadQuotes);
+    });
+
+    container.querySelectorAll("[data-open-quote-form]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.showForm = true;
+        render();
+      });
+    });
 
     // Attach form input listeners
     container.querySelectorAll(".quote-form [name]").forEach((input) => {
@@ -260,6 +368,42 @@ export function initQuotesTab(container, options = {}) {
         handleUpdateQuoteStatus(quoteId, status);
       });
     });
+
+    container.querySelectorAll('[data-action="toggle-menu"]').forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const menu = btn.parentElement?.querySelector(".quote-row-menu-panel");
+        if (menu) {
+          menu.classList.toggle("hidden");
+          btn.setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
+        }
+      });
+      btn.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          const menu = btn.parentElement?.querySelector(".quote-row-menu-panel");
+          if (menu && !menu.classList.contains("hidden")) {
+            menu.classList.add("hidden");
+            btn.setAttribute("aria-expanded", "false");
+            btn.focus();
+          }
+        }
+      });
+    });
+
+    // Wire closeMenuHandler for outside-click dismissal
+    if (!closeMenuHandler) {
+      closeMenuHandler = (event) => {
+        if (!event.target.closest(".quote-row-menu")) {
+          container.querySelectorAll(".quote-row-menu-panel:not(.hidden)").forEach((panel) => {
+            panel.classList.add("hidden");
+            panel.closest(".quote-row-menu")
+              ?.querySelector('[data-action="toggle-menu"]')
+              ?.setAttribute("aria-expanded", "false");
+          });
+        }
+      };
+      document.addEventListener("click", closeMenuHandler);
+    }
   }
 
   /**
@@ -267,15 +411,27 @@ export function initQuotesTab(container, options = {}) {
    */
   function renderQuotesList() {
     if (state.loading) {
-      return '<div class="loading-message">Loading quotes...</div>';
+      return '<div class="loading-message" role="status" aria-live="polite">Loading quotes...</div>';
     }
 
     if (state.error) {
-      return `<div class="error-message">${state.error}</div>`;
+      return `
+        <div class="error-message" role="alert">
+          <strong>Unable to load quotes</strong>
+          <p>${state.error}</p>
+          <button type="button" class="btn ghost" data-retry-quotes>Retry</button>
+        </div>
+      `;
     }
 
     if (state.quotes.length === 0) {
-      return '<div class="empty-message">No quotes yet. Request a quote to get started!</div>';
+      return `
+        <div class="empty-message" role="status" aria-live="polite">
+          <strong>No quotes yet</strong>
+          <p>Request a quote to start a vendor conversation for this business.</p>
+          <button type="button" class="btn ghost" data-open-quote-form>Request Quote</button>
+        </div>
+      `;
     }
 
     return state.quotes
@@ -334,16 +490,33 @@ export function initQuotesTab(container, options = {}) {
               class="btn ghost quote-action-btn"
               data-quote-id="${quote.id}"
               data-status="accepted"
+              ${state.pendingAction === `status-${quote.id}` ? "disabled" : ""}
             >
               ✓ Accept
             </button>
-            <button
-              class="btn ghost quote-action-btn"
-              data-quote-id="${quote.id}"
-              data-status="rejected"
-            >
-              ✕ Decline
-            </button>
+            <div class="quote-row-menu">
+              <button
+                class="btn ghost btn-row-menu"
+                data-quote-id="${quote.id}"
+                data-action="toggle-menu"
+                aria-label="More quote actions"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                ⋯
+              </button>
+              <div class="quote-row-menu-panel hidden" role="menu">
+                <button
+                  class="btn ghost quote-action-btn"
+                  data-quote-id="${quote.id}"
+                  data-status="rejected"
+                  role="menuitem"
+                  ${state.pendingAction === `status-${quote.id}` ? "disabled" : ""}
+                >
+                  ✕ Decline
+                </button>
+              </div>
+            </div>
           </div>
         `
             : ""
@@ -369,23 +542,13 @@ function formatStatus(status) {
 }
 
 /**
- * Format date
+ * Cleanup function
+ * Called by business-detail.js on route change or business change.
+ * @export
  */
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-}
-
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+export function cleanup() {
+  if (closeMenuHandler) {
+    document.removeEventListener("click", closeMenuHandler);
+    closeMenuHandler = null;
+  }
 }

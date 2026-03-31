@@ -231,3 +231,56 @@ export async function request(path, method, payload, options = {}) {
     }
   }
 }
+
+/**
+ * Make a raw HTTP request using the configured API base and auth headers.
+ * Intended for non-JSON bodies such as FormData uploads.
+ *
+ * @param {string} path - API path beginning with "/"
+ * @param {Object} [init={}] - Fetch init options
+ * @param {Object} [options={}] - Retry/error handling options
+ * @param {number} [options.retries=0] - Number of retry attempts on network failure
+ * @param {number} [options.retryDelayMs=350] - Base retry delay
+ * @param {boolean} [options.suppressAlert=false] - If true, do not show network failure toast
+ * @returns {Promise<Response>} Fetch response object
+ */
+export async function fetchWithAuth(path, init = {}, options = {}) {
+  const retries = Number(options.retries ?? 0);
+  const retryDelayMs = Number(options.retryDelayMs ?? 350);
+  const suppressAlert = Boolean(options.suppressAlert);
+  const base = getApiBase();
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const authHeaders = await getAuthHeaders();
+      const providedHeaders = init.headers ?? {};
+      const shouldSetJsonContentType =
+        !(init.body instanceof FormData) &&
+        !Object.keys(providedHeaders).some((header) => header.toLowerCase() === "content-type");
+
+      return await fetch(`${base}${path}`, {
+        ...init,
+        headers: {
+          ...(shouldSetJsonContentType ? { "Content-Type": "application/json" } : {}),
+          ...authHeaders,
+          ...providedHeaders
+        }
+      });
+    } catch (error) {
+      if (attempt < retries) {
+        const delay = retryDelayMs * (attempt + 1);
+        await sleep(delay);
+        continue;
+      }
+
+      if (!suppressAlert) {
+        console.error("[API] Raw request failed:", error);
+        showToast("API request failed. Check API base and console.");
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error("Unreachable raw request state");
+}

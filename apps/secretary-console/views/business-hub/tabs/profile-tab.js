@@ -9,31 +9,45 @@
  * - Contact/edit buttons
  * - Rating display
  *
- * Exported function: initProfileTab(container, options)
+ * Exported function: render(container, options)
  */
 
 import { getCurrentRole } from "../../../core/auth.js";
+import { request } from "../../../core/api.js";
+import { showToast } from "../../../core/toast.js";
+import { escapeHtml } from "../../common/format.js";
+
+const LOCAL_DRAFT_KEY = "camBusinessProfileDrafts";
 
 /**
- * Initialize profile tab
+ * Render profile tab
  * @param {HTMLElement} container - Container to render into
  * @param {Object} options - Configuration options
  * @param {Object} options.business - Business data object
  */
-export function initProfileTab(container, options = {}) {
-  const { business = {} } = options;
+export function render(container, options = {}) {
+  const { business = {}, onBusinessUpdated = () => {} } = options;
   const role = getCurrentRole();
   const isAdmin = role === "admin";
+  const hydratedBusiness = applyDraftBusiness(business);
+  let editMode = false;
 
-  const html = `
-    <div class="profile-tab-content">
+  function renderView() {
+    container.innerHTML = `
+      <div class="profile-tab-content">
       <!-- Description Section -->
       ${
-        business.description
+        hydratedBusiness.description
           ? `
         <section class="profile-section">
           <h3>About</h3>
-          <p class="profile-description">${escapeHtml(business.description)}</p>
+          ${
+            editMode
+              ? `<textarea id="businessDescription" class="profile-edit-input profile-edit-textarea">${escapeHtml(
+                  hydratedBusiness.description
+                )}</textarea>`
+              : `<p class="profile-description">${escapeHtml(hydratedBusiness.description)}</p>`
+          }
         </section>
       `
           : ""
@@ -44,57 +58,96 @@ export function initProfileTab(container, options = {}) {
         <h3>Contact Information</h3>
         <div class="profile-contact">
           ${
-            business.phone
+            hydratedBusiness.phone
               ? `
             <div class="contact-item">
               <span class="contact-label">Phone:</span>
-              <a href="tel:${business.phone}" class="contact-link">
-                ${escapeHtml(business.phone)}
-              </a>
+              ${
+                editMode
+                  ? `<input id="businessPhone" class="profile-edit-input" type="tel" value="${escapeHtml(
+                      hydratedBusiness.phone
+                    )}" />`
+                  : `<a href="tel:${hydratedBusiness.phone}" class="contact-link">
+                      ${escapeHtml(hydratedBusiness.phone)}
+                    </a>`
+              }
             </div>
           `
               : ""
           }
 
           ${
-            business.email
+            hydratedBusiness.email
               ? `
             <div class="contact-item">
               <span class="contact-label">Email:</span>
-              <a href="mailto:${business.email}" class="contact-link">
-                ${escapeHtml(business.email)}
-              </a>
+              ${
+                editMode
+                  ? `<input id="businessEmail" class="profile-edit-input" type="email" value="${escapeHtml(
+                      hydratedBusiness.email
+                    )}" />`
+                  : `<a href="mailto:${hydratedBusiness.email}" class="contact-link">
+                      ${escapeHtml(hydratedBusiness.email)}
+                    </a>`
+              }
             </div>
           `
               : ""
           }
 
           ${
-            business.website
+            hydratedBusiness.website
               ? `
             <div class="contact-item">
               <span class="contact-label">Website:</span>
-              <a href="${business.website}" target="_blank" rel="noopener noreferrer" class="contact-link">
-                ${escapeHtml(business.website)}
-              </a>
+              ${
+                editMode
+                  ? `<input id="businessWebsite" class="profile-edit-input" type="url" value="${escapeHtml(
+                      hydratedBusiness.website
+                    )}" />`
+                  : `<a href="${hydratedBusiness.website}" target="_blank" rel="noopener noreferrer" class="contact-link">
+                      ${escapeHtml(hydratedBusiness.website)}
+                    </a>`
+              }
             </div>
           `
               : ""
           }
 
           ${
-            business.address
+            hydratedBusiness.address
               ? `
             <div class="contact-item">
               <span class="contact-label">Address:</span>
               <div class="address-block">
-                <span>${escapeHtml(business.address)}</span>
-                ${business.city ? `<span>${escapeHtml(business.city)}` : ""}
-                ${business.state ? `, ${escapeHtml(business.state)}` : ""}
-                ${business.zip ? ` ${escapeHtml(business.zip)}</span>` : "</span>"}
-                <button class="btn-copy" id="copyAddressBtn" title="Copy address">
-                  📋 Copy
-                </button>
+                ${
+                  editMode
+                    ? `
+                      <input id="businessAddress" class="profile-edit-input" type="text" value="${escapeHtml(
+                        hydratedBusiness.address
+                      )}" />
+                      <div class="profile-edit-grid">
+                        <input id="businessCity" class="profile-edit-input" type="text" value="${escapeHtml(
+                          hydratedBusiness.city || ""
+                        )}" placeholder="City" />
+                        <input id="businessState" class="profile-edit-input" type="text" value="${escapeHtml(
+                          hydratedBusiness.state || ""
+                        )}" placeholder="State" />
+                        <input id="businessZip" class="profile-edit-input" type="text" value="${escapeHtml(
+                          hydratedBusiness.zip || ""
+                        )}" placeholder="ZIP" />
+                      </div>
+                    `
+                    : `
+                      <span>${escapeHtml(hydratedBusiness.address)}</span>
+                      ${hydratedBusiness.city ? `<span>${escapeHtml(hydratedBusiness.city)}` : ""}
+                      ${hydratedBusiness.state ? `, ${escapeHtml(hydratedBusiness.state)}` : ""}
+                      ${hydratedBusiness.zip ? ` ${escapeHtml(hydratedBusiness.zip)}</span>` : "</span>"}
+                      <button class="btn-copy" id="copyAddressBtn" title="Copy address">
+                        📋 Copy
+                      </button>
+                    `
+                }
               </div>
             </div>
           `
@@ -105,12 +158,12 @@ export function initProfileTab(container, options = {}) {
 
       <!-- Hours Section -->
       ${
-        business.hours
+        hydratedBusiness.hours
           ? `
         <section class="profile-section">
           <h3>Hours of Operation</h3>
           <div class="profile-hours">
-            ${renderHours(business.hours)}
+            ${renderHours(hydratedBusiness.hours)}
           </div>
         </section>
       `
@@ -119,7 +172,7 @@ export function initProfileTab(container, options = {}) {
 
       <!-- Rating Section -->
       ${
-        business.rating !== undefined
+        hydratedBusiness.rating !== undefined
           ? `
         <section class="profile-section">
           <h3>Rating</h3>
@@ -129,12 +182,12 @@ export function initProfileTab(container, options = {}) {
                 .fill(0)
                 .map(
                   (_, i) =>
-                    `<span class="star ${i < Math.floor(business.rating) ? "filled" : ""}">★</span>`
+                    `<span class="star ${i < Math.floor(hydratedBusiness.rating) ? "filled" : ""}">★</span>`
                 )
                 .join("")}
             </div>
-            <span class="rating-value">${business.rating.toFixed(1)} / 5.0</span>
-            ${business.reviewCount ? `<span class="rating-count">(${business.reviewCount} reviews)</span>` : ""}
+            <span class="rating-value">${hydratedBusiness.rating.toFixed(1)} / 5.0</span>
+            ${hydratedBusiness.reviewCount ? `<span class="rating-count">(${hydratedBusiness.reviewCount} reviews)</span>` : ""}
           </div>
         </section>
       `
@@ -143,12 +196,12 @@ export function initProfileTab(container, options = {}) {
 
       <!-- Social Links Section -->
       ${
-        business.socialLinks && Object.keys(business.socialLinks).length > 0
+        hydratedBusiness.socialLinks && Object.keys(hydratedBusiness.socialLinks).length > 0
           ? `
         <section class="profile-section">
           <h3>Follow Us</h3>
           <div class="profile-social">
-            ${Object.entries(business.socialLinks)
+            ${Object.entries(hydratedBusiness.socialLinks)
               .map(
                 ([platform, url]) => `
               <a href="${url}" target="_blank" rel="noopener noreferrer" class="social-link" title="${platform}">
@@ -166,44 +219,118 @@ export function initProfileTab(container, options = {}) {
       <!-- Action Buttons -->
       <div class="profile-actions">
         <button class="btn" id="contactBtn">📧 Send Message</button>
-        ${isAdmin ? '<button class="btn ghost" id="editBtn">✏️ Edit Profile</button>' : ""}
+        ${
+          isAdmin
+            ? editMode
+              ? '<button class="btn" id="saveProfileBtn">💾 Save Changes</button><button class="btn ghost" id="cancelEditBtn">Cancel</button>'
+              : '<button class="btn ghost" id="editBtn">✏️ Edit Profile</button>'
+            : ""
+        }
       </div>
     </div>
   `;
 
-  container.innerHTML = html;
+    // Attach event listeners
+    const copyBtn = container.querySelector("#copyAddressBtn");
+    const contactBtn = container.querySelector("#contactBtn");
+    const editBtn = container.querySelector("#editBtn");
+    const saveBtn = container.querySelector("#saveProfileBtn");
+    const cancelEditBtn = container.querySelector("#cancelEditBtn");
 
-  // Attach event listeners
-  const copyBtn = container.querySelector("#copyAddressBtn");
-  const contactBtn = container.querySelector("#contactBtn");
-  const editBtn = container.querySelector("#editBtn");
-
-  if (copyBtn) {
-    copyBtn.addEventListener("click", () => {
-      const address = `${business.address || ""} ${business.city || ""} ${business.state || ""} ${business.zip || ""}`.trim();
-      navigator.clipboard.writeText(address).then(() => {
-        copyBtn.textContent = "✓ Copied!";
-        setTimeout(() => {
-          copyBtn.textContent = "📋 Copy";
-        }, 2000);
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        const address = `${hydratedBusiness.address || ""} ${hydratedBusiness.city || ""} ${hydratedBusiness.state || ""} ${hydratedBusiness.zip || ""}`.trim();
+        navigator.clipboard.writeText(address).then(() => {
+          copyBtn.textContent = "✓ Copied!";
+          setTimeout(() => {
+            copyBtn.textContent = "📋 Copy";
+          }, 2000);
+        });
       });
-    });
+    }
+
+    if (contactBtn) {
+      contactBtn.addEventListener("click", () => {
+        if (hydratedBusiness.email) {
+          window.location.href = `mailto:${hydratedBusiness.email}`;
+        }
+      });
+    }
+
+    if (editBtn) {
+      editBtn.addEventListener("click", () => {
+        editMode = true;
+        renderView();
+      });
+    }
+
+    if (cancelEditBtn) {
+      cancelEditBtn.addEventListener("click", () => {
+        editMode = false;
+        renderView();
+      });
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener("click", async () => {
+        const updatedBusiness = {
+          ...hydratedBusiness,
+          description: container.querySelector("#businessDescription")?.value ?? hydratedBusiness.description,
+          phone: container.querySelector("#businessPhone")?.value ?? hydratedBusiness.phone,
+          email: container.querySelector("#businessEmail")?.value ?? hydratedBusiness.email,
+          website: container.querySelector("#businessWebsite")?.value ?? hydratedBusiness.website,
+          address: container.querySelector("#businessAddress")?.value ?? hydratedBusiness.address,
+          city: container.querySelector("#businessCity")?.value ?? hydratedBusiness.city,
+          state: container.querySelector("#businessState")?.value ?? hydratedBusiness.state,
+          zip: container.querySelector("#businessZip")?.value ?? hydratedBusiness.zip
+        };
+
+        const persistedBusiness = await persistBusinessDraft(updatedBusiness);
+        editMode = false;
+        onBusinessUpdated(persistedBusiness);
+        renderView();
+      });
+    }
   }
 
-  if (contactBtn) {
-    contactBtn.addEventListener("click", () => {
-      if (business.email) {
-        window.location.href = `mailto:${business.email}`;
-      }
+  renderView();
+}
+
+async function persistBusinessDraft(business) {
+  try {
+    const response = await request(`/business-listings/${business.id}`, "PUT", business, {
+      suppressAlert: true
     });
+
+    if (response && !response.error) {
+      clearDraftBusiness(business.id);
+      showToast("Business profile saved");
+      return response.data || response;
+    }
+  } catch (error) {
+    console.debug("[Business Profile] PUT unavailable:", error.message);
   }
 
-  if (editBtn) {
-    editBtn.addEventListener("click", () => {
-      // TODO: Implement edit functionality
-      console.log("Edit profile clicked for:", business.id);
-    });
-  }
+  saveDraftBusiness(business);
+  showToast("Business profile saved locally for this session");
+  return business;
+}
+
+function applyDraftBusiness(business) {
+  const drafts = JSON.parse(localStorage.getItem(LOCAL_DRAFT_KEY) || "{}");
+  return drafts[business.id] ? { ...business, ...drafts[business.id] } : business;
+}
+
+function saveDraftBusiness(business) {
+  const drafts = JSON.parse(localStorage.getItem(LOCAL_DRAFT_KEY) || "{}");
+  drafts[business.id] = business;
+  localStorage.setItem(LOCAL_DRAFT_KEY, JSON.stringify(drafts));
+}
+
+function clearDraftBusiness(businessId) {
+  const drafts = JSON.parse(localStorage.getItem(LOCAL_DRAFT_KEY) || "{}");
+  delete drafts[businessId];
+  localStorage.setItem(LOCAL_DRAFT_KEY, JSON.stringify(drafts));
 }
 
 /**
@@ -253,10 +380,10 @@ function capitalizeWord(word) {
 }
 
 /**
- * Escape HTML special characters
+ * Cleanup function — no-op for this tab
+ * Called by business-detail.js on route change or business change.
+ * @export
  */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+export function cleanup() {
+  // No document listeners, no open modals, no async state
 }

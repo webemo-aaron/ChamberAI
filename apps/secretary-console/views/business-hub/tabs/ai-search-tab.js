@@ -8,20 +8,21 @@
  * - Show count of related items
  * - Relevance indicators
  *
- * Exported function: initAiSearchTab(container, options)
+ * Exported function: render(container, options)
  */
 
 import { request } from "../../../core/api.js";
 import { showToast } from "../../../core/toast.js";
 import { navigate } from "../../../core/router.js";
+import { escapeHtml, formatDate } from "../../common/format.js";
 
 /**
- * Initialize AI search tab
+ * Render AI search tab
  * @param {HTMLElement} container - Container to render into
  * @param {Object} options - Configuration options
  * @param {Object} options.business - Business data object
  */
-export function initAiSearchTab(container, options = {}) {
+export function render(container, options = {}) {
   const { business = {} } = options;
 
   // State
@@ -30,6 +31,7 @@ export function initAiSearchTab(container, options = {}) {
     relatedBusinesses: [],
     loading: true,
     error: null,
+    notice: null,
     searchCompleted: false
   };
 
@@ -41,23 +43,46 @@ export function initAiSearchTab(container, options = {}) {
   async function loadRelatedContent() {
     state.loading = true;
     state.error = null;
-    render();
+    state.notice = {
+      tone: "info",
+      title: "Refreshing AI Context",
+      message: "Scanning indexed meetings and related signals for this business."
+    };
+    renderView();
 
     try {
       // Search for meetings mentioning this business
       const meetingsResponse = await request(
+        `/api/ai-search/business?businessId=${business.id}`,
         "GET",
-        `/api/ai-search/business?businessId=${business.id}`
+        null,
+        { suppressAlert: true }
       );
-      state.relatedMeetings = meetingsResponse.data || [];
+      if (!meetingsResponse || meetingsResponse.error) {
+        throw new Error(meetingsResponse?.error || "AI search unavailable");
+      }
+      state.relatedMeetings = meetingsResponse.data || meetingsResponse || [];
       state.searchCompleted = true;
+      state.notice = {
+        tone: "success",
+        title: "AI Search Updated",
+        message:
+          state.relatedMeetings.length > 0
+            ? `Found ${state.relatedMeetings.length} related meeting records for this business.`
+            : "No indexed meeting mentions were found for this business yet."
+      };
     } catch (error) {
       console.error("Failed to load related content:", error);
-      state.error = "Failed to search related content";
-      // Don't show error toast - this is optional feature
+      state.error = "Verify the API base or AI index readiness, then retry.";
+      state.notice = {
+        tone: "warning",
+        title: "AI Search Unavailable",
+        message: "The related-meetings index could not be reached for this business."
+      };
+      showToast("AI search unavailable", "error");
     } finally {
       state.loading = false;
-      render();
+      renderView();
     }
   }
 
@@ -69,16 +94,44 @@ export function initAiSearchTab(container, options = {}) {
   }
 
   /**
-   * Render the AI search tab
+   * Render the AI search tab view
    */
-  function render() {
+  function renderView() {
     container.innerHTML = `
       <div class="ai-search-tab-content">
+        <div class="ai-search-header">
+          <div>
+            <h3>AI Search</h3>
+            <p class="ai-search-subtitle">Find meetings where this business was discussed, mentioned, or surfaced by relevance ranking.</p>
+          </div>
+          <button class="btn ghost" id="refreshAiSearchBtn" ${state.loading ? "disabled" : ""}>
+            Refresh
+          </button>
+        </div>
+        ${
+          state.notice
+            ? `
+              <div
+                class="ai-search-notice ai-search-notice--${state.notice.tone}"
+                role="${state.notice.tone === "warning" ? "alert" : "status"}"
+                aria-live="${state.notice.tone === "warning" ? "assertive" : "polite"}"
+              >
+                <strong>${state.notice.title}</strong>
+                <p>${state.notice.message}</p>
+              </div>
+            `
+            : ""
+        }
         ${renderContent()}
       </div>
     `;
 
     // Attach event listeners
+    container.querySelector("#refreshAiSearchBtn")?.addEventListener("click", loadRelatedContent);
+    container.querySelectorAll("[data-retry-ai-search]").forEach((button) => {
+      button.addEventListener("click", loadRelatedContent);
+    });
+
     container.querySelectorAll(".related-meeting-link").forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
@@ -94,7 +147,7 @@ export function initAiSearchTab(container, options = {}) {
   function renderContent() {
     if (state.loading) {
       return `
-        <div class="ai-search-loading">
+        <div class="ai-search-loading" role="status" aria-live="polite">
           <p>Searching for related meetings...</p>
           <div class="loading-spinner"></div>
         </div>
@@ -103,8 +156,10 @@ export function initAiSearchTab(container, options = {}) {
 
     if (state.error) {
       return `
-        <div class="ai-search-error">
+        <div class="ai-search-error" role="alert">
+          <strong>Unable to run AI search</strong>
           <p>${escapeHtml(state.error)}</p>
+          <button type="button" class="btn ghost" data-retry-ai-search>Retry</button>
         </div>
       `;
     }
@@ -159,7 +214,7 @@ export function initAiSearchTab(container, options = {}) {
         `
             : `
           <section class="ai-search-section">
-            <div class="empty-state">
+            <div class="empty-state" role="status" aria-live="polite">
               <p class="empty-title">No related meetings found</p>
               <p class="empty-description">
                 This business hasn't been mentioned in any meetings yet
@@ -213,19 +268,6 @@ export function initAiSearchTab(container, options = {}) {
 }
 
 /**
- * Format date
- */
-function formatDate(dateStr) {
-  if (!dateStr) return "Unknown date";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-}
-
-/**
  * Format relevance score (0-1 to percentage)
  */
 function formatRelevance(score) {
@@ -235,10 +277,10 @@ function formatRelevance(score) {
 }
 
 /**
- * Escape HTML special characters
+ * Cleanup function — no-op for this tab
+ * Called by business-detail.js on route change or business change.
+ * @export
  */
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+export function cleanup() {
+  // No document listeners, no open modals, no async state
 }
