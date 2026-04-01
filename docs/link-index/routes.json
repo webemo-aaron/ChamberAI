@@ -1,0 +1,25 @@
+{
+  "generated_from": "apps/secretary-console/app.js registerRoute()",
+  "routes": [
+    { "path": "/", "requires_auth": false, "role": "guest" },
+    { "path": "/login", "requires_auth": false, "role": "guest" },
+    { "path": "/dashboard", "requires_auth": true, "role": "guest" },
+    { "path": "/operations", "requires_auth": true, "role": "guest" },
+    { "path": "/meetings", "requires_auth": true, "role": "guest" },
+    { "path": "/meetings/:id", "requires_auth": true, "role": "guest" },
+    { "path": "/business-hub", "requires_auth": true, "role": "guest" },
+    { "path": "/business-hub/:id", "requires_auth": true, "role": "guest" },
+    { "path": "/settings", "requires_auth": true, "role": "guest" },
+    { "path": "/analytics", "requires_auth": true, "role": "secretary", "tier": "Council" },
+    { "path": "/engagement", "requires_auth": true, "role": "guest" },
+    { "path": "/campaigns", "requires_auth": true, "role": "guest" },
+    { "path": "/billing", "requires_auth": true, "role": "secretary" },
+    { "path": "/geo-intelligence", "requires_auth": true, "role": "guest" },
+    { "path": "/profile", "requires_auth": true, "role": "guest" },
+    { "path": "/preferences", "requires_auth": true, "role": "guest" },
+    { "path": "/kiosk", "requires_auth": true, "role": "secretary", "tier": "Council" },
+    { "path": "/kiosk-config", "requires_auth": true, "role": "admin" },
+    { "path": "/admin/stripe", "requires_auth": true, "role": "admin" },
+    { "path": "/admin/products", "requires_auth": true, "role": "admin" }
+  ]
+}

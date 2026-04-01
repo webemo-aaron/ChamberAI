@@ -91,7 +91,7 @@ test("dashboard model exposes route metadata for primary drill-down surfaces", (
     model.workspaceLanes.map((lane) => ({ id: lane.id, route: lane.route, actionLabel: lane.actionLabel })),
     [
       { id: "intelligence", route: "/dashboard", actionLabel: "Open Overview" },
-      { id: "operations", route: "/meetings", actionLabel: "Open Operations" },
+      { id: "operations", route: "/operations", actionLabel: "Open Operations" },
       { id: "admin", route: "/admin/stripe", actionLabel: "Open Admin" }
     ]
   );

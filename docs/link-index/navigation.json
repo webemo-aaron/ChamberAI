@@ -1,0 +1,110 @@
+{
+  "base_entry": "/login",
+  "context": "authenticated-admin-council",
+  "links": [
+    {
+      "id": "sidebar-dashboard",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-dashboard']",
+      "expected_route": "/dashboard"
+    },
+    {
+      "id": "sidebar-business-hub",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-business-hub']",
+      "expected_route": "/business-hub"
+    },
+    {
+      "id": "sidebar-geo-intelligence",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-geo-intelligence']",
+      "expected_route": "/geo-intelligence"
+    },
+    {
+      "id": "sidebar-kiosk",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-kiosk']",
+      "expected_route": "/kiosk"
+    },
+    {
+      "id": "sidebar-operations",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-operations']",
+      "expected_route": "/operations"
+    },
+    {
+      "id": "sidebar-meetings",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-meetings']",
+      "expected_route": "/meetings"
+    },
+    {
+      "id": "sidebar-engagement",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-engagement']",
+      "expected_route": "/engagement"
+    },
+    {
+      "id": "sidebar-campaigns",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-campaigns']",
+      "expected_route": "/campaigns"
+    },
+    {
+      "id": "sidebar-settings",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-settings']",
+      "expected_route": "/settings"
+    },
+    {
+      "id": "sidebar-analytics",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-analytics']",
+      "expected_route": "/analytics"
+    },
+    {
+      "id": "sidebar-billing",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-billing']",
+      "expected_route": "/billing"
+    },
+    {
+      "id": "sidebar-stripe-admin",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-stripe-admin']",
+      "expected_route": "/admin/stripe"
+    },
+    {
+      "id": "sidebar-products-admin",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-products-admin']",
+      "expected_route": "/admin/products"
+    },
+    {
+      "id": "sidebar-profile",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-profile']",
+      "expected_route": "/profile"
+    },
+    {
+      "id": "sidebar-preferences",
+      "source": "sidebar",
+      "selector": "[data-testid='sidebar-link-preferences']",
+      "expected_route": "/preferences"
+    }
+  ],
+  "external_links": [
+    {
+      "id": "billing-stripe-admin-link",
+      "source_route": "/billing",
+      "label": "Open Stripe Admin",
+      "expected_href": "./stripe-admin.html"
+    },
+    {
+      "id": "billing-products-admin-link",
+      "source_route": "/billing",
+      "label": "Open Products Admin",
+      "expected_href": "./products-admin.html"
+    }
+  ]
+}

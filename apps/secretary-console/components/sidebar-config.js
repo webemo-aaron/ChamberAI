@@ -62,9 +62,18 @@ const navigationSections = [
     description: "Campaign execution, communications, governance, and revenue controls.",
     items: [
       {
+        id: "operations",
+        icon: "🧭",
+        label: "Operations",
+        route: "/operations",
+        minRole: "guest",
+        testId: "sidebar-link-operations",
+        mobile: true
+      },
+      {
         id: "meetings",
         icon: "📋",
-        label: "Operations",
+        label: "Meetings",
         route: "/meetings",
         minRole: "guest",
         testId: "sidebar-link-meetings",
@@ -207,7 +216,7 @@ export function getNavigationSections({ role = "guest", tier = "Free" } = {}) {
 }
 
 export function getMobileNavigationItems(context = {}) {
-  const order = ["dashboard", "business-hub", "meetings", "engagement", "analytics", "settings"];
+  const order = ["dashboard", "business-hub", "operations", "meetings", "engagement", "analytics", "settings"];
 
   return getNavigationSections(context)
     .flatMap((section) => section.items)
@@ -221,6 +230,7 @@ export function getDefaultRouteForRole() {
     const preferredRoute = localStorage.getItem("camPreferenceLanding");
     const allowedRoutes = new Set([
       "/dashboard",
+      "/operations",
       "/meetings",
       "/business-hub",
       "/engagement",

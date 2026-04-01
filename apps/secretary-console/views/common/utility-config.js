@@ -42,6 +42,44 @@ export function buildUtilityRouteConfig(route, context = {}) {
   };
 
   switch (route) {
+    case "/operations":
+      return {
+        eyebrow: "Operations",
+        title: "Operations",
+        description:
+          "Coordinate daily chamber workflows across meetings, engagement, campaigns, and communications from one operating lane.",
+        spotlight: {
+          title: "Operational command lane",
+          description:
+            "Use this as the weekly control surface, then open dedicated tools for execution details.",
+          pills: [`${tier} tier`, `${formatRole(role)} role`]
+        },
+        cards: [
+          {
+            title: "Meeting Cadence",
+            description: "Schedule and run board sessions with agenda, minutes, motions, and audit history.",
+            actions: [{ label: "Open Meetings", route: "/meetings" }]
+          },
+          {
+            title: "Outreach Execution",
+            description: "Advance member communication queues and launch promotion workflows.",
+            actions: [
+              { label: "Open Engagement", route: "/engagement" },
+              { label: "Open Campaigns", route: "/campaigns" }
+            ]
+          },
+          {
+            title: "Operating Controls",
+            description: "Manage communications settings, billing posture, and dashboard oversight.",
+            actions: [
+              { label: "Open Settings", route: "/settings" },
+              { label: "Open Billing", route: "/billing" },
+              sharedActions.dashboard
+            ]
+          }
+        ]
+      };
+
     case "/engagement":
       return {
         eyebrow: "Engagement",

@@ -6,7 +6,7 @@ const laneRouteMap = {
     actionLabel: "Open Overview"
   },
   operations: {
-    route: "/meetings",
+    route: "/operations",
     actionLabel: "Open Operations"
   },
   admin: {
@@ -19,7 +19,7 @@ const cityPlaybookMap = {
   all: {
     kicker: "Statewide Showcase",
     summary: "Use the dashboard as a cross-city launch point into meetings, member support, and analytics.",
-    primaryCta: { label: "Open Meetings Workspace", route: "/meetings" },
+    primaryCta: { label: "Open Operations Workspace", route: "/operations" },
     secondaryCta: { label: "Review Business Hub", route: "/business-hub" },
     statHelpers: {
       meetings: "Tracked sessions",
@@ -28,9 +28,9 @@ const cityPlaybookMap = {
       ai: "Recent guided assists"
     },
     navigationLinks: {
-      quickActions: { label: "View Meetings", route: "/meetings" },
+      quickActions: { label: "Open Operations", route: "/operations" },
       feature: { label: "Open Business Hub", route: "/business-hub" },
-      activity: { label: "View All Activity", route: "/meetings" },
+      activity: { label: "View All Activity", route: "/operations" },
       calendar: { label: "Open Calendar View", route: "/meetings" }
     }
   },
@@ -286,7 +286,7 @@ export function buildDashboardModel({
       id: "create-meeting",
       label: "Run Operations Session",
       helper: "Capture decisions, assign actions, and publish updates",
-      route: "/meetings"
+      route: "/operations"
     },
     {
       id: "open-directory",
@@ -345,7 +345,7 @@ export function buildDashboardModel({
           eyebrow: "Engagement AI",
           title: "Concierge Kiosk",
           description: "Support members and visitors with AI-guided answers and governed context.",
-          route: "/engagement",
+          route: "/kiosk",
           accent: "ai"
         }
       : {

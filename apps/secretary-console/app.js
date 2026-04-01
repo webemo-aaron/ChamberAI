@@ -425,6 +425,13 @@ async function initializeApp() {
     activateView(utilityView);
     analyticsHandler(params, context);
   });
+  registerRoute("/operations", () => {
+    if (!getCurrentRole()) {
+      navigate("/login");
+      return;
+    }
+    renderNamedUtilityRoute("/operations");
+  });
   registerRoute("/engagement", () => {
     if (!getCurrentRole()) {
       navigate("/login");

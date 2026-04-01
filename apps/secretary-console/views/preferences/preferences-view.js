@@ -56,6 +56,7 @@ export function preferencesHandler() {
               <span>Landing route</span>
               <select id="preferenceLanding" class="utility-form-input">
                 <option value="/dashboard">Dashboard</option>
+                <option value="/operations">Operations</option>
                 <option value="/meetings">Meetings</option>
                 <option value="/business-hub">Business Hub</option>
                 <option value="/analytics">Analytics</option>
