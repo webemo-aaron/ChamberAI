@@ -19,6 +19,12 @@ import { request } from "../../core/api.js";
 let loginThemeMediaQuery = null;
 let loginThemeChangeHandler = null;
 
+function getDemoTierForRole(role) {
+  if (role === "admin") return "Network";
+  if (role === "secretary") return "Council";
+  return "Free";
+}
+
 /**
  * Check if SSO is enabled for the current org
  * @async
@@ -430,8 +436,11 @@ async function handleDemoSignIn(navigate) {
   try {
     // Set role and persist to localStorage
     setRole(role, email, "");
+    const demoTier = getDemoTierForRole(role);
+    localStorage.setItem("camUserTier", demoTier);
+    localStorage.removeItem("camTierPreview");
 
-    showToast(`Signed in as ${role}`, {
+    showToast(`Signed in as ${role} (${demoTier})`, {
       type: "success"
     });
 
