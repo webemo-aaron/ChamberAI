@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-04-02T00:41:29.371Z",
+  "generated_at": "2026-04-02T00:54:15.353Z",
   "summary": {
     "canonical_route_count": 20,
     "app_registered_route_count": 20,
-    "extracted_internal_reference_count": 70,
+    "extracted_internal_reference_count": 69,
     "extracted_external_reference_count": 2,
     "invalid_internal_references": 0,
     "missing_routes_in_index": 0,

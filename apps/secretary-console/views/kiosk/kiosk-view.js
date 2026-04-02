@@ -20,6 +20,30 @@ import { showToast } from "../../core/toast.js";
 import { navigate } from "../../core/router.js";
 import { initKioskChat } from "./kiosk-chat.js";
 
+function renderKioskUnavailable({ title, description, currentRole }) {
+  const mainContent = document.querySelector("main") || document.body;
+  const nextRoute = currentRole === "admin" ? "/kiosk-config" : "/dashboard";
+  const nextLabel = currentRole === "admin" ? "Open Kiosk Settings" : "Back to Dashboard";
+
+  mainContent.innerHTML = `
+    <section class="kiosk-page" role="main">
+      <div class="panel utility-hero">
+        <span class="utility-eyebrow">AI Engagement</span>
+        <h1>${title}</h1>
+        <p>${description}</p>
+        <div class="utility-action-row">
+          <button type="button" class="utility-action" data-kiosk-next-route="${nextRoute}">${nextLabel}</button>
+        </div>
+      </div>
+    </section>
+  `;
+
+  const cta = mainContent.querySelector("[data-kiosk-next-route]");
+  if (cta) {
+    cta.addEventListener("click", () => navigate(nextRoute));
+  }
+}
+
 /**
  * Main kiosk view handler
  * @param {Object} params - Route parameters
@@ -27,6 +51,8 @@ import { initKioskChat } from "./kiosk-chat.js";
  */
 export async function kioskHandler(params, context) {
   try {
+    const currentRole = getCurrentRole();
+
     // Load kiosk configuration
     let kioskConfig;
     try {
@@ -34,25 +60,36 @@ export async function kioskHandler(params, context) {
     } catch (error) {
       showToast("Failed to load kiosk configuration", "error");
       console.error("Failed to load kiosk config:", error);
-      navigate("/meetings");
+      renderKioskUnavailable({
+        title: "Kiosk Configuration Unavailable",
+        description: "The kiosk service could not load configuration for this workspace.",
+        currentRole
+      });
       return;
     }
 
     // Check if kiosk is enabled
     if (!kioskConfig.enabled) {
       showToast("AI Kiosk is not enabled for this organization");
-      navigate("/meetings");
+      renderKioskUnavailable({
+        title: "Kiosk Is Disabled",
+        description: "Enable public or private kiosk mode to use AI engagement.",
+        currentRole
+      });
       return;
     }
 
     // Detect current mode based on auth state
-    const currentRole = getCurrentRole();
     const isPrivateMode = currentRole === "admin" && kioskConfig.privateModeEnabled;
     const isPublicMode = kioskConfig.publicModeEnabled && !isPrivateMode;
 
     if (!isPrivateMode && !isPublicMode) {
       showToast("Kiosk mode not available for this organization");
-      navigate("/meetings");
+      renderKioskUnavailable({
+        title: "No Kiosk Mode Is Enabled",
+        description: "Ask an admin to enable public mode or private admin mode for kiosk access.",
+        currentRole
+      });
       return;
     }
 
