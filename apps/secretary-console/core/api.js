@@ -112,15 +112,17 @@ export async function getAuthHeaders() {
 
   // Fallback: demo token for localhost development
   const role = localStorage.getItem('camRole');
+  const authMode = localStorage.getItem('camAuthMode');
   const isLocalDevHost =
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1';
+  const shouldUseDemoToken = authMode === 'demo' || isLocalDevHost;
 
-  if (isLocalDevHost && role && role !== 'guest') {
+  if (shouldUseDemoToken && role && role !== 'guest') {
     headers.Authorization = 'Bearer demo-token';
   } else if (!firebaseUser && role && role !== 'guest') {
     console.warn(
-      '[API] Google auth session missing; not sending demo token in hosted mode'
+      '[API] Google auth session missing; no eligible demo auth mode'
     );
   }
 

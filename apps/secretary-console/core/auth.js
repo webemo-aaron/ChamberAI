@@ -76,7 +76,8 @@ export async function getAuthHeaders() {
       // Demo mode fallback (localhost and not guest)
       const isDemoMode =
         location.hostname === "localhost" ||
-        location.hostname === "127.0.0.1";
+        location.hostname === "127.0.0.1" ||
+        localStorage.getItem("camAuthMode") === "demo";
       const email = localStorage.getItem("camEmail");
       const role = currentRole;
 
@@ -304,6 +305,7 @@ export async function signOut() {
   localStorage.removeItem("camDisplayName");
   localStorage.removeItem("camUserTier");
   localStorage.removeItem("camTierPreview");
+  localStorage.removeItem("camAuthMode");
 
   currentRole = "";
   firebaseUser = null;

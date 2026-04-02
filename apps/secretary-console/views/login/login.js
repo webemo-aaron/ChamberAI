@@ -422,6 +422,7 @@ async function handleSsoSignIn(navigate, ssoStatus) {
       // OIDC providers: google_workspace, azure_ad, okta, oidc_custom
       user = await signInWithOIDC(ssoStatus.provider);
     }
+    localStorage.setItem("camAuthMode", "firebase");
 
     showToast(`Signed in as ${user.displayName || user.email}`, {
       type: "success"
@@ -446,6 +447,7 @@ async function handleSsoSignIn(navigate, ssoStatus) {
 async function handleGoogleSignIn(navigate) {
   try {
     const user = await signInWithGoogle();
+    localStorage.setItem("camAuthMode", "firebase");
     showToast(`Signed in as ${user.displayName || user.email}`, {
       type: "success"
     });
@@ -488,6 +490,7 @@ async function handleDemoSignIn(navigate) {
   try {
     // Set role and persist to localStorage
     setRole(role, email, "");
+    localStorage.setItem("camAuthMode", "demo");
     const demoTier =
       tierSelect.value === "auto"
         ? getDemoTierForRole(role)
