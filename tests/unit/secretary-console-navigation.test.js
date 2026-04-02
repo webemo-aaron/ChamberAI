@@ -81,7 +81,7 @@ test("mobile navigation is limited to primary destinations", () => {
 
   assert.deepEqual(
     items.map((item) => item.id),
-    ["dashboard", "business-hub", "operations", "meetings", "engagement"]
+    ["dashboard", "business-hub", "operations", "meetings", "kiosk"]
   );
 });
 

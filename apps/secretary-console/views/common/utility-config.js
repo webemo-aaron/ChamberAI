@@ -64,6 +64,7 @@ export function buildUtilityRouteConfig(route, context = {}) {
             title: "Outreach Execution",
             description: "Advance member communication queues and launch promotion workflows.",
             actions: [
+              { label: "Open Concierge Kiosk", route: "/kiosk" },
               { label: "Open Engagement", route: "/engagement" },
               { label: "Open Campaigns", route: "/campaigns" }
             ]

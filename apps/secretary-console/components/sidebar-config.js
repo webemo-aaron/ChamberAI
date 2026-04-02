@@ -49,10 +49,11 @@ const navigationSections = [
         icon: "🤖",
         label: "AI Engagement",
         route: "/kiosk",
-        minRole: "secretary",
+        minRole: "guest",
         minTier: "Council",
         testId: "sidebar-link-kiosk",
-        badge: "Council+"
+        badge: "Council+",
+        mobile: true
       }
     ]
   },
@@ -216,7 +217,7 @@ export function getNavigationSections({ role = "guest", tier = "Free" } = {}) {
 }
 
 export function getMobileNavigationItems(context = {}) {
-  const order = ["dashboard", "business-hub", "operations", "meetings", "engagement", "analytics", "settings"];
+  const order = ["dashboard", "business-hub", "operations", "meetings", "kiosk", "engagement", "analytics", "settings"];
 
   return getNavigationSections(context)
     .flatMap((section) => section.items)

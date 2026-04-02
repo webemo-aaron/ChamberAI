@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-04-02T00:17:52.234Z",
+  "summary": {
+    "canonical_route_count": 20,
+    "app_registered_route_count": 20,
+    "extracted_internal_reference_count": 70,
+    "extracted_external_reference_count": 2,
+    "invalid_internal_references": 0,
+    "missing_routes_in_index": 0,
+    "extra_routes_in_index": 0,
+    "invalid_navigation_entries": 0
+  },
+  "details": {
+    "missing_routes_in_index": [],
+    "extra_routes_in_index": [],
+    "invalid_navigation_entries": [],
+    "invalid_internal_references": []
+  }
+}
