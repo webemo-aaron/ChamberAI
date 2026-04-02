@@ -302,6 +302,8 @@ export async function signOut() {
   localStorage.removeItem("camRole");
   localStorage.removeItem("camEmail");
   localStorage.removeItem("camDisplayName");
+  localStorage.removeItem("camUserTier");
+  localStorage.removeItem("camTierPreview");
 
   currentRole = "";
   firebaseUser = null;
