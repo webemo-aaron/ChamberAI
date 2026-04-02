@@ -15,7 +15,7 @@
  */
 
 import { request } from "../../core/api.js";
-import { getCurrentRole } from "../../core/auth.js";
+import { getCurrentRole, signOut } from "../../core/auth.js";
 import { showToast } from "../../core/toast.js";
 import { navigate } from "../../core/router.js";
 import { initKioskChat } from "./kiosk-chat.js";
@@ -95,10 +95,12 @@ export async function kioskHandler(params, context) {
     if (isPrivateMode) {
       const logoutBtn = header.querySelector(".kiosk-logout-btn");
       if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-          localStorage.removeItem("camRole");
-          localStorage.removeItem("camEmail");
-          localStorage.removeItem("camDisplayName");
+        logoutBtn.addEventListener("click", async () => {
+          try {
+            await signOut();
+          } catch (error) {
+            console.debug("Kiosk logout warning:", error.message);
+          }
           showToast("Logged out from kiosk");
           navigate("/login");
         });

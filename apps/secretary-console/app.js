@@ -22,6 +22,7 @@ import { request, setApiBase, getApiBase, detectDefaultApiBase } from "./core/ap
 import {
   getCurrentRole,
   setRole,
+  signOut,
   initFirebaseAuth,
   applyRolePermissions,
   onAuthStateChange,
@@ -794,16 +795,16 @@ modalLoginGoogle.addEventListener("click", async () => {
 });
 
 // Logout Button
-logoutBtn.addEventListener("click", () => {
-  localStorage.removeItem("camRole");
-  localStorage.removeItem("camEmail");
-  localStorage.removeItem("camDisplayName");
+logoutBtn.addEventListener("click", async () => {
+  try {
+    await signOut();
+  } catch (error) {
+    console.debug("Topbar logout warning:", error.message);
+  }
 
-  setRole("guest", "", "");
   applyRolePermissions("guest");
   updateAuthDisplay();
-  openModal(loginModal, { returnFocus: logoutBtn });
-
+  navigate("/login");
   showToast("Signed out");
 });
 
