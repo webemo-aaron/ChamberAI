@@ -95,15 +95,19 @@ export function requireKioskTier() {
       // Fetch org settings
       const settingsDoc = await orgCollection(db, orgId, "settings").doc("system").get();
       const settings = settingsDoc.exists ? settingsDoc.data() : {};
-      const currentTier = settings.subscription?.tier ?? "free";
+      const settingsTier = settings.subscription?.tier ?? "free";
+      const userTier = String(req.user?.tier ?? "").toLowerCase();
+      const effectiveTier = (tierLevels[userTier] ?? -1) > (tierLevels[settingsTier] ?? -1)
+        ? userTier
+        : settingsTier;
 
       // Kiosk requires Pro+ tier
-      if ((tierLevels[currentTier] ?? 0) < (tierLevels["pro"] ?? 0)) {
+      if ((tierLevels[effectiveTier] ?? 0) < (tierLevels["pro"] ?? 0)) {
         return res.status(402).json({
           error: "Payment required",
           feature: "kiosk",
           tier_required: "pro",
-          current_tier: currentTier,
+          current_tier: effectiveTier,
           message: "AI Kiosk feature requires Pro tier or higher"
         });
       }
