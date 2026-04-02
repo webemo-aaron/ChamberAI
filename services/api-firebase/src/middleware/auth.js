@@ -81,7 +81,8 @@ export async function requireAuth(req, res, next) {
       req.user = {
         uid: mocked.uid ?? "mocked-user",
         email: mocked.email ?? demoEmail,
-        role: mocked.role ?? "secretary"
+        role: mocked.role ?? "secretary",
+        tier: mocked.tier ?? null
       };
       req.orgId = resolveOrgId(mocked.orgId);
       return next();

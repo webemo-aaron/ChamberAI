@@ -6,6 +6,7 @@ SHOWCASE_NAMESPACE="${SHOWCASE_NAMESPACE:-showcase-live}"
 SHOWCASE_AUTH_TOKEN="${SHOWCASE_AUTH_TOKEN:-demo-token}"
 SHOWCASE_AUTH_EMAIL="${SHOWCASE_AUTH_EMAIL:-admin@acme.com}"
 RUNTIME_API_BASE="${API_BASE:-}"
+ALLOW_COMPOSE_FALLBACK="${SHOWCASE_ALLOW_COMPOSE_FALLBACK:-false}"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo "Missing env file: ${ENV_FILE}" >&2
@@ -41,6 +42,12 @@ run_audit() {
 
 if ! run_audit; then
   echo "Primary showcase audit failed for API base: ${API_BASE}" >&2
+
+  if [[ "${ALLOW_COMPOSE_FALLBACK}" != "true" ]]; then
+    echo "Compose-network fallback disabled. Set SHOWCASE_ALLOW_COMPOSE_FALLBACK=true to enable it." >&2
+    echo "Showcase data audit failed." >&2
+    exit 1
+  fi
 
   if command -v docker >/dev/null 2>&1; then
     compose_project="${COMPOSE_PROJECT_NAME:-chamberofcommerceai}"

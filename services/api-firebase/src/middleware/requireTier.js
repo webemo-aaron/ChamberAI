@@ -20,13 +20,17 @@ export function requireTier(requiredTier) {
       const orgId = req.orgId ?? process.env.DEFAULT_ORG_ID ?? "default";
       const settingsDoc = await orgCollection(db, orgId, "settings").doc("system").get();
       const settings = settingsDoc.exists ? settingsDoc.data() : {};
-      const currentTier = settings.subscription?.tier ?? "free";
+      const settingsTier = settings.subscription?.tier ?? "free";
+      const userTier = String(req.user?.tier ?? "").toLowerCase();
+      const effectiveTier = (tierLevels[userTier] ?? -1) > (tierLevels[settingsTier] ?? -1)
+        ? userTier
+        : settingsTier;
 
-      if ((tierLevels[currentTier] ?? 0) < (tierLevels[requiredTier] ?? 0)) {
+      if ((tierLevels[effectiveTier] ?? 0) < (tierLevels[requiredTier] ?? 0)) {
         return res.status(402).json({
           error: "Payment required",
           tier_required: requiredTier,
-          current_tier: currentTier,
+          current_tier: effectiveTier,
           message: `This feature requires ${requiredTier} tier or higher`
         });
       }
