@@ -132,10 +132,13 @@ router.post("/api/kiosk/config", requireAuth, requireRole("admin"), async (req, 
 
     // Update settings
     const settingsRef = orgCollection(db, orgId, "settings").doc("system");
-    await settingsRef.update({
-      kioskConfig,
-      updatedAt: serverTimestamp()
-    });
+    await settingsRef.set(
+      {
+        kioskConfig,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
 
     // Audit log
     await orgCollection(db, orgId, "audit_logs").add({
