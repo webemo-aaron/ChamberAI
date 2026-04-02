@@ -20,8 +20,20 @@ import { showToast } from "../../core/toast.js";
 import { navigate } from "../../core/router.js";
 import { initKioskChat } from "./kiosk-chat.js";
 
+function getKioskMountContainer() {
+  const utilityView = document.getElementById("utilityView");
+  if (utilityView) {
+    const shellMains = document.querySelectorAll("main.shell");
+    shellMains.forEach((main) => main.classList.add("hidden"));
+    utilityView.classList.remove("hidden");
+    return utilityView;
+  }
+
+  return document.querySelector("main") || document.body;
+}
+
 function renderKioskUnavailable({ title, description, currentRole }) {
-  const mainContent = document.querySelector("main") || document.body;
+  const mainContent = getKioskMountContainer();
   const nextRoute = currentRole === "admin" ? "/kiosk-config" : "/dashboard";
   const nextLabel = currentRole === "admin" ? "Open Kiosk Settings" : "Back to Dashboard";
 
@@ -118,7 +130,7 @@ export async function kioskHandler(params, context) {
     kioskPage.appendChild(chatContainer);
 
     // Get main content area
-    const mainContent = document.querySelector("main") || document.body;
+    const mainContent = getKioskMountContainer();
     mainContent.innerHTML = "";
     mainContent.appendChild(kioskPage);
 
