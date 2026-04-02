@@ -25,6 +25,14 @@ function getDemoTierForRole(role) {
   return "Free";
 }
 
+function normalizeDemoTier(value = "") {
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === "pro") return "Pro";
+  if (normalized === "council") return "Council";
+  if (normalized === "network") return "Network";
+  return "Free";
+}
+
 /**
  * Check if SSO is enabled for the current org
  * @async
@@ -266,6 +274,48 @@ function renderLoginPage(ssoStatus = null) {
   roleWrapper.appendChild(roleLabel);
   roleWrapper.appendChild(roleSelect);
 
+  // Tier select (explicit Council+ / Network demo option)
+  const tierLabel = document.createElement("label");
+  tierLabel.htmlFor = "loginTier";
+  tierLabel.textContent = "Access Tier";
+
+  const tierSelect = document.createElement("select");
+  tierSelect.id = "loginTier";
+  tierSelect.className = "form-input";
+  tierSelect.setAttribute("aria-label", "Access tier for demo access");
+
+  const tierAutoOption = document.createElement("option");
+  tierAutoOption.value = "auto";
+  tierAutoOption.textContent = "Auto (from role)";
+  tierAutoOption.selected = true;
+
+  const tierFreeOption = document.createElement("option");
+  tierFreeOption.value = "free";
+  tierFreeOption.textContent = "Free";
+
+  const tierProOption = document.createElement("option");
+  tierProOption.value = "pro";
+  tierProOption.textContent = "Pro";
+
+  const tierCouncilOption = document.createElement("option");
+  tierCouncilOption.value = "council";
+  tierCouncilOption.textContent = "Council+";
+
+  const tierNetworkOption = document.createElement("option");
+  tierNetworkOption.value = "network";
+  tierNetworkOption.textContent = "Network";
+
+  tierSelect.appendChild(tierAutoOption);
+  tierSelect.appendChild(tierFreeOption);
+  tierSelect.appendChild(tierProOption);
+  tierSelect.appendChild(tierCouncilOption);
+  tierSelect.appendChild(tierNetworkOption);
+
+  const tierWrapper = document.createElement("div");
+  tierWrapper.className = "form-group";
+  tierWrapper.appendChild(tierLabel);
+  tierWrapper.appendChild(tierSelect);
+
   // Demo submit button
   const submitBtn = document.createElement("button");
   submitBtn.id = "loginSubmit";
@@ -277,6 +327,7 @@ function renderLoginPage(ssoStatus = null) {
   demoForm.appendChild(demoNote);
   demoForm.appendChild(emailWrapper);
   demoForm.appendChild(roleWrapper);
+  demoForm.appendChild(tierWrapper);
   demoForm.appendChild(submitBtn);
 
   demoDetails.appendChild(demoForm);
@@ -417,8 +468,9 @@ async function handleGoogleSignIn(navigate) {
 async function handleDemoSignIn(navigate) {
   const emailInput = document.getElementById("loginEmail");
   const roleSelect = document.getElementById("loginRole");
+  const tierSelect = document.getElementById("loginTier");
 
-  if (!emailInput || !roleSelect) {
+  if (!emailInput || !roleSelect || !tierSelect) {
     showToast("Form elements not found", { type: "error" });
     return;
   }
@@ -436,7 +488,10 @@ async function handleDemoSignIn(navigate) {
   try {
     // Set role and persist to localStorage
     setRole(role, email, "");
-    const demoTier = getDemoTierForRole(role);
+    const demoTier =
+      tierSelect.value === "auto"
+        ? getDemoTierForRole(role)
+        : normalizeDemoTier(tierSelect.value);
     localStorage.setItem("camUserTier", demoTier);
     localStorage.removeItem("camTierPreview");
 

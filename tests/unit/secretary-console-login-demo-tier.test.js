@@ -24,3 +24,10 @@ test("demo login persists tier and clears tier preview", () => {
   assert.match(loginJs, /localStorage\.removeItem\("camTierPreview"\)/);
 });
 
+test("demo login includes explicit access tier selector with Council\\+ option", () => {
+  const loginJs = read("apps/secretary-console/views/login/login.js");
+
+  assert.match(loginJs, /tierSelect\.id = "loginTier"/);
+  assert.match(loginJs, /tierCouncilOption\.textContent = "Council\+"/);
+  assert.match(loginJs, /tierSelect\.value === "auto"/);
+});
